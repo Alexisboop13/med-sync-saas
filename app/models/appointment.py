@@ -4,11 +4,10 @@ app/models/appointment.py
 Appointment — the central scheduling entity.
 
 Status FSM:
-  SCHEDULED → CONFIRMED → IN_PROGRESS → COMPLETED
-      │            │
+  SCHEDULED → COMPLETED (visit finished)
+      │
       └──── CANCELED (by clinic staff)
       └──── CANCELED_BY_PATIENT (via magic link, ≥1 h before starts_at)
-      └──── NO_SHOW  (doctor marks after missed appointment)
 
 Overlap prevention:
   The DB constraint `uq_doctor_no_overlap` (exclusion constraint using
@@ -50,7 +49,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import DateTime, ForeignKey, Index, SmallInteger, String, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, SmallInteger, String, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -58,31 +57,30 @@ from app.db.types import NullableEncryptedString
 from app.models.base import TenantBase
 
 if TYPE_CHECKING:
+    from app.models.appointment_note import AppointmentNote
     from app.models.clinic import Clinic
     from app.models.doctor import Doctor
+    from app.models.location import Location
     from app.models.patient import Patient
     from app.models.user import User
     from app.models.medical_record import MedicalRecord
     from app.models.notification import Notification
+    from app.models.reschedule_request import RescheduleRequest
 
 
 # ── Status FSM ────────────────────────────────────────────────────────────────
 
 class AppointmentStatus(StrEnum):
-    SCHEDULED = "scheduled"           # default on creation
-    CONFIRMED = "confirmed"           # patient or staff confirmed
-    IN_PROGRESS = "in_progress"         # doctor opened the record
-    COMPLETED = "completed"           # visit finished
-    CANCELED = "canceled"            # canceled by staff
-    CANCELED_BY_PATIENT = "canceled_by_patient"  # via magic link (≥1 h prior)
-    NO_SHOW = "no_show"             # patient didn't show up
+    SCHEDULED = "scheduled"                     # default on creation
+    COMPLETED = "completed"                     # visit finished
+    CANCELED = "canceled"                       # canceled by staff
+    CANCELED_BY_PATIENT = "canceled_by_patient" # via magic link (≥1 h prior)
+    NO_SHOW = "no_show"                         # patient did not attend
 
 
 # Statuses that "occupy" a time slot for overlap checking
 ACTIVE_STATUSES = frozenset({
     AppointmentStatus.SCHEDULED,
-    AppointmentStatus.CONFIRMED,
-    AppointmentStatus.IN_PROGRESS,
 })
 
 # Statuses that count as cancellation (free the slot)
@@ -105,6 +103,15 @@ class Appointment(TenantBase):
     """
 
     __tablename__ = "appointments"
+
+    # ── Location ──────────────────────────────────────────────────────────────
+    location_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("locations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="Branch/location where the appointment takes place.",
+    )
 
     # ── Participants ──────────────────────────────────────────────────────────
     doctor_id: Mapped[uuid.UUID] = mapped_column(
@@ -178,6 +185,33 @@ class Appointment(TenantBase):
         server_default="0",
     )
 
+    # ── Proposed reschedule ───────────────────────────────────────────────────
+    proposed_starts_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Staff-proposed new start time; NULL when no reschedule is pending.",
+    )
+
+    proposed_ends_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Staff-proposed new end time; NULL when no reschedule is pending.",
+    )
+
+    reschedule_token: Mapped[Optional[str]] = mapped_column(
+        String(36),
+        nullable=True,
+        unique=True,
+        index=True,
+        comment="UUID v4 token for patient confirm/reject reschedule link. Cleared after use.",
+    )
+
+    reschedule_token_expires_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Reschedule token expiry. Typically now + 48 h.",
+    )
+
     # ── Magic link (patient self-service) ──────────────────────────────────────
     magic_token: Mapped[Optional[str]] = mapped_column(
         String(36),
@@ -194,6 +228,32 @@ class Appointment(TenantBase):
         DateTime(timezone=True),
         nullable=True,
         comment="Token expiry. Typically created_at + 72 h.",
+    )
+
+    # ── No-show flag ─────────────────────────────────────────────────────────
+    was_no_show: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+        comment=(
+            "True when staff marked this appointment as no-show. "
+            "Persists even if status changes, enabling historical reporting."
+        ),
+    )
+
+    # ── Patient confirmation ──────────────────────────────────────────────────
+    patient_confirmed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+        comment="When the patient confirmed attendance. NULL = not yet confirmed.",
+    )
+
+    patient_confirmation_channel: Mapped[Optional[str]] = mapped_column(
+        String(20),
+        nullable=True,
+        comment="How the patient confirmed: magic_link | whatsapp | phone | staff",
     )
 
     # ── Relationships ─────────────────────────────────────────────────────────
@@ -222,6 +282,12 @@ class Appointment(TenantBase):
         lazy="select",
     )
 
+    location: Mapped[Optional["Location"]] = relationship(
+        "Location",
+        back_populates="appointments",
+        lazy="select",
+    )
+
     medical_records: Mapped[List["MedicalRecord"]] = relationship(
         "MedicalRecord",
         back_populates="appointment",
@@ -236,6 +302,23 @@ class Appointment(TenantBase):
         lazy="select",
         cascade="all, delete-orphan",
         passive_deletes=True,
+    )
+
+    reschedule_requests: Mapped[List["RescheduleRequest"]] = relationship(
+        "RescheduleRequest",
+        back_populates="appointment",
+        lazy="select",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    notes: Mapped[List["AppointmentNote"]] = relationship(
+        "AppointmentNote",
+        back_populates="appointment",
+        lazy="select",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="AppointmentNote.created_at",
     )
 
     # ── Composite indexes ─────────────────────────────────────────────────────

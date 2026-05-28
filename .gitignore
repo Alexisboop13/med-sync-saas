@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.env.dev
+.env.prod
+.env.staging
+.DS_Store
+uploads/
+*.log
+*.ics
+citas.ics

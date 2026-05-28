@@ -1,0 +1,7 @@
+ID,Paciente,Doctor,Fecha,Hora inicio,Hora fin,Estado,Motivo,Ubicación,Notas
+5849320d-9942-4620-be1e-2bf461ef0338,María González,Axel Hector,2026-05-02,14:00,17:34,scheduled,,,
+ad206a03-9903-4d65-8bf8-abe833b956e5,María González,Admin Test,2026-05-02,19:30,21:30,pending_reschedule,Limpieza,,Limpieza
+948b1e1f-bf5b-458a-bf91-97e0b4799147,Juan García,Admin Test,2026-05-10,10:00,10:30,canceled_by_patient,Consulta general,,
+5219414a-77a8-493f-84bf-28e994ab2616,Juan García,Admin Test,2026-05-10,10:00,10:30,pending_reschedule,Consulta de seguimiento,,
+77a372f5-48b2-417e-a798-269db345d3e1,María González,Axel Hector,2026-05-10,14:30,15:30,scheduled,,,
+388c3aa9-4ae3-4a02-b88d-641eba04df5d,María González,Axel Hector,2026-05-16,17:00,18:29,scheduled,Tazajeada,,Tazajeada

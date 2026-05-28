@@ -41,7 +41,10 @@ from app.models.doctor import Doctor  # noqa: F401
 # ── 5. Patient (FK → clinics only) ───────────────────────────────────────────
 from app.models.patient import Patient  # noqa: F401
 
-# ── 6. Appointment (FK → doctors, patients, users, clinics) ──────────────────
+# ── 5b. Location (FK → clinics only) ─────────────────────────────────────────
+from app.models.location import Location  # noqa: F401
+
+# ── 6. Appointment (FK → doctors, patients, users, clinics, locations) ────────
 from app.models.appointment import (  # noqa: F401
     Appointment,
     AppointmentStatus,
@@ -63,16 +66,36 @@ from app.models.notification import (  # noqa: F401
     NotificationType,
 )
 
+# ── 10. RefreshToken (FK → users) ─────────────────────────────────────────────
+from app.models.refresh_token import RefreshToken  # noqa: F401
+
+# ── 10b. PasswordResetToken (FK → users) ──────────────────────────────────────
+from app.models.password_reset_token import PasswordResetToken  # noqa: F401
+
+# ── 11. RescheduleRequest (FK → appointments, users) ──────────────────────────
+from app.models.reschedule_request import (  # noqa: F401
+    RescheduleRequest,
+    RescheduleRequestStatus,
+)
+
+# ── 12. AppointmentNote (FK → appointments, users, clinics) ───────────────────
+from app.models.appointment_note import AppointmentNote  # noqa: F401
+
+# ── 13. EmailVerification (system-level, no tenant FK) ────────────────────────
+from app.models.email_verification import EmailVerification  # noqa: F401
+
 # ── Public surface ─────────────────────────────────────────────────────────────
 __all__ = [
     # Bases
     "Base", "SystemBase", "TenantBase", "TimestampMixin",
     # Models
-    "Clinic", "User", "Doctor", "Patient",
-    "Appointment", "MedicalRecord", "AuditLog", "Notification",
+    "Clinic", "User", "Doctor", "Patient", "Location",
+    "Appointment", "AppointmentNote", "MedicalRecord", "AuditLog", "Notification",
+    "RefreshToken", "PasswordResetToken", "RescheduleRequest", "EmailVerification",
     # Enums / constants
     "PlanTier", "SubscriptionStatus", "Role",
     "AppointmentStatus", "ACTIVE_STATUSES", "CANCELED_STATUSES",
     "EventType",
     "NotificationChannel", "NotificationStatus", "NotificationType",
+    "RescheduleRequestStatus",
 ]

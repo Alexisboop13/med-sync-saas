@@ -126,6 +126,9 @@ class NullableEncryptedString(EncryptedString):
             return None
         return super().process_bind_param(value, dialect)
 
+    def copy(self, **kwargs: Any) -> "NullableEncryptedString":
+        return NullableEncryptedString()
+
 
 # ── EncryptedJSON ──────────────────────────────────────────────────────────────
 

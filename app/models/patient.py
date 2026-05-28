@@ -35,7 +35,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Boolean, Index, SmallInteger, String, text
+from datetime import datetime
+
+from sqlalchemy import Boolean, DateTime, Index, Integer, SmallInteger, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.types import EncryptedString, NullableEncryptedString, EncryptedJSON
@@ -151,6 +153,25 @@ class Patient(TenantBase):
         nullable=True,
     )
 
+    # ── Medical record code (plaintext, unique per clinic) ───────────────────
+    medical_record_code: Mapped[str] = mapped_column(
+        String(4),
+        nullable=False,
+        comment="4-char unique code per clinic: 2 consonants + 2 digits (no vowels, no 0/1).",
+    )
+
+    # ── Trigram search text (plaintext, non-PII index) ───────────────────────
+    search_text: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False,
+        default="",
+        server_default="",
+        comment=(
+            "Lowercase concat of full_name, email, phone for pg_trgm ILIKE search. "
+            "Must be kept in sync with the encrypted fields on every write."
+        ),
+    )
+
     # ── Key rotation tracking ─────────────────────────────────────────────────
     key_version: Mapped[int] = mapped_column(
         SmallInteger,
@@ -162,6 +183,21 @@ class Patient(TenantBase):
             "Index of the encryption key used for this row. "
             "Background job: UPDATE patients SET ... WHERE key_version < :current"
         ),
+    )
+
+    # ── No-show tracking ─────────────────────────────────────────────────────
+    no_show_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+        comment="Cumulative count of no-show appointments for this patient.",
+    )
+
+    last_no_show_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Timestamp of the most recent no-show event.",
     )
 
     # ── Soft delete ───────────────────────────────────────────────────────────
@@ -221,6 +257,26 @@ class Patient(TenantBase):
             "ix_patients_clinic_active",
             "clinic_id",
             "is_active",
+        ),
+        # Trigram full-text search (requires pg_trgm extension)
+        Index(
+            "ix_patients_search_text_gin",
+            "search_text",
+            postgresql_using="gin",
+            postgresql_ops={"search_text": "gin_trgm_ops"},
+        ),
+        # Unique medical record code lookup per clinic
+        Index(
+            "idx_patients_code",
+            "clinic_id",
+            "medical_record_code",
+            unique=True,
+        ),
+        # No-show flag filter — find patients with repeated no-shows
+        Index(
+            "ix_patients_clinic_no_show",
+            "clinic_id",
+            "no_show_count",
         ),
     )
 

@@ -40,7 +40,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import ExpiredSignatureError, JWTError, jwt
+import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -143,13 +143,13 @@ def _decode_token(raw_token: str) -> TokenPayload:
             algorithms=[settings.JWT_ALGORITHM],
             options={"require": ["sub", "exp", "iat"]},
         )
-    except ExpiredSignatureError:
+    except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except JWTError:
+    except jwt.PyJWTError:
         raise _CREDENTIALS_EXCEPTION
 
     # Validate and type-cast custom claims

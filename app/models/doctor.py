@@ -67,17 +67,19 @@ class Doctor(TenantBase):
     )
 
     # ── Professional info ─────────────────────────────────────────────────────
+    title: Mapped[str] = mapped_column(
+        String(10),
+        nullable=False,
+        default="Dr.",
+        server_default="Dr.",
+        comment="Honorific title displayed before the name (Dr., Dra., Lic., etc.).",
+    )
+
     specialty: Mapped[str] = mapped_column(
         String(120),
         nullable=False,
         default="General Practice",
         comment="Displayed on patient-facing booking page.",
-    )
-
-    license_number: Mapped[Optional[str]] = mapped_column(
-        String(50),
-        nullable=True,
-        comment="Professional medical license (Cédula Profesional in Mexico).",
     )
 
     bio: Mapped[Optional[str]] = mapped_column(

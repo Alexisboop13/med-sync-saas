@@ -1,0 +1,4542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DentalSync — Clínica Dental</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" />
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:       #2c7da0;
+      --blue-dark:  #1a5f7a;
+      --blue-mid:   #2589b0;
+      --blue-light: #e8f4f8;
+      --gray-50:    #f7f8fa;
+      --gray-100:   #f0f2f5;
+      --gray-200:   #e4e8ed;
+      --gray-400:   #a8b2be;
+      --gray-600:   #64748b;
+      --gray-800:   #1e2a35;
+      --red:        #dc4a4a;
+      --green:      #2e9b56;
+      --orange:     #f59e0b;
+      --white:      #ffffff;
+      --radius:     12px;
+      --shadow:     0 2px 16px rgba(44,125,160,.10), 0 1px 4px rgba(0,0,0,.04);
+      --shadow-md:  0 4px 24px rgba(44,125,160,.13), 0 2px 8px rgba(0,0,0,.06);
+      --transition: .18s ease;
+    }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 2rem;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      text-decoration: none;
+      letter-spacing: -.01em;
+    }
+    .navbar-brand svg { color: var(--blue); }
+    .navbar-user {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: .875rem;
+      color: var(--gray-600);
+    }
+    .btn-logout {
+      background: none;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: .35rem .85rem;
+      cursor: pointer;
+      color: var(--gray-600);
+      font-size: .83rem;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    .btn-logout:hover { background: var(--gray-100); color: var(--red); border-color: var(--red); }
+
+    /* ── Page wrappers ── */
+    #login-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(140deg, var(--blue-light) 0%, var(--gray-50) 55%);
+    }
+    #dashboard-page { display: none; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* ── Login card ── */
+    .login-card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 3rem 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--gray-200);
+    }
+    .login-logo {
+      text-align: center;
+      margin-bottom: 1.8rem;
+    }
+    .login-logo .icon-wrap {
+      width: 64px;
+      height: 64px;
+      background: var(--blue-light);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: .8rem;
+    }
+    .login-logo h1 { font-size: 1.5rem; color: var(--blue-dark); font-weight: 700; letter-spacing: -.02em; }
+    .login-logo p  { color: var(--gray-600); font-size: .88rem; margin-top: .3rem; }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 1.25rem; }
+    label { display: block; font-size: .83rem; font-weight: 600; color: var(--gray-600); margin-bottom: .4rem; letter-spacing: .01em; }
+    input, select, textarea {
+      width: 100%;
+      padding: .68rem 1rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius);
+      font-size: .93rem;
+      font-family: inherit;
+      background: var(--white);
+      color: var(--gray-800);
+      transition: border-color var(--transition), box-shadow var(--transition);
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(44,125,160,.14);
+    }
+    input::placeholder, textarea::placeholder { color: var(--gray-400); }
+    textarea { resize: vertical; min-height: 90px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .62rem 1.4rem;
+      border: none;
+      border-radius: var(--radius);
+      font-size: .9rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background var(--transition), box-shadow var(--transition), transform .12s ease;
+      text-decoration: none;
+      letter-spacing: .01em;
+    }
+    .btn-primary { background: var(--blue); color: var(--white); box-shadow: 0 2px 8px rgba(44,125,160,.25); }
+    .btn-primary:hover { background: var(--blue-mid); box-shadow: 0 4px 14px rgba(44,125,160,.35); }
+    .btn-primary:active { background: var(--blue-dark); transform: scale(.98); box-shadow: none; }
+    .btn-block { width: 100%; justify-content: center; }
+    .btn-sm { padding: .38rem .9rem; font-size: .83rem; }
+    .btn-success { background: var(--green); color: var(--white); box-shadow: 0 2px 8px rgba(46,155,86,.2); }
+    .btn-success:hover { background: #278a4b; }
+    .btn-danger { background: var(--red); color: var(--white); box-shadow: 0 2px 8px rgba(220,74,74,.2); }
+    .btn-danger:hover { background: #c03b3b; }
+    .btn-danger-solid { background: #dc2626; color: var(--white); box-shadow: 0 2px 8px rgba(220,38,38,.25); }
+    .btn-danger-solid:hover { background: #b91c1c; }
+    .btn-danger-solid:active { background: #991b1b; transform: scale(.98); }
+    .btn-outline {
+      background: var(--white);
+      border: 1.5px solid var(--blue);
+      color: var(--blue);
+    }
+    .btn-outline:hover { background: var(--blue-light); }
+    .btn-outline-danger {
+      background: var(--white);
+      border: 1.5px solid var(--red);
+      color: var(--red);
+    }
+    .btn-outline-danger:hover { background: #fdecea; }
+
+    /* ── Alerts ── */
+    .alert {
+      padding: .75rem 1rem;
+      border-radius: var(--radius);
+      font-size: .88rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .alert.show { display: block; }
+    .alert-error   { background: #fdecea; color: #b03030; border-left: 4px solid var(--red); }
+    .alert-success { background: #e6f6ed; color: #1d6e3f; border-left: 4px solid var(--green); }
+
+    /* ── Tab navigation ── */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--gray-200);
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      padding: .78rem 1.4rem;
+      font-size: .875rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--gray-600);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color var(--transition), background var(--transition);
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .tab-btn:hover { color: var(--blue); background: var(--blue-light); }
+    .tab-btn.active { color: var(--blue-dark); border-bottom-color: var(--blue); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Dashboard grid ── */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 768px) { .dash-grid { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    .card-header h2 {
+      font-size: .975rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      letter-spacing: -.01em;
+    }
+    .card-header-actions { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+    .card-body { padding: 1.5rem; }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    thead th {
+      background: var(--gray-50);
+      color: var(--gray-600);
+      font-weight: 600;
+      font-size: .8rem;
+      text-align: left;
+      padding: .75rem 1rem;
+      border-bottom: 1.5px solid var(--gray-200);
+      white-space: nowrap;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+    tbody tr { transition: background var(--transition); }
+    tbody tr:hover { background: var(--blue-light); }
+    tbody td {
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--gray-100);
+      vertical-align: middle;
+      color: var(--gray-800);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: .22rem .65rem;
+      border-radius: 20px;
+      font-size: .76rem;
+      font-weight: 600;
+      letter-spacing: .01em;
+    }
+    .badge-blue   { background: #dbeeff;  color: #1a5f7a; }
+    .badge-green  { background: #d1fae5;  color: #065f46; }
+    .badge-orange { background: #fef3c7;  color: #92400e; }
+    .badge-red    { background: #fee2e2;  color: #991b1b; }
+    .badge-gray   { background: #f0f2f5;  color: #4b5563; }
+    .badge-purple { background: #ede9fe;  color: #5b21b6; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--gray-400);
+    }
+    .empty-state svg { margin-bottom: .8rem; opacity: .45; }
+    .empty-state p { font-size: .88rem; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 24px; height: 24px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 1.5rem auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 1.2rem 0;
+    }
+
+    /* ── Form inline grid ── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+
+    /* ── Section heading ── */
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      letter-spacing: -.02em;
+    }
+
+    /* ── Full-width card ── */
+    .card-full { grid-column: 1 / -1; }
+
+    /* ── Loading state ── */
+    .loading { text-align: center; padding: 2rem; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 1rem;
+      backdrop-filter: blur(2px);
+    }
+    .modal-card {
+      background: var(--white);
+      border-radius: 18px;
+      box-shadow: 0 8px 48px rgba(0,0,0,.18), 0 2px 12px rgba(0,0,0,.08);
+      border: 1px solid var(--gray-200);
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 1.05rem; font-weight: 700; color: var(--blue-dark); letter-spacing: -.01em; }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--gray-400);
+      cursor: pointer;
+      line-height: 1;
+      padding: .1rem .4rem;
+      border-radius: 6px;
+      transition: color var(--transition), background var(--transition);
+    }
+    .modal-close:hover { color: var(--red); background: #fdecea; }
+    .modal-body { padding: 1.5rem; }
+
+    /* ── Appointment detail rows ── */
+    .detail-row {
+      display: flex;
+      gap: .75rem;
+      padding: .6rem 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: .875rem;
+      align-items: flex-start;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label {
+      min-width: 90px;
+      font-weight: 600;
+      color: var(--gray-600);
+      flex-shrink: 0;
+    }
+    .modal-actions { display: flex; gap: .75rem; margin-top: 1.4rem; flex-wrap: wrap; }
+
+    /* ── Appointment detail modal (redesign) ── */
+    #appt-detail-modal .modal-card { max-width: 600px; }
+    .detail-hero {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 0 1.2rem; border-bottom: 1px solid var(--gray-100); margin-bottom: 1.1rem;
+    }
+    .detail-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: var(--blue-light); color: var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 700; flex-shrink: 0; letter-spacing: -.02em;
+    }
+    .detail-hero-text h4 { font-size: 1rem; font-weight: 700; color: var(--gray-800); margin-bottom: .15rem; }
+    .detail-hero-text small { font-size: .8rem; color: var(--gray-600); }
+    .detail-grid {
+      display: grid; grid-template-columns: 108px 1fr;
+      gap: .5rem 1rem; margin-bottom: 1.1rem; font-size: .875rem;
+    }
+    .detail-grid-label { font-weight: 600; color: var(--gray-600); align-self: start; padding-top: .06rem; }
+    .detail-grid-value { color: var(--gray-800); word-break: break-word; }
+    .detail-actions {
+      display: flex; flex-wrap: wrap; gap: .45rem;
+      padding-top: 1rem; border-top: 1px solid var(--gray-100); margin-top: .25rem;
+    }
+    .detail-actions-close { margin-left: auto; }
+    .detail-panel {
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 1rem 1.1rem; margin-top: .85rem;
+    }
+    .detail-panel h5 {
+      font-size: .75rem; font-weight: 700; color: var(--gray-600);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: .85rem;
+    }
+    .detail-panel-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: .75rem; }
+
+    /* ── Nueva Cita modal: 2-column form grid ── */
+    .modal-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 1rem;
+    }
+    .modal-form-grid > .form-group-wide,
+    .modal-form-grid > .form-row,
+    .modal-form-grid > .modal-actions {
+      grid-column: 1 / -1;
+    }
+    .modal-form-grid > .modal-actions { justify-content: flex-end; }
+    #cal-create-modal .modal-card { max-width: 580px; }
+    @media (max-width: 560px) {
+      .modal-form-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Calendar styles ── */
+    #appointments-view { }
+    #calendar-container { padding: 1.5rem; }
+    #calendar { min-height: 620px; }
+
+    /* FullCalendar theme overrides */
+    .fc .fc-button-primary {
+      background-color: var(--blue);
+      border-color: var(--blue-dark);
+      font-size: .83rem;
+      font-weight: 600;
+      font-family: inherit;
+      transition: background var(--transition);
+    }
+    .fc .fc-button-primary:hover { background-color: var(--blue-mid); border-color: var(--blue-dark); }
+    .fc .fc-button-primary:not(:disabled):active,
+    .fc .fc-button-primary:not(:disabled).fc-button-active {
+      background-color: var(--blue-dark);
+      border-color: var(--blue-dark);
+    }
+    .fc .fc-button-primary:focus { box-shadow: 0 0 0 3px rgba(44,125,160,.25); }
+    .fc-daygrid-event { border-radius: 5px; font-size: .79rem; }
+    .fc-timegrid-event { border-radius: 5px; font-size: .79rem; }
+    .fc .fc-toolbar-title { font-size: 1.05rem; font-weight: 700; color: var(--blue-dark); }
+
+    /* ── Calendar custom toolbar ── */
+    .cal-toolbar {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      flex-wrap: wrap;
+      padding: .8rem 1.25rem;
+      border-bottom: 1px solid var(--gray-100);
+      background: var(--gray-50);
+    }
+    .cal-toolbar-right { display: flex; gap: .45rem; margin-left: auto; }
+    .cal-view-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      background: none;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: .32rem .85rem;
+      font-size: .82rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all var(--transition);
+      line-height: 1.4;
+    }
+    .cal-view-btn:hover { background: var(--blue-light); color: var(--blue-dark); border-color: var(--blue); }
+    .cal-view-btn.active { background: var(--blue); color: var(--white); border-color: var(--blue-dark); }
+    .cal-sep { width: 1px; height: 22px; background: var(--gray-200); margin: 0 .2rem; display: inline-block; align-self: center; }
+    /* ── Custom FC event card ── */
+    .fc-cal-event { padding: 2px 4px; overflow: hidden; width: 100%; }
+    .fc-cal-event .ev-time    { font-size: .7rem; font-weight: 700; opacity: .9; display: block; }
+    .fc-cal-event .ev-patient { font-size: .78rem; font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fc-cal-event .ev-doctor  { font-size: .71rem; opacity: .85; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fc-cal-event .ev-loc     { font-size: .68rem; opacity: .78; }
+    .fc-daygrid-event .fc-cal-event .ev-time { display: none; }
+    .fc .fc-event { cursor: grab; }
+    /* ── Tooltip ── */
+    .cal-tooltip {
+      position: fixed; z-index: 9000;
+      background: var(--gray-800); color: #fff;
+      border-radius: 10px; padding: .7rem 1rem;
+      font-size: .8rem; line-height: 1.6; max-width: 270px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.28);
+      pointer-events: none; opacity: 0; transition: opacity .12s;
+    }
+    .cal-tooltip.visible { opacity: 1; }
+    /* ── List view ── */
+    #cal-list-view { padding: 1.25rem 1.5rem; }
+    .list-filters {
+      display: flex; gap: .45rem; margin-bottom: 1.1rem;
+      flex-wrap: wrap; align-items: center;
+    }
+    .list-filter-lbl { font-size: .79rem; font-weight: 600; color: var(--gray-600); }
+    .lf-btn {
+      background: none; border: 1px solid var(--gray-200); border-radius: 8px;
+      padding: .28rem .8rem; font-size: .81rem; font-weight: 600; font-family: inherit;
+      color: var(--gray-600); cursor: pointer; transition: all var(--transition);
+    }
+    .lf-btn:hover, .lf-btn.active { background: var(--blue); color: var(--white); border-color: var(--blue-dark); }
+    .list-table th { cursor: pointer; user-select: none; white-space: nowrap; }
+    .list-table th:hover { color: var(--blue-dark); }
+    .list-table .sort-ic { margin-left: .3rem; opacity: .35; font-size: .72rem; }
+    .list-table th.s-asc  .sort-ic::after { content: '▲'; opacity: 1; }
+    .list-table th.s-desc .sort-ic::after { content: '▼'; opacity: 1; }
+    .drag-grip { color: var(--gray-400); cursor: grab; vertical-align: middle; }
+
+    /* ── FAB ── */
+    .fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(44,125,160,.45), 0 2px 6px rgba(0,0,0,.15);
+      z-index: 150;
+      transition: background var(--transition), transform .12s ease, box-shadow var(--transition);
+    }
+    .fab:hover  { background: var(--blue-mid); box-shadow: 0 6px 24px rgba(44,125,160,.55); }
+    .fab:active { transform: scale(.93); background: var(--blue-dark); }
+    .fab.visible { display: flex; }
+
+    /* ── Analytics / Dashboard ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
+    .kpi-card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-200);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .kpi-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: .65rem;
+    }
+    .kpi-value {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--gray-800);
+      line-height: 1.1;
+      letter-spacing: -.02em;
+    }
+    .kpi-label {
+      font-size: .76rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-top: .3rem;
+    }
+    .kpi-sub {
+      font-size: .75rem;
+      color: var(--gray-400);
+      margin-top: .2rem;
+    }
+    .chart-canvas-wrap { position: relative; height: 260px; }
+
+    /* ── Dashboard filter bar ── */
+    .dash-filters {
+      display: flex;
+      align-items: flex-end;
+      gap: .65rem;
+      flex-wrap: wrap;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: .9rem 1.25rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+    .dash-filter-group { display: flex; flex-direction: column; gap: .28rem; }
+    .dash-filter-group label {
+      font-size: .71rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .dash-filter-group input[type="date"],
+    .dash-filter-group input[type="text"],
+    .dash-filter-group select {
+      height: 34px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 0 .75rem;
+      font-size: .86rem;
+      color: var(--gray-800);
+      background: var(--white);
+      font-family: inherit;
+      outline: none;
+      min-width: 130px;
+    }
+    .dash-filter-group input:focus, .dash-filter-group select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(44,125,160,.12);
+    }
+    .dash-filter-actions { display: flex; gap: .5rem; align-items: flex-end; }
+    /* Today appointments list */
+    .today-list { list-style: none; padding: 0; margin: 0; }
+    .today-item {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .55rem 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: .86rem;
+    }
+    .today-item:last-child { border-bottom: none; }
+    .today-time { min-width: 68px; font-weight: 600; color: var(--blue-dark); font-size: .82rem; }
+    .today-info { flex: 1; min-width: 0; }
+    .today-patient { font-weight: 600; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .today-doctor  { color: var(--gray-600); font-size: .78rem; }
+
+    /* ── Dashboard search results ── */
+    #search-results-card { display: none; margin-bottom: 1.5rem; }
+    .sr-count { font-size: .82rem; font-weight: 500; color: var(--gray-600); margin-left: .5rem; }
+    .sr-table tbody tr { cursor: pointer; }
+    .sr-pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .85rem 1.5rem; border-top: 1px solid var(--gray-100);
+      font-size: .83rem; color: var(--gray-600); flex-wrap: wrap; gap: .5rem;
+    }
+    .sr-pagination-btns { display: flex; gap: .4rem; }
+
+    /* ── Expedientes placeholder ── */
+    .coming-soon {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--gray-400);
+    }
+    .coming-soon svg { margin-bottom: 1rem; opacity: .4; }
+    .coming-soon h3 { font-size: 1.05rem; font-weight: 700; color: var(--gray-600); margin-bottom: .5rem; }
+    .coming-soon p { font-size: .88rem; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ LOGIN PAGE ═══════════════════════════ -->
+<div id="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon-wrap">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b9edd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
+          <path d="M9 11.5a3 3 0 0 0 6 0"/>
+          <line x1="12" y1="8" x2="12" y2="8.5"/>
+        </svg>
+      </div>
+      <h1>DentalSync</h1>
+      <p>Sistema de Gestión Clínica</p>
+    </div>
+
+    <div id="login-error" class="alert alert-error"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" placeholder="doctor@clinica.com" required autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="login-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        Iniciar sesión
+      </button>
+      <div style="text-align:center;margin-top:1rem;">
+        <button type="button" onclick="openForgotModal()"
+                style="background:none;border:none;color:var(--blue);font-size:.85rem;cursor:pointer;text-decoration:underline;padding:0;">
+          ¿Olvidaste tu contraseña?
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Olvidé mi contraseña ═══ -->
+<div id="forgot-modal" class="modal-overlay" style="display:none;" onclick="closeForgotModalOverlay(event)">
+  <div class="modal-card" style="max-width:400px;">
+    <div class="modal-header">
+      <h3>Recuperar contraseña</h3>
+      <button class="modal-close" onclick="closeForgotModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--gray-600);font-size:.875rem;margin:0 0 1.2rem;line-height:1.5;">
+        Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
+      </p>
+      <div id="forgot-error"   class="alert alert-error"></div>
+      <div id="forgot-success" class="alert alert-success"></div>
+      <form id="forgot-form">
+        <div class="form-group">
+          <label for="forgot-email">Correo electrónico</label>
+          <input type="email" id="forgot-email" placeholder="doctor@clinica.com" required autocomplete="email" />
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary" id="forgot-submit-btn" style="flex:1;">
+            Enviar enlace
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="closeForgotModal()" style="flex:1;">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Restablecer contraseña ═══ -->
+<div id="reset-modal" class="modal-overlay" style="display:none;" onclick="closeResetModalOverlay(event)">
+  <div class="modal-card" style="max-width:400px;">
+    <div class="modal-header">
+      <h3>Nueva contraseña</h3>
+      <button class="modal-close" onclick="closeResetModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="reset-error"   class="alert alert-error"></div>
+      <div id="reset-success" class="alert alert-success"></div>
+      <form id="reset-form">
+        <div class="form-group">
+          <label for="reset-new">Nueva contraseña <span style="color:var(--red)">*</span></label>
+          <input type="password" id="reset-new" placeholder="Mín. 8 caracteres" required minlength="8" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label for="reset-confirm">Confirmar contraseña <span style="color:var(--red)">*</span></label>
+          <input type="password" id="reset-confirm" placeholder="Repite la nueva contraseña" required minlength="8" autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="reset-submit-btn">
+          Guardar contraseña
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ DASHBOARD PAGE ═══════════════════════ -->
+<div id="dashboard-page">
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a class="navbar-brand" href="#">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
+        <path d="M9 11.5a3 3 0 0 0 6 0"/>
+      </svg>
+      DentalSync
+    </a>
+    <div class="navbar-user">
+      <span id="navbar-email"></span>
+      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="container">
+    <p class="section-title">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      Panel de control
+    </p>
+
+    <!-- ── Tab navigation ── -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="tab-dashboard" onclick="switchTab('tab-dashboard')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        Dashboard
+      </button>
+      <button class="tab-btn" data-tab="tab-pacientes" onclick="switchTab('tab-pacientes')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        </svg>
+        Pacientes
+      </button>
+      <button class="tab-btn" data-tab="tab-citas" onclick="switchTab('tab-citas')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        Citas
+      </button>
+      <button class="tab-btn" data-tab="tab-doctores" id="tab-btn-doctores" onclick="switchTab('tab-doctores')" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          <line x1="12" y1="11" x2="12" y2="15"/><line x1="10" y1="13" x2="14" y2="13"/>
+        </svg>
+        Doctores
+      </button>
+      <button class="tab-btn" data-tab="tab-expedientes" onclick="switchTab('tab-expedientes')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Expedientes
+      </button>
+      <button class="tab-btn" data-tab="tab-ubicaciones" id="tab-btn-ubicaciones" onclick="switchTab('tab-ubicaciones')" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+        Ubicaciones
+      </button>
+    </nav>
+
+    <!-- ═══ TAB: DASHBOARD ═══ -->
+    <div id="tab-dashboard" class="tab-panel active">
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#eff6ff;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b9edd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div class="kpi-value" id="kpi-today">—</div>
+          <div class="kpi-label">Citas hoy</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#d1fae5;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#37a05b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="kpi-value" id="kpi-patients">—</div>
+          <div class="kpi-label">Pacientes totales</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#fef3c7;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="kpi-value" id="kpi-month">—</div>
+          <div class="kpi-label">Citas este mes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#fee2e2;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e05c5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>
+            </svg>
+          </div>
+          <div class="kpi-value" id="kpi-cancel-rate">—</div>
+          <div class="kpi-label">Tasa cancelación</div>
+          <div class="kpi-sub" id="kpi-cancel-sub"></div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="dash-filters">
+        <div class="dash-filter-group">
+          <label>Desde</label>
+          <input type="date" id="filter-start-date" />
+        </div>
+        <div class="dash-filter-group">
+          <label>Hasta</label>
+          <input type="date" id="filter-end-date" />
+        </div>
+        <div class="dash-filter-group">
+          <label>Doctor</label>
+          <select id="filter-doctor">
+            <option value="">Todos los doctores</option>
+          </select>
+        </div>
+        <div class="dash-filter-group">
+          <label>Estado</label>
+          <select id="filter-status">
+            <option value="">Todos los estados</option>
+            <option value="scheduled">Programada</option>
+            <option value="completed">Completada</option>
+            <option value="canceled">Cancelada</option>
+          </select>
+        </div>
+        <div class="dash-filter-group">
+          <label>Paciente</label>
+          <input type="text" id="filter-patient-q" placeholder="Buscar paciente…" style="min-width:160px;" />
+        </div>
+        <div class="dash-filter-actions">
+          <button class="btn btn-primary btn-sm" onclick="applyDashboardFilters()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Aplicar
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="resetDashboardFilters()">Limpiar</button>
+        </div>
+      </div>
+
+      <!-- Search results (shown after applying filters) -->
+      <div class="card card-full" id="search-results-card">
+        <div class="card-header">
+          <h2>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Resultados de búsqueda
+            <span class="sr-count" id="sr-count-label"></span>
+          </h2>
+        </div>
+        <div class="table-wrap">
+          <table class="sr-table" style="width:100%;">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Paciente</th>
+                <th>Doctor</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="sr-body">
+              <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--gray-400);">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="sr-pagination" id="sr-pagination" style="display:none;">
+          <span id="sr-range-label"></span>
+          <div class="sr-pagination-btns">
+            <button class="btn btn-outline btn-sm" id="sr-prev" onclick="searchResultsPage(-1)">&#8592; Anterior</button>
+            <button class="btn btn-outline btn-sm" id="sr-next" onclick="searchResultsPage(1)">Siguiente &#8594;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Citas de hoy -->
+      <div class="card card-full" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <h2>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Citas de hoy — <span id="today-date-label" style="font-weight:400;color:var(--gray-600);"></span>
+          </h2>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <span style="font-size:.8rem;color:var(--gray-600);">Filtros activos sobre esta lista: Estado · Paciente · Doctor</span>
+            <button class="btn btn-outline btn-sm" onclick="_loadTodayAppointments()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Actualizar
+            </button>
+          </div>
+        </div>
+        <div class="card-body" style="max-height:320px;overflow-y:auto;">
+          <ul class="today-list" id="today-list">
+            <li style="color:var(--gray-400);text-align:center;padding:1rem 0;">Cargando…</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="dash-grid">
+        <!-- Citas por mes (barras agrupadas) — full width -->
+        <div class="card card-full">
+          <div class="card-header">
+            <h2>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              Citas por mes
+            </h2>
+            <button class="btn btn-outline btn-sm" onclick="loadDashboard()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              Actualizar
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="chart-canvas-wrap"><canvas id="chart-monthly"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Estado de citas (dona) -->
+        <div class="card">
+          <div class="card-header">
+            <h2>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/>
+              </svg>
+              Estado de citas
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="chart-canvas-wrap"><canvas id="chart-status"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Top doctores (barras horizontales) -->
+        <div class="card">
+          <div class="card-header">
+            <h2>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              Top Doctores
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="chart-canvas-wrap"><canvas id="chart-doctors"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="dashboard-error" class="alert alert-error" style="margin-top:1rem;"></div>
+    </div><!-- /tab-dashboard -->
+
+    <!-- ═══ TAB: PACIENTES ═══ -->
+    <div id="tab-pacientes" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Pacientes
+          </h2>
+          <div style="display:flex;gap:.5rem;align-items:center;">
+            <input type="search" id="patient-search" placeholder="Buscar…" oninput="filterPatients(this.value)"
+              style="padding:.35rem .7rem;border:1px solid var(--gray-300,#d1d5db);border-radius:6px;font-size:.85rem;width:180px;" />
+            <button class="btn btn-outline btn-sm" onclick="loadPatients()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              Actualizar
+            </button>
+          </div>
+        </div>
+        <div id="patients-error" class="alert alert-error" style="margin:1rem 1rem 0;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
+              </tr>
+            </thead>
+            <tbody id="patients-body">
+              <tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tab-pacientes -->
+
+    <!-- ═══ TAB: CITAS (Calendar) ═══ -->
+    <div id="tab-citas" class="tab-panel">
+      <div id="appointments-view">
+        <div class="card">
+
+          <!-- ── Custom toolbar ── -->
+          <div class="cal-toolbar">
+            <!-- View toggles -->
+            <button class="cal-view-btn active" id="cvb-week" onclick="calSetView('timeGridWeek')">Semana</button>
+            <button class="cal-view-btn" id="cvb-day"  onclick="calSetView('timeGridDay')">Día</button>
+            <button class="cal-view-btn" id="cvb-month" onclick="calSetView('dayGridMonth')">Mes</button>
+            <span class="cal-sep"></span>
+            <button class="cal-view-btn" id="cvb-list" onclick="calToggleListView()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+              Vista lista
+            </button>
+
+            <!-- Right actions -->
+            <div class="cal-toolbar-right">
+              <button class="btn btn-outline btn-sm" id="cvb-refresh"
+                      onclick="if(!_listViewActive && calendar) calendar.refetchEvents(); else loadListView()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+                Actualizar
+              </button>
+              <button class="btn btn-success btn-sm" onclick="openCalCreateModal(null)" style="font-weight:700;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Nueva cita
+              </button>
+            </div>
+          </div>
+
+          <!-- ── Calendar view ── -->
+          <div id="calendar-container">
+            <div id="calendar"></div>
+          </div>
+
+          <!-- ── List view (hidden by default) ── -->
+          <div id="cal-list-view" style="display:none;">
+            <div class="list-filters">
+              <span class="list-filter-lbl">Período:</span>
+              <button class="lf-btn active" id="lf-today" onclick="loadListView('today')">Hoy</button>
+              <button class="lf-btn" id="lf-week"  onclick="loadListView('week')">Esta semana</button>
+              <button class="lf-btn" id="lf-month" onclick="loadListView('month')">Este mes</button>
+              <button class="lf-btn" id="lf-all"   onclick="loadListView('all')">Todo</button>
+              <div style="margin-left:auto;">
+                <input type="text" id="list-search" placeholder="Buscar en lista…" oninput="filterListView(this.value)"
+                       style="height:32px;border:1px solid var(--gray-200);border-radius:8px;padding:0 .75rem;font-size:.84rem;outline:none;width:190px;font-family:inherit;" />
+              </div>
+            </div>
+            <div id="list-view-error" class="alert alert-error" style="display:none;margin-bottom:1rem;"></div>
+            <div class="table-wrap">
+              <table class="list-table" style="width:100%;">
+                <thead>
+                  <tr>
+                    <th style="width:30px;"></th>
+                    <th onclick="sortListView('date')"    id="lh-date">Fecha<span class="sort-ic"></span></th>
+                    <th onclick="sortListView('time')"    id="lh-time">Hora<span class="sort-ic"></span></th>
+                    <th onclick="sortListView('patient')" id="lh-patient">Paciente<span class="sort-ic"></span></th>
+                    <th onclick="sortListView('doctor')"  id="lh-doctor">Doctor<span class="sort-ic"></span></th>
+                    <th>Ubicación</th>
+                    <th onclick="sortListView('status')"  id="lh-status">Estado<span class="sort-ic"></span></th>
+                  </tr>
+                </thead>
+                <tbody id="list-view-body">
+                  <tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /tab-citas -->
+
+    <!-- ═══ TAB: DOCTORES ═══ -->
+    <div id="tab-doctores" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              <line x1="12" y1="11" x2="12" y2="15"/><line x1="10" y1="13" x2="14" y2="13"/>
+            </svg>
+            Gestión de Doctores
+          </h2>
+          <button class="btn btn-success btn-sm" onclick="openDoctorModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Agregar Doctor
+          </button>
+        </div>
+        <div id="doctors-error" class="alert alert-error" style="margin:1rem 1rem 0;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:52px;"></th>
+                <th>Nombre</th>
+                <th>Especialidad</th>
+                <th>Estado</th>
+                <th style="width:90px;"></th>
+              </tr>
+            </thead>
+            <tbody id="doctors-body">
+              <tr><td colspan="5"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Gestión de usuarios
+          </h2>
+        </div>
+        <div id="users-error" class="alert alert-error" style="margin:1rem 1rem 0;"></div>
+        <div id="users-success" class="alert alert-success" style="margin:1rem 1rem 0;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol actual</th>
+              </tr>
+            </thead>
+            <tbody id="users-body">
+              <tr><td colspan="3"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tab-doctores -->
+
+    <!-- ═══ TAB: EXPEDIENTES ═══ -->
+    <div id="tab-expedientes" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Expedientes Clínicos
+          </h2>
+          <div style="display:flex;align-items:center;gap:.75rem;">
+            <select id="exp-patient-select" style="min-width:220px;" onchange="loadExpedientes(this.value)">
+              <option value="">— Seleccionar paciente —</option>
+            </select>
+          </div>
+        </div>
+        <div id="exp-error" class="alert alert-error" style="margin:1rem 1rem 0;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th id="exp-th-notas">Notas</th>
+                <th>Doctor</th>
+                <th id="exp-th-pdf" style="width:80px;">PDF</th>
+              </tr>
+            </thead>
+            <tbody id="exp-body">
+              <tr><td colspan="4"><div class="empty-state">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <p>Selecciona un paciente para ver sus expedientes</p>
+              </div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tab-expedientes -->
+
+    <!-- ═══ TAB: UBICACIONES ═══ -->
+    <div id="tab-ubicaciones" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            Ubicaciones / Sucursales
+          </h2>
+          <button class="btn btn-success btn-sm" onclick="openLocModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nueva Ubicación
+          </button>
+        </div>
+        <div id="loc-error" class="alert alert-error" style="margin:1rem 1rem 0;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Dirección</th>
+                <th>Google Maps</th>
+                <th>Consultorios</th>
+                <th style="width:140px;"></th>
+              </tr>
+            </thead>
+            <tbody id="loc-body">
+              <tr><td colspan="5"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tab-ubicaciones -->
+
+  </div><!-- /container -->
+</div><!-- /dashboard-page -->
+
+<!-- ═══ FAB ═══ -->
+<button id="fab-new-patient" class="fab" onclick="fabAction()" title="Nuevo paciente" aria-label="Nuevo paciente">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+    <path fill="white" fill-rule="evenodd" d="
+      M6 3 C4 3 2 5 2 8 C2 12 5 14 5 16
+      L5.5 22 C5.5 25 7 28 9.5 28 L10.5 28
+      C12 28 13 26 13 24.5 L13.5 21
+      C13.5 19.5 14.5 19 16 19
+      C17.5 19 18.5 19.5 18.5 21 L19 24.5
+      C19 26 20 28 21.5 28 L22.5 28
+      C25 28 26.5 25 26.5 22 L27 16
+      C27 14 30 12 30 8 C30 5 28 3 26 3
+      C24 3 23 5 21 5.5
+      C19 6 17.5 6.5 16 6.5
+      C14.5 6.5 13 6 11 5.5
+      C9 5 8 3 6 3 Z
+      M14.5 7 L17.5 7 L17.5 9.5 L23.5 9.5
+      L23.5 12.5 L17.5 12.5 L17.5 15
+      L14.5 15 L14.5 12.5 L8.5 12.5
+      L8.5 9.5 L14.5 9.5 Z
+    "/>
+  </svg>
+</button>
+
+<!-- ═══ MODAL: Nuevo Paciente Rápido ═══ -->
+<div id="quick-patient-modal" class="modal-overlay" style="display:none;" onclick="closeQuickPatientModalOverlay(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Nuevo Paciente</h3>
+      <button class="modal-close" onclick="closeQuickPatientModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="qp-error"   class="alert alert-error"></div>
+      <div id="qp-success" class="alert alert-success"></div>
+      <form id="quick-patient-form" onsubmit="submitQuickPatient(event)" novalidate>
+        <div class="form-group">
+          <label for="qp-name">Nombre completo <span style="color:var(--red)">*</span></label>
+          <input type="text" id="qp-name" placeholder="Ej. María López" required autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="qp-phone">Teléfono</label>
+          <input type="tel" id="qp-phone" placeholder="Ej. +52 55 1234 5678" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="qp-email">Correo electrónico</label>
+          <input type="email" id="qp-email" placeholder="Ej. maria@email.com" autocomplete="off" />
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-success" id="qp-submit-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Guardar
+          </button>
+          <button type="button" class="btn btn-outline" onclick="closeQuickPatientModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Add Doctor ═══ -->
+<div id="doctor-modal" class="modal-overlay" style="display:none;" onclick="closeDoctorModalOverlay(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="doc-modal-title">Nuevo Doctor</h3>
+      <button class="modal-close" onclick="closeDoctorModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="doc-error"   class="alert alert-error"></div>
+      <div id="doc-success" class="alert alert-success"></div>
+      <input type="hidden" id="doc-id" />
+      <input type="hidden" id="doc-user-id" />
+      <form id="doctor-form">
+        <!-- Foto -->
+        <div class="form-group" style="text-align:center;margin-bottom:1.2rem;">
+          <label for="doc-photo" style="cursor:pointer;display:inline-block;">
+            <div id="doc-photo-preview" style="width:80px;height:80px;border-radius:50%;background:#e8f4fd;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:2px dashed #2c7da0;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2c7da0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <span style="font-size:.8rem;color:#6b7280;">Foto de perfil (opcional)</span>
+          </label>
+          <input type="file" id="doc-photo" accept="image/*" style="display:none;" onchange="previewDoctorPhoto(this)" />
+        </div>
+        <!-- Título + Nombre -->
+        <div class="form-row">
+          <div class="form-group" style="max-width:120px;">
+            <label for="doc-title">Título</label>
+            <select id="doc-title">
+              <option value="Dr.">Dr.</option>
+              <option value="Dra.">Dra.</option>
+              <option value="Lic.">Lic.</option>
+              <option value="Mtro.">Mtro.</option>
+              <option value="Mtra.">Mtra.</option>
+              <option value="Esp.">Esp.</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="doc-name">Nombre completo <span style="color:var(--red)">*</span></label>
+            <input type="text" id="doc-name" placeholder="Juan Pérez" required />
+          </div>
+        </div>
+        <!-- Especialidad -->
+        <div class="form-group">
+          <label for="doc-specialty">Especialidad <span style="color:var(--red)">*</span></label>
+          <select id="doc-specialty" required>
+            <option value="">— Seleccionar —</option>
+            <option>Ortodoncia</option>
+            <option>Endodoncia</option>
+            <option>Periodoncia</option>
+            <option>Cirugía</option>
+            <option>Odontopediatría</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <!-- Email + Teléfono -->
+        <div class="form-row" id="doc-contact-row">
+          <div class="form-group">
+            <label for="doc-email">Email <span id="doc-email-required" style="color:var(--red)">*</span></label>
+            <input type="email" id="doc-email" placeholder="doctor@clinica.com" required autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="doc-phone">Teléfono</label>
+            <input type="tel" id="doc-phone" placeholder="+52 55 1234 5678" />
+          </div>
+        </div>
+        <!-- Contraseña (solo nuevo) -->
+        <div id="doc-password-group" class="form-group">
+          <label for="doc-password">Contraseña temporal <span style="color:var(--red)">*</span></label>
+          <input type="password" id="doc-password" placeholder="Mín. 8 caracteres" required minlength="8" autocomplete="new-password" />
+        </div>
+        <!-- Bio -->
+        <div class="form-group">
+          <label for="doc-bio">Bio (opcional)</label>
+          <textarea id="doc-bio" rows="2" placeholder="Breve descripción del doctor..." style="resize:none;"></textarea>
+        </div>
+        <!-- Cambiar contraseña (solo edición) -->
+        <div id="doc-change-pwd-row" style="display:none;margin-bottom:1rem;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="openPasswordModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Cambiar contraseña
+          </button>
+        </div>
+        <button type="submit" class="btn btn-success btn-block" id="doc-submit-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          <span id="doc-submit-label">Agregar Doctor</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Cambiar Contraseña ═══ -->
+<div id="pwd-modal" class="modal-overlay" style="display:none;" onclick="closePwdModalOverlay(event)">
+  <div class="modal-card" style="max-width:400px;">
+    <div class="modal-header">
+      <h3>Cambiar Contraseña</h3>
+      <button class="modal-close" onclick="closePwdModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="pwd-error"   class="alert alert-error"></div>
+      <div id="pwd-success" class="alert alert-success"></div>
+      <form id="pwd-form">
+        <div class="form-group">
+          <label for="pwd-current">Contraseña actual <span style="color:var(--red)">*</span></label>
+          <input type="password" id="pwd-current" placeholder="Tu contraseña actual" required autocomplete="current-password" />
+        </div>
+        <div class="form-group">
+          <label for="pwd-new">Nueva contraseña <span style="color:var(--red)">*</span></label>
+          <input type="password" id="pwd-new" placeholder="Mín. 8 caracteres" required minlength="8" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label for="pwd-confirm">Confirmar nueva contraseña <span style="color:var(--red)">*</span></label>
+          <input type="password" id="pwd-confirm" placeholder="Repite la nueva contraseña" required minlength="8" autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="pwd-submit-btn">
+          Cambiar contraseña
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Nuevo Expediente ═══ -->
+<div id="exp-modal" class="modal-overlay" style="display:none;" onclick="closeExpModalOverlay(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Nuevo Expediente</h3>
+      <button class="modal-close" onclick="closeExpModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="exp-modal-error"   class="alert alert-error"></div>
+      <div id="exp-modal-success" class="alert alert-success"></div>
+      <form id="exp-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="exp-patient">Paciente <span style="color:var(--red)">*</span></label>
+            <select id="exp-patient" required>
+              <option value="">— Seleccionar paciente —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="exp-doctor">Doctor <span style="color:var(--red)">*</span></label>
+            <select id="exp-doctor" required>
+              <option value="">— Seleccionar doctor —</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="exp-notes">Notas (opcional)</label>
+          <textarea id="exp-notes" rows="4" placeholder="Diagnóstico, tratamiento, observaciones..." style="resize:none;"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="exp-pdf">Archivo PDF (opcional)</label>
+          <input type="file" id="exp-pdf" accept=".pdf,application/pdf" />
+          <small style="color:#6b7280;display:block;margin-top:4px;">Máximo 10 MB · Solo archivos PDF</small>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-success" id="exp-submit-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Guardar Expediente
+          </button>
+          <button type="button" class="btn btn-outline" onclick="closeExpModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Nueva / Editar Ubicación ═══ -->
+<div id="loc-modal" class="modal-overlay" style="display:none;" onclick="closeLocModalOverlay(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="loc-modal-title">Nueva Ubicación</h3>
+      <button class="modal-close" onclick="closeLocModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="loc-modal-error"   class="alert alert-error"></div>
+      <div id="loc-modal-success" class="alert alert-success"></div>
+      <input type="hidden" id="loc-id" />
+      <form id="loc-form">
+        <div class="form-group">
+          <label for="loc-name">Nombre <span style="color:var(--red)">*</span></label>
+          <input type="text" id="loc-name" placeholder="Ej. Sucursal Jardines" required />
+        </div>
+        <div class="form-group">
+          <label for="loc-address">Dirección <span style="color:var(--red)">*</span></label>
+          <textarea id="loc-address" rows="2" placeholder="Calle, Num, Col, Ciudad" required style="resize:none;"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="loc-maps">Link Google Maps (opcional)</label>
+          <input type="url" id="loc-maps" placeholder="https://maps.google.com/..." />
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-success" id="loc-submit-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span id="loc-submit-label">Guardar</span>
+          </button>
+          <button type="button" class="btn btn-outline" onclick="closeLocModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Consultorios / Unidades ═══ -->
+<div id="rooms-modal" class="modal-overlay" style="display:none;" onclick="closeRoomsModalOverlay(event)">
+  <div class="modal-card" style="max-width:600px;">
+    <div class="modal-header">
+      <h3>Consultorios — <span id="rooms-modal-loc-name"></span></h3>
+      <button class="modal-close" onclick="closeRoomsModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="rooms-modal-error"   class="alert alert-error"></div>
+      <div id="rooms-modal-success" class="alert alert-success"></div>
+      <div id="rooms-editor" style="max-height:400px;overflow-y:auto;padding-right:4px;"></div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="addRoom()" style="margin-top:.75rem;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Agregar Consultorio
+      </button>
+      <div class="modal-actions" style="margin-top:1rem;">
+        <button class="btn btn-success" onclick="saveRooms()" id="rooms-save-btn">Guardar Consultorios</button>
+        <button class="btn btn-outline" onclick="closeRoomsModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Appointment Detail ═══ -->
+<div id="appt-detail-modal" class="modal-overlay" style="display:none;" onclick="closeApptDetailModalOverlay(event)">
+  <div class="modal-card">
+    <div class="modal-header" style="align-items:flex-start;">
+      <div>
+        <div id="ad-status-badge" style="margin-bottom:.3rem;"></div>
+        <h3>Detalle de Cita</h3>
+      </div>
+      <button class="modal-close" onclick="closeApptDetailModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="appt-detail-id" />
+
+      <!-- Patient hero -->
+      <div class="detail-hero">
+        <div class="detail-avatar" id="ad-avatar">?</div>
+        <div class="detail-hero-text">
+          <h4 id="ad-patient-name">—</h4>
+          <small id="ad-patient-code"></small>
+        </div>
+      </div>
+
+      <!-- Info grid -->
+      <div class="detail-grid">
+        <span class="detail-grid-label">Doctor</span>
+        <span class="detail-grid-value" id="ad-doctor">—</span>
+
+        <span class="detail-grid-label">Fecha y hora</span>
+        <span class="detail-grid-value" id="ad-datetime">—</span>
+
+        <span class="detail-grid-label">Ubicación</span>
+        <span class="detail-grid-value" id="ad-location">—</span>
+
+        <span class="detail-grid-label">Motivo</span>
+        <span class="detail-grid-value" id="ad-reason">—</span>
+      </div>
+
+      <!-- Notes history section -->
+      <div id="ad-notes-block" class="detail-panel" style="margin-top:.75rem; padding:.7rem 1rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem;">
+          <h5 style="margin:0;">📝 Notas clínicas</h5>
+          <button class="btn btn-outline btn-sm" id="ad-btn-add-note" style="font-size:.74rem; padding:.18rem .55rem;" onclick="toggleAddNoteForm()">+ Agregar</button>
+        </div>
+        <!-- Add-note form -->
+        <div id="ad-add-note-form" style="display:none; margin-bottom:.55rem;">
+          <textarea id="ad-note-input" rows="3" style="width:100%; box-sizing:border-box; resize:vertical; border:1px solid var(--gray-300,#d1d5db); border-radius:var(--radius,6px); padding:.45rem .6rem; font-size:.85rem; font-family:inherit;" placeholder="Observaciones, diagnóstico, indicaciones..."></textarea>
+          <div style="display:flex; gap:.4rem; justify-content:flex-end; margin-top:.3rem;">
+            <button class="btn btn-outline btn-sm" onclick="cancelAddNote()">Cancelar</button>
+            <button class="btn btn-primary btn-sm" onclick="submitAddNote()">Guardar nota</button>
+          </div>
+        </div>
+        <!-- Notes list -->
+        <div id="ad-notes-list"></div>
+      </div>
+
+      <!-- Inline: Edit panel -->
+      <div id="ad-edit-panel" class="detail-panel" style="display:none;">
+        <h5>Editar cita</h5>
+        <div class="modal-form-grid">
+          <div class="form-group form-group-wide">
+            <label for="ad-edit-date">Fecha</label>
+            <input type="date" id="ad-edit-date" />
+          </div>
+          <div class="form-group">
+            <label for="ad-edit-start">Hora inicio</label>
+            <input type="time" id="ad-edit-start" />
+          </div>
+          <div class="form-group">
+            <label for="ad-edit-end">Hora fin</label>
+            <input type="time" id="ad-edit-end" />
+          </div>
+          <div class="form-group form-group-wide">
+            <label for="ad-edit-reason">Motivo</label>
+            <textarea id="ad-edit-reason" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="detail-panel-actions">
+          <button class="btn btn-outline btn-sm" onclick="closeDetailPanel('ad-edit-panel')">Cancelar</button>
+          <button class="btn btn-primary btn-sm" onclick="submitApptEdit()">Guardar cambios</button>
+        </div>
+      </div>
+
+      <!-- Inline: Reschedule panel -->
+      <div id="ad-reschedule-panel" class="detail-panel" style="display:none;">
+        <h5>Proponer nueva fecha</h5>
+        <div class="modal-form-grid">
+          <div class="form-group form-group-wide">
+            <label for="ad-rs-date">Nueva fecha</label>
+            <input type="date" id="ad-rs-date" />
+          </div>
+          <div class="form-group">
+            <label for="ad-rs-start">Hora inicio</label>
+            <input type="time" id="ad-rs-start" />
+          </div>
+          <div class="form-group">
+            <label for="ad-rs-end">Hora fin</label>
+            <input type="time" id="ad-rs-end" />
+          </div>
+          <div class="form-group form-group-wide">
+            <label for="ad-rs-reason">Motivo del cambio (opcional)</label>
+            <textarea id="ad-rs-reason" rows="2" placeholder="Ej. Solicitud del paciente"></textarea>
+          </div>
+        </div>
+        <div class="detail-panel-actions">
+          <button class="btn btn-outline btn-sm" onclick="closeDetailPanel('ad-reschedule-panel')">Cancelar</button>
+          <button class="btn btn-primary btn-sm" onclick="submitReschedule()">Enviar propuesta</button>
+        </div>
+      </div>
+
+      <!-- Action bar -->
+      <div class="detail-actions">
+        <button class="btn btn-outline btn-sm" id="ad-btn-edit" onclick="toggleDetailPanel('ad-edit-panel')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Editar
+        </button>
+        <button class="btn btn-outline btn-sm" id="ad-btn-reschedule" onclick="toggleDetailPanel('ad-reschedule-panel')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Reagendar
+        </button>
+        <button class="btn btn-success btn-sm" id="ad-btn-complete" onclick="changeApptStatus('completed')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Completada
+        </button>
+        <button class="btn btn-outline-danger btn-sm" id="ad-btn-cancel" onclick="changeApptStatus('canceled')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Cancelar cita
+        </button>
+        <button class="btn btn-outline btn-sm" id="ad-btn-no-show" onclick="markNoShow()" style="border-color:#f59e0b;color:#b45309;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          No asistió
+        </button>
+        <button class="btn btn-outline btn-sm detail-actions-close" onclick="closeApptDetailModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Drag & Drop Confirm ═══ -->
+<div id="drag-confirm-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-card" style="max-width:420px;">
+    <div class="modal-header">
+      <h3>Mover cita</h3>
+      <button class="modal-close" onclick="revertDrop()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="drag-confirm-text" style="margin-bottom:1.25rem;line-height:1.55;font-size:.95rem;"></p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="confirmDrop()">Confirmar</button>
+        <button class="btn btn-outline" onclick="revertDrop()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Confirm Cancel Appointment ═══ -->
+<div id="confirm-cancel-modal" class="modal-overlay" style="display:none;" onclick="closeConfirmCancelOverlay(event)">
+  <div class="modal-card" style="max-width:420px;">
+    <div class="modal-header">
+      <h3>Cancelar cita</h3>
+      <button class="modal-close" onclick="closeConfirmCancel()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:1.5rem;line-height:1.6;font-size:.93rem;color:var(--gray-800);">
+        ¿Estás seguro de que quieres cancelar esta cita?<br>
+        <span style="color:var(--gray-600);font-size:.86rem;">Esta acción no se puede deshacer.</span>
+      </p>
+      <div class="modal-actions" style="justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="closeConfirmCancel()">Mantener cita</button>
+        <button class="btn btn-danger-solid" onclick="executeCancelAppt()">Sí, cancelar cita</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Create Appointment (from calendar) ═══ -->
+<div id="cal-create-modal" class="modal-overlay" style="display:none;" onclick="closeCalCreateModalOverlay(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Nueva Cita</h3>
+      <button class="modal-close" onclick="closeCalCreateModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="cal-appt-error"   class="alert alert-error"></div>
+      <div id="cal-appt-success" class="alert alert-success"></div>
+      <form id="cal-appt-form" class="modal-form-grid" onsubmit="submitCalAppt(event)">
+        <div class="form-group">
+          <label for="cal-patient-select">Paciente <span style="color:var(--red)">*</span></label>
+          <select id="cal-patient-select" required>
+            <option value="">— Seleccionar paciente —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cal-doctor-select">Doctor <span style="color:var(--red)">*</span></label>
+          <select id="cal-doctor-select" required>
+            <option value="">— Seleccionar doctor —</option>
+          </select>
+        </div>
+        <div class="form-group form-group-wide" id="cal-loc-group" style="display:none;">
+          <label for="cal-loc-select">Ubicación (opcional)</label>
+          <select id="cal-loc-select" onchange="onCalLocChange()">
+            <option value="">— Sin ubicación —</option>
+          </select>
+        </div>
+        <div class="form-row" id="cal-room-row" style="display:none;">
+          <div class="form-group">
+            <label for="cal-room-select">Consultorio</label>
+            <select id="cal-room-select" onchange="onCalRoomChange()">
+              <option value="">— Seleccionar —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cal-unit-select">Unidad</label>
+            <div style="display:flex;gap:.5rem;align-items:center;">
+              <select id="cal-unit-select" style="flex:1;" onchange="onCalUnitChange()">
+                <option value="">— Seleccionar —</option>
+              </select>
+              <span id="cal-unit-color" style="width:22px;height:22px;border-radius:50%;border:2px solid #e5e7eb;flex-shrink:0;transition:background .15s;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group form-group-wide">
+          <label for="cal-appt-date">Fecha <span style="color:var(--red)">*</span></label>
+          <input type="date" id="cal-appt-date" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cal-appt-start">Hora inicio <span style="color:var(--red)">*</span></label>
+            <input type="time" id="cal-appt-start" required />
+          </div>
+          <div class="form-group">
+            <label for="cal-appt-end">Hora fin <span style="color:var(--red)">*</span></label>
+            <input type="time" id="cal-appt-end" required />
+          </div>
+        </div>
+        <div class="form-group form-group-wide">
+          <label for="cal-appt-reason">Motivo <span style="color:var(--red)">*</span></label>
+          <textarea id="cal-appt-reason" rows="3" placeholder="Ej. Limpieza dental" required></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-success" id="cal-appt-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Crear Cita
+          </button>
+          <button type="button" class="btn btn-outline" onclick="closeCalCreateModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  const API = 'http://localhost:8000';
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  const token    = () => localStorage.getItem('access_token') || localStorage.getItem('jwt_token');
+  const email    = () => localStorage.getItem('user_email');
+  const userRole = () => localStorage.getItem('user_role') || '';
+  const clinicId = () => localStorage.getItem('clinic_id') || '';
+
+  function jwtPayload(t) {
+    try {
+      const b64 = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(atob(b64));
+    } catch { return {}; }
+  }
+
+  function authHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token()}`
+    };
+  }
+
+  function showAlert(id, msg, type = 'error') {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = `alert alert-${type} show`;
+  }
+  function hideAlert(id) {
+    const el = document.getElementById(id);
+    el.className = 'alert';
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (loading) {
+      btn.disabled = true;
+      btn.dataset.orig = btn.innerHTML;
+      btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;margin:0;border-width:2px;"></div>';
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = btn.dataset.orig || '';
+    }
+  }
+
+  function statusBadge(status) {
+    const map = {
+      scheduled:           ['badge-blue',   'Programada'],
+      completed:           ['badge-gray',   'Completada'],
+      canceled:            ['badge-red',    'Cancelada'],
+      canceled_by_patient: ['badge-red',    'Cancelada'],
+    };
+    const s = (status || '').toLowerCase();
+    const [cls, label] = map[s] || ['badge-gray', status || 'Desconocido'];
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+
+  function statusColor(status) {
+    const map = {
+      scheduled:           '#3b82f6',
+      completed:           '#6b7280',
+      canceled:            '#ef4444',
+      canceled_by_patient: '#ef4444',
+    };
+    return map[(status || '').toLowerCase()] || '#6b7280';
+  }
+
+  function formatDate(str) {
+    if (!str) return '—';
+    const d = new Date(str);
+    if (isNaN(d)) return str;
+    return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function formatTime(str) {
+    if (!str) return '—';
+    const match = String(str).match(/(\d{2}:\d{2})/);
+    return match ? match[1] : str;
+  }
+
+  // ── Patient / doctor in-memory caches ────────────────────────────────
+  let _patientMap   = {};  // id → patient object
+  let _doctorMap    = {};  // id → doctor object
+  let _locationMap  = {};  // id → location object
+  let _roomsLocId   = null; // location being edited in rooms modal
+
+  function pLabel(p) {
+    const code = p.medical_record_code || '';
+    const name = p.full_name_enc || p.full_name || p.name || '';
+    return code ? `${code} - ${name}` : (name || `Paciente #${p.id}`);
+  }
+
+  function pSelectLabel(p) {
+    return pLabel(p);
+  }
+
+  function dLabel(d) {
+    const name = d.full_name || '';
+    return name ? `Dr. ${name}${d.specialty ? ' - ' + d.specialty : ''}` : (d.specialty || `Doctor #${String(d.id).slice(0, 8)}`);
+  }
+
+  function patientName(a) {
+    if (a.patient_name) return a.patient_name;
+    const cached = _patientMap[a.patient_id];
+    return cached ? pLabel(cached) : `Pac. #${String(a.patient_id || '').slice(0, 8)}`;
+  }
+
+  function doctorName(a) {
+    if (a.doctor_name) return a.doctor_name;
+    const cached = _doctorMap[a.doctor_id];
+    return cached ? dLabel(cached) : `Dr. #${String(a.doctor_id || '').slice(0, 8)}`;
+  }
+
+  // ── Dashboard / Analytics ─────────────────────────────────────────────
+  let _chartMonthly = null;
+  let _chartStatus  = null;
+  let _chartDoctors = null;
+
+  const MONTH_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  function destroyChart(inst) {
+    if (inst) { try { inst.destroy(); } catch(_) {} }
+    return null;
+  }
+
+  function _getDashFilters() {
+    return {
+      startDate: document.getElementById('filter-start-date')?.value || '',
+      endDate:   document.getElementById('filter-end-date')?.value   || '',
+      doctorId:  document.getElementById('filter-doctor')?.value     || '',
+      status:    document.getElementById('filter-status')?.value     || '',
+      patientQ:  document.getElementById('filter-patient-q')?.value  || '',
+    };
+  }
+
+  function _initDashFilters() {
+    const now   = new Date();
+    const y     = now.getFullYear();
+    const m     = String(now.getMonth() + 1).padStart(2, '0');
+    const today = now.toISOString().split('T')[0];
+    const sd = document.getElementById('filter-start-date');
+    const ed = document.getElementById('filter-end-date');
+    if (sd && !sd.value) sd.value = `${y}-${m}-01`;
+    if (ed && !ed.value) ed.value = today;
+  }
+
+  function applyDashboardFilters() {
+    loadDashboard();
+    _searchPage = 0;
+    loadSearchResults();
+  }
+
+  function resetDashboardFilters() {
+    const now   = new Date();
+    const y     = now.getFullYear();
+    const m     = String(now.getMonth() + 1).padStart(2, '0');
+    const today = now.toISOString().split('T')[0];
+    document.getElementById('filter-start-date').value  = `${y}-${m}-01`;
+    document.getElementById('filter-end-date').value    = today;
+    document.getElementById('filter-doctor').value      = '';
+    document.getElementById('filter-status').value      = '';
+    document.getElementById('filter-patient-q').value   = '';
+    document.getElementById('search-results-card').style.display = 'none';
+    _searchPage    = 0;
+    _searchTotal   = 0;
+    _searchResults = [];
+    loadDashboard();
+  }
+
+  const _SR_PAGE_SIZE = 20;
+  let _searchPage    = 0;
+  let _searchTotal   = 0;
+  let _searchResults = [];
+
+  async function loadSearchResults() {
+    const f = _getDashFilters();
+    const skip = _searchPage * _SR_PAGE_SIZE;
+    const qs = new URLSearchParams({ limit: String(_SR_PAGE_SIZE), offset: String(skip) });
+    if (f.startDate) qs.set('start_date', f.startDate);
+    if (f.endDate)   qs.set('end_date',   f.endDate);
+    if (f.doctorId)  qs.set('doctor_id',  f.doctorId);
+    if (f.status)    qs.set('status',     f.status);
+    if (f.patientQ)  qs.set('patient_q',  f.patientQ);
+
+    const card = document.getElementById('search-results-card');
+    card.style.display = 'block';
+    const tbody = document.getElementById('sr-body');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--gray-400);">Cargando…</td></tr>';
+
+    try {
+      const res = await fetch(`${API}/api/v1/appointments?${qs}`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      const data = await res.json();
+      _searchResults = Array.isArray(data) ? data : (data.items || []);
+      _searchTotal   = data.total ?? _searchResults.length + skip;
+      _renderSearchResults();
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--gray-400);">Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  function _renderSearchResults() {
+    const tbody = document.getElementById('sr-body');
+    const skip  = _searchPage * _SR_PAGE_SIZE;
+
+    document.getElementById('sr-count-label').textContent =
+      `— ${_searchTotal} cita${_searchTotal !== 1 ? 's' : ''} encontrada${_searchTotal !== 1 ? 's' : ''}`;
+
+    if (!_searchResults.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--gray-400);">No se encontraron citas con los filtros seleccionados.</td></tr>';
+      document.getElementById('sr-pagination').style.display = 'none';
+      return;
+    }
+
+    tbody.innerHTML = _searchResults.map(a => {
+      const dt      = a.starts_at ? new Date(a.starts_at) : null;
+      const dateStr = dt ? dt.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+      const timeStr = dt ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '—';
+      const pat     = a.patient_name || patientName(a);
+      const doc     = a.doctor_name  || doctorName(a);
+      const badge   = statusBadge(a.status);
+      const raw     = encodeURIComponent(JSON.stringify(a));
+      return `<tr onclick="_openSearchResult(this)" data-appt="${raw}">
+        <td>${dateStr}</td>
+        <td>${timeStr}</td>
+        <td style="font-weight:600;">${pat}</td>
+        <td>${doc}</td>
+        <td>${badge}</td>
+      </tr>`;
+    }).join('');
+
+    // Pagination controls
+    const end   = Math.min(skip + _searchResults.length, _searchTotal);
+    const start = _searchTotal === 0 ? 0 : skip + 1;
+    const pag   = document.getElementById('sr-pagination');
+    pag.style.display = _searchTotal > _SR_PAGE_SIZE ? '' : 'none';
+    document.getElementById('sr-range-label').textContent = `Mostrando ${start}–${end} de ${_searchTotal}`;
+    document.getElementById('sr-prev').disabled = _searchPage === 0;
+    document.getElementById('sr-next').disabled = end >= _searchTotal;
+  }
+
+  function searchResultsPage(delta) {
+    _searchPage = Math.max(0, _searchPage + delta);
+    loadSearchResults();
+  }
+
+  function _openSearchResult(row) {
+    try {
+      const a = JSON.parse(decodeURIComponent(row.dataset.appt));
+      // Build a minimal FullCalendar-like event object for the detail modal
+      const start = a.starts_at ? new Date(a.starts_at) : null;
+      const end   = a.ends_at   ? new Date(a.ends_at)   : null;
+      openApptDetailModal({ id: String(a.id), extendedProps: a, start, end });
+    } catch (_) {}
+  }
+
+  async function _loadTodayAppointments() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayFmt = new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const lbl = document.getElementById('today-date-label');
+    if (lbl) lbl.textContent = todayFmt.charAt(0).toUpperCase() + todayFmt.slice(1);
+
+    const list = document.getElementById('today-list');
+    if (!list) return;
+    list.innerHTML = '<li style="color:var(--gray-400);text-align:center;padding:.75rem 0;">Cargando…</li>';
+
+    const f = _getDashFilters();
+    const qs = new URLSearchParams({ fecha: todayStr, limit: '100' });
+    if (f.doctorId) qs.set('doctor_id', f.doctorId);
+    if (f.status)   qs.set('status', f.status);
+    if (f.patientQ) qs.set('patient_q', f.patientQ);
+
+    const _STATUS_LABEL = { scheduled:'Programada', completed:'Completada',
+      canceled:'Cancelada', canceled_by_patient:'Canc. paciente' };
+    const _STATUS_BADGE = { scheduled:'badge-blue', completed:'badge-gray',
+      canceled:'badge-red', canceled_by_patient:'badge-red' };
+
+    try {
+      const res = await fetch(`${API}/api/v1/appointments?${qs}`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      const data  = await res.json();
+      const items = Array.isArray(data) ? data : (data.items || []);
+      const total = data.total ?? items.length;
+
+      document.getElementById('kpi-today').textContent = total;
+
+      if (!items.length) {
+        list.innerHTML = '<li style="color:var(--gray-400);text-align:center;padding:1.25rem 0;">No hay citas para hoy con los filtros seleccionados</li>';
+        return;
+      }
+
+      list.innerHTML = items.map(a => {
+        const dt = a.starts_at ? new Date(a.starts_at) : null;
+        const time = dt ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
+        const patient = a.patient_name || patientName(a);
+        const doctor  = a.doctor_name || (a.doctor_id && _doctorMap[a.doctor_id] ? dLabel(_doctorMap[a.doctor_id]) : '');
+        const s = (a.status || '').toLowerCase();
+        return `<li class="today-item">
+          <span class="today-time">${time}</span>
+          <span class="today-info">
+            <div class="today-patient">${patient}</div>
+            ${doctor ? `<div class="today-doctor">${doctor}</div>` : ''}
+          </span>
+          <span class="badge ${_STATUS_BADGE[s] || 'badge-gray'}">${_STATUS_LABEL[s] || a.status || '—'}</span>
+        </li>`;
+      }).join('');
+    } catch (err) {
+      list.innerHTML = `<li style="color:var(--gray-400);text-align:center;padding:.75rem 0;">No se pudo cargar (${err.message || ''})</li>`;
+    }
+  }
+
+  async function loadDashboard() {
+    hideAlert('dashboard-error');
+    ['kpi-patients','kpi-month','kpi-cancel-rate'].forEach(id => {
+      document.getElementById(id).textContent = '…';
+    });
+    document.getElementById('kpi-today').textContent = '…';
+
+    const f  = _getDashFilters();
+    const qs = new URLSearchParams();
+    if (f.startDate) qs.set('start_date', f.startDate);
+    if (f.endDate)   qs.set('end_date',   f.endDate);
+    if (f.doctorId)  qs.set('doctor_id',  f.doctorId);
+
+    // Always fetch today's list independently
+    _loadTodayAppointments();
+
+    let data;
+    try {
+      const url = `${API}/api/v1/analytics/dashboard${qs.toString() ? '?' + qs.toString() : ''}`;
+      const res = await fetch(url, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      data = res.ok ? await res.json() : await _buildDashboardFromCache();
+    } catch (_) {
+      try { data = await _buildDashboardFromCache(); }
+      catch (err) {
+        ['kpi-patients','kpi-month','kpi-cancel-rate'].forEach(id => {
+          document.getElementById(id).textContent = '—';
+        });
+        showAlert('dashboard-error', 'No se pudo cargar el dashboard: ' + (err.message || ''));
+        return;
+      }
+    }
+
+    const rows       = data.appointments_by_month || [];
+    const normalised = _normaliseDashboard(data, rows, f);
+    _renderKPIs(normalised);
+    _renderChartMonthly(rows);
+    _renderChartStatus(normalised.appointments_by_status);
+    _renderChartDoctors(data.top_doctors || []);
+  }
+
+  function _normaliseDashboard(data, rows, filters) {
+    const now      = new Date();
+    const curYear  = now.getFullYear();
+    const curMonth = now.getMonth() + 1;
+
+    let totalScheduled = 0, totalCompleted = 0, totalCanceled = 0;
+    rows.forEach(r => {
+      totalScheduled += r.scheduled || 0;
+      totalCompleted += r.completed || 0;
+      totalCanceled  += r.canceled  || 0;
+    });
+    const total = totalScheduled + totalCompleted + totalCanceled;
+    const rate  = total > 0 ? Math.round((totalCanceled / total) * 100) : 0;
+
+    // When a custom range is active, show period total; otherwise show current month
+    const hasDateFilter = filters && (filters.startDate || filters.endDate);
+    let periodCount;
+    if (hasDateFilter) {
+      periodCount = total;
+    } else {
+      const curRow = rows.find(r => r.year === curYear && r.month === curMonth) || {};
+      periodCount  = (curRow.scheduled || 0) + (curRow.completed || 0) + (curRow.canceled || 0);
+    }
+
+    // Update KPI label dynamically
+    const monthEl  = document.getElementById('kpi-month');
+    const monthLbl = monthEl?.nextElementSibling;
+    if (monthLbl && monthLbl.classList.contains('kpi-label'))
+      monthLbl.textContent = hasDateFilter ? 'Citas en período' : 'Citas este mes';
+
+    return {
+      kpis: {
+        total_patients:    Object.keys(_patientMap).length,
+        this_month:        periodCount,
+        cancellation_rate: rate,
+        canceled_count:    totalCanceled,
+        total
+      },
+      appointments_by_status: {
+        scheduled: totalScheduled,
+        completed: totalCompleted,
+        canceled:  totalCanceled
+      }
+    };
+  }
+
+  async function _buildDashboardFromCache() {
+    const res = await fetch(`${API}/api/v1/appointments`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    const raw = await res.json();
+    const appts = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
+
+    const todayStr  = new Date().toISOString().split('T')[0];
+    const now       = new Date();
+    const monthStr  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+    let todayCount = 0, monthCount = 0;
+    const byStatus = {}, byMonth = {}, byDoctor = {};
+
+    appts.forEach(a => {
+      const dt   = a.starts_at || a.appointment_datetime || a.datetime || a.scheduled_at || a.date || '';
+      const date = dt.slice(0, 10);
+      const mon  = dt.slice(0, 7);
+
+      if (date === todayStr) todayCount++;
+      if (mon === monthStr)  monthCount++;
+
+      const s = (a.status || 'unknown').toLowerCase();
+      byStatus[s] = (byStatus[s] || 0) + 1;
+
+      if (mon) {
+        if (!byMonth[mon]) byMonth[mon] = { total: 0, completed: 0, canceled: 0 };
+        byMonth[mon].total++;
+        if (s === 'completed') byMonth[mon].completed++;
+        if (s === 'canceled' || s === 'cancelled' || s === 'canceled_by_patient') byMonth[mon].canceled++;
+      }
+
+      if (a.doctor_id) {
+        const doc = _doctorMap[a.doctor_id];
+        const name = doc ? (doc.full_name ? `Dr. ${doc.full_name}` : dLabel(doc)) : `Doctor #${String(a.doctor_id).slice(0,6)}`;
+        byDoctor[name] = (byDoctor[name] || 0) + 1;
+      }
+    });
+
+    const total    = appts.length;
+    const canceled = (byStatus['canceled']||0) + (byStatus['cancelled']||0) + (byStatus['canceled_by_patient']||0);
+    const rate     = total > 0 ? Math.round((canceled / total) * 100) : 0;
+
+    const appointments_by_month = Object.keys(byMonth).sort().slice(-12)
+      .map(m => ({ month: m, ...byMonth[m] }));
+
+    const top_doctors = Object.entries(byDoctor)
+      .sort((a,b) => b[1]-a[1]).slice(0,5)
+      .map(([name, count]) => ({ name, count }));
+
+    return {
+      kpis: { today: todayCount, total_patients: Object.keys(_patientMap).length,
+               this_month: monthCount, cancellation_rate: rate,
+               canceled_count: canceled, total },
+      appointments_by_month,
+      appointments_by_status: byStatus,
+      top_doctors
+    };
+  }
+
+  function _renderKPIs(data) {
+    const k = data.kpis || data;
+    // kpi-today is set by _loadTodayAppointments; only update others here
+    document.getElementById('kpi-patients').textContent    = k.total_patients ?? Object.keys(_patientMap).length;
+    document.getElementById('kpi-month').textContent       = k.this_month   ?? k.month_count  ?? '—';
+    document.getElementById('kpi-cancel-rate').textContent = k.cancellation_rate != null ? `${k.cancellation_rate}%` : '—';
+    document.getElementById('kpi-cancel-sub').textContent  =
+      (k.canceled_count != null && k.total != null) ? `${k.canceled_count} de ${k.total} citas` : '';
+  }
+
+  function _renderChartMonthly(rows) {
+    _chartMonthly = destroyChart(_chartMonthly);
+    const labels = rows.map(r => MONTH_NAMES[(r.month || 1) - 1] || r.month);
+    _chartMonthly = new Chart(document.getElementById('chart-monthly'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Programadas', data: rows.map(r => r.scheduled || 0), backgroundColor: 'rgba(59,158,221,.75)',  borderRadius: 4 },
+          { label: 'Completadas', data: rows.map(r => r.completed || 0), backgroundColor: 'rgba(55,160,91,.75)',   borderRadius: 4 },
+          { label: 'Canceladas',  data: rows.map(r => r.canceled  || 0), backgroundColor: 'rgba(224,92,92,.75)',   borderRadius: 4 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  }
+
+  function _renderChartStatus(byStatus) {
+    _chartStatus = destroyChart(_chartStatus);
+    const labelMap = { scheduled: 'Programada', confirmed: 'Confirmada', completed: 'Completada',
+      canceled: 'Cancelada', cancelled: 'Cancelada', canceled_by_patient: 'Canc. paciente',
+      no_show: 'No asistió', in_progress: 'En progreso', pending_reschedule: 'Reprogramando' };
+    const colorMap = { scheduled: '#3b9edd', confirmed: '#37a05b', completed: '#6b7280',
+      canceled: '#e05c5c', cancelled: '#e05c5c', canceled_by_patient: '#f59e0b',
+      no_show: '#f59e0b', in_progress: '#8b5cf6', pending_reschedule: '#f59e0b' };
+
+    const entries = Object.entries(byStatus).filter(([,v]) => v > 0);
+    _chartStatus = new Chart(document.getElementById('chart-status'), {
+      type: 'doughnut',
+      data: {
+        labels:   entries.map(([k]) => labelMap[k] || k),
+        datasets: [{ data: entries.map(([,v]) => v),
+                     backgroundColor: entries.map(([k]) => colorMap[k] || '#adb5bd'),
+                     borderWidth: 2, borderColor: '#fff' }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '65%',
+        plugins: { legend: { position: 'bottom', labels: { padding: 14, font: { size: 12 } } } }
+      }
+    });
+  }
+
+  function _renderChartDoctors(top) {
+    _chartDoctors = destroyChart(_chartDoctors);
+    if (!top.length) return;
+    _chartDoctors = new Chart(document.getElementById('chart-doctors'), {
+      type: 'bar',
+      data: {
+        labels: top.map(d => d.name || d.doctor_name || 'Doctor'),
+        datasets: [{ label: 'Citas', data: top.map(d => d.appointments || d.count || d.appointments_count || 0),
+                     backgroundColor: 'rgba(59,158,221,.75)', borderRadius: 4 }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, ticks: { precision: 0 } },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // ── Tab switching ─────────────────────────────────────────────────────
+  const FAB_CONFIG = {
+    'tab-pacientes':   { title: 'Nuevo paciente',  label: 'Nuevo paciente',  action: () => openQuickPatientModal() },
+    'tab-citas':       { title: 'Nueva cita',       label: 'Nueva cita',      action: () => openCalCreateModal(null) },
+    'tab-doctores':    { title: 'Nuevo doctor',     label: 'Nuevo doctor',    action: () => openDoctorModal() },
+    'tab-expedientes': { title: 'Nuevo expediente', label: 'Nuevo expediente',action: () => openExpedienteModal() },
+    'tab-ubicaciones': { title: 'Nueva ubicación',  label: 'Nueva ubicación', action: () => openLocModal() },
+  };
+
+  function fabAction() {
+    const fab = document.getElementById('fab-new-patient');
+    if (fab._fabAction) fab._fabAction();
+  }
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+    if (btn) btn.classList.add('active');
+    if (tabId === 'tab-citas') {
+      setTimeout(initCalendar, 80);
+    }
+    if (tabId === 'tab-dashboard') {
+      loadDashboard();
+    }
+    if (tabId === 'tab-expedientes') {
+      _populateExpPatientSelect();
+    }
+    if (tabId === 'tab-ubicaciones') {
+      loadLocations();
+    }
+    if (tabId === 'tab-doctores') {
+      loadUsers();
+    }
+
+    const fab = document.getElementById('fab-new-patient');
+    const cfg = FAB_CONFIG[tabId];
+    const isAssistantUser = userRole() === 'assistant';
+    const hideFabForAssistant = isAssistantUser && tabId === 'tab-expedientes';
+    if (cfg && !hideFabForAssistant) {
+      fab.title = cfg.title;
+      fab.setAttribute('aria-label', cfg.label);
+      fab._fabAction = cfg.action;
+      fab.classList.add('visible');
+    } else {
+      fab.classList.remove('visible');
+      fab._fabAction = null;
+    }
+  }
+
+  // ── Pages ─────────────────────────────────────────────────────────────
+  function showDashboard() {
+    document.getElementById('login-page').style.display    = 'none';
+    document.getElementById('dashboard-page').style.display = 'block';
+    document.getElementById('navbar-email').textContent = email() || '';
+    const isOwner = userRole() === 'owner';
+    const showAdmin = isOwner || userRole() === 'assistant';
+    document.getElementById('tab-btn-doctores').style.display   = isOwner   ? '' : 'none';
+    document.getElementById('tab-btn-ubicaciones').style.display = showAdmin ? '' : 'none';
+    switchTab('tab-dashboard');
+  }
+
+  function showLogin() {
+    document.getElementById('login-page').style.display    = 'flex';
+    document.getElementById('dashboard-page').style.display = 'none';
+    document.getElementById('fab-new-patient').classList.remove('visible');
+  }
+
+  function logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('clinic_id');
+    showLogin();
+  }
+
+  // ── Login ─────────────────────────────────────────────────────────────
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert('login-error');
+    setLoading('login-btn', true);
+
+    const emailVal = document.getElementById('email').value.trim();
+    const passVal  = document.getElementById('password').value;
+
+    try {
+      const body = new URLSearchParams({ username: emailVal, password: passVal });
+      let res = await fetch(`${API}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+
+      if (!res.ok && res.status === 422) {
+        res = await fetch(`${API}/api/v1/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailVal, password: passVal })
+        });
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}: credenciales inválidas`);
+      }
+
+      const data = await res.json();
+      const jwt  = data.access_token || data.token || data.jwt;
+      if (!jwt) throw new Error('La respuesta del servidor no incluye un token.');
+
+      const payload = jwtPayload(jwt);
+      localStorage.setItem('access_token', jwt);
+      localStorage.setItem('jwt_token', jwt);
+      localStorage.setItem('user_email', emailVal);
+      localStorage.setItem('user_role', payload.role || '');
+      localStorage.setItem('clinic_id', payload.clinic_id || '');
+
+      showDashboard();  // calls switchTab('tab-dashboard') → loadDashboard()
+      loadPatients();
+      loadDoctorSelects().then(() => loadAppointments());
+      if (payload.role === 'owner') { loadDoctors(); loadUsers(); }
+      loadLocations();
+    } catch (err) {
+      showAlert('login-error', err.message || 'Error de conexión. ¿Está el servidor corriendo?');
+    } finally {
+      setLoading('login-btn', false);
+    }
+  });
+
+  // ── Patients ──────────────────────────────────────────────────────────
+  async function loadPatients() {
+    hideAlert('patients-error');
+    const tbody  = document.getElementById('patients-body');
+    const sel1   = document.getElementById('patient-select');
+    const sel2   = document.getElementById('cal-patient-select');
+    tbody.innerHTML = '<tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr>';
+
+    try {
+      const res = await fetch(`${API}/api/v1/patients`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data.items || data.data || []);
+
+      // Build patient cache
+      _patientMap = {};
+      list.forEach(p => { _patientMap[p.id] = p; });
+
+      // Populate patient selects (cal-patient-select always exists; others may not)
+      const emptyOpt = '<option value="">— Seleccionar paciente —</option>';
+      const opts = list.map(p => `<option value="${p.id}">${pSelectLabel(p)}</option>`).join('');
+      if (sel1) sel1.innerHTML = emptyOpt + opts;
+      if (sel2) sel2.innerHTML = emptyOpt + opts;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          </svg>
+          <p>No hay pacientes registrados</p></div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(p => {
+        const code  = p.medical_record_code || '—';
+        const name  = p.full_name_enc  || p.full_name  || p.name  || '—';
+        const phone = p.phone_enc      || p.phone      || '—';
+        const email = p.email_enc      || p.email      || '—';
+        const noShowCount = p.no_show_count || 0;
+        const noShowBadge = noShowCount >= 2
+          ? `<span style="display:inline-block;margin-left:6px;padding:1px 6px;border-radius:9999px;font-size:11px;font-weight:600;background:#fef3c7;color:#b45309;border:1px solid #fcd34d;" title="${noShowCount} inasistencias">⚠ ${noShowCount} no-shows</span>`
+          : noShowCount === 1
+            ? `<span style="display:inline-block;margin-left:6px;padding:1px 6px;border-radius:9999px;font-size:11px;font-weight:600;background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;" title="1 inasistencia">1 no-show</span>`
+            : '';
+        return `<tr style="cursor:pointer;" onclick="openPatientExpedientes('${p.id}')" title="Ver expedientes">
+          <td><span class="badge badge-blue">${code}</span></td>
+          <td>${name}${noShowBadge}</td>
+          <td>${phone}</td>
+          <td>${email}</td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = '';
+      showAlert('patients-error', err.message || 'No se pudieron cargar los pacientes.');
+    }
+  }
+
+  // ── Appointments table ────────────────────────────────────────────────
+  async function loadAppointments() {
+    const tbody = document.getElementById('appointments-body');
+    if (!tbody) return;
+    hideAlert('appointments-error');
+    tbody.innerHTML = '<tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>';
+
+    try {
+      const res = await fetch(`${API}/api/v1/appointments`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data.items || data.data || []);
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+          </svg>
+          <p>No hay citas programadas</p></div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(a => {
+        const pat = patientName(a);
+        const doc = doctorName(a);
+
+        let dateStr = '—', timeStr = '—';
+        if (a.starts_at || a.appointment_datetime || a.datetime || a.scheduled_at) {
+          const dt = new Date(a.starts_at || a.appointment_datetime || a.datetime || a.scheduled_at);
+          dateStr = formatDate(dt);
+          timeStr = dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+        } else {
+          dateStr = formatDate(a.date || a.appointment_date);
+          timeStr = formatTime(a.time || a.appointment_time || a.start_time);
+        }
+
+        const cached = _patientMap[a.patient_id];
+        const code   = cached ? (cached.medical_record_code || '—') : '—';
+        return `<tr>
+          <td><span class="badge badge-blue">${code}</span></td>
+          <td>${pat}</td>
+          <td>${doc}</td>
+          <td>${dateStr}</td>
+          <td>${timeStr}</td>
+          <td>${a.reason || a.notes || a.description || '—'}</td>
+          <td>${statusBadge(a.status)}</td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = '';
+      showAlert('appointments-error', err.message || 'No se pudieron cargar las citas.');
+    }
+  }
+
+  function filterPatients(query) {
+    const q = query.trim().toLowerCase();
+    document.querySelectorAll('#patients-body tr').forEach(tr => {
+      tr.style.display = !q || tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+
+  function openPatientExpedientes(patientId) {
+    switchTab('tab-expedientes');
+    const sel = document.getElementById('exp-patient-select');
+    if (sel) {
+      sel.value = patientId;
+      loadExpedientes(patientId);
+    }
+  }
+
+  // ── Doctor selects ────────────────────────────────────────────────────
+  async function loadDoctorSelects() {
+    try {
+      const res = await fetch(`${API}/api/v1/doctors`, { headers: authHeaders() });
+      if (!res.ok) return;
+      const raw  = await res.json();
+      const list = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
+      list.forEach(d => { _doctorMap[d.id] = d; });
+      const emptyOpt = '<option value="">— Seleccionar doctor —</option>';
+      const opts = list.map(d => `<option value="${d.id}">${dLabel(d)}</option>`).join('');
+      const ds = document.getElementById('doctor-select');
+      if (ds) ds.innerHTML = emptyOpt + opts;
+      document.getElementById('cal-doctor-select').innerHTML = emptyOpt + opts;
+      // Populate dashboard filter doctor select
+      const fd = document.getElementById('filter-doctor');
+      if (fd) fd.innerHTML = '<option value="">Todos los doctores</option>' + opts;
+    } catch (_) {}
+  }
+
+  // ── Doctors ───────────────────────────────────────────────────────────
+  async function loadDoctors() {
+    hideAlert('doctors-error');
+    const tbody = document.getElementById('doctors-body');
+    tbody.innerHTML = '<tr><td colspan="5"><div class="loading"><div class="spinner"></div></div></td></tr>';
+
+    try {
+      const res = await fetch(`${API}/api/v1/doctors`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+
+      const raw  = await res.json();
+      const list = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
+      list.forEach(d => { _doctorMap[d.id] = d; });
+
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          <p>No hay doctores registrados</p></div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(d => {
+        const initials = d.full_name
+          ? d.full_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+          : 'DR';
+        const photoSrc = d.avatar_s3_key ? `/${d.avatar_s3_key}` : null;
+        const avatar = photoSrc
+          ? `<img src="${photoSrc}" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;display:block;">`
+          : `<span class="badge badge-blue">${initials}</span>`;
+        const estado = d.is_accepting_patients
+          ? `<span class="badge badge-green">Activo</span>`
+          : `<span class="badge badge-red">Inactivo</span>`;
+        return `<tr>
+          <td style="width:52px;text-align:center;">${avatar}</td>
+          <td>${d.full_name ? `${d.title || 'Dr.'} ${d.full_name}` : '—'}</td>
+          <td>${d.specialty || '—'}</td>
+          <td>${estado}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="openDoctorModal('${d.id}')">Editar</button></td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = '';
+      showAlert('doctors-error', err.message || 'No se pudieron cargar los doctores.');
+    }
+  }
+
+  async function loadUsers() {
+    const tbody = document.getElementById('users-body');
+    if (!tbody) return;
+    hideAlert('users-error');
+    hideAlert('users-success');
+    tbody.innerHTML = '<tr><td colspan="3"><div class="loading"><div class="spinner"></div></div></td></tr>';
+
+    try {
+      const res = await fetch(`${API}/api/v1/users`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+
+      const list = await res.json();
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><p>No hay usuarios registrados</p></div></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = list.map(u => {
+        const roleLabels = { owner: 'Dueño', doctor: 'Doctor', assistant: 'Asistente' };
+        if (u.role === 'owner') {
+          return `<tr>
+            <td>${_escHtml(u.full_name)}</td>
+            <td>${_escHtml(u.email)}</td>
+            <td><span class="badge badge-blue">${roleLabels[u.role] || u.role}</span></td>
+          </tr>`;
+        }
+        return `<tr>
+          <td>${_escHtml(u.full_name)}</td>
+          <td>${_escHtml(u.email)}</td>
+          <td>
+            <select data-user-id="${u.id}" onchange="changeUserRole('${u.id}', this.value, this)"
+              style="padding:.25rem .5rem;border-radius:var(--radius,6px);border:1px solid var(--gray-300,#d1d5db);font-size:.85rem;">
+              <option value="doctor" ${u.role === 'doctor' ? 'selected' : ''}>Doctor</option>
+              <option value="assistant" ${u.role === 'assistant' ? 'selected' : ''}>Asistente</option>
+            </select>
+          </td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = '';
+      showAlert('users-error', err.message || 'No se pudieron cargar los usuarios.');
+    }
+  }
+
+  async function changeUserRole(userId, newRole, selectEl) {
+    const prev = selectEl ? (newRole === 'doctor' ? 'assistant' : 'doctor') : null;
+    if (selectEl) selectEl.disabled = true;
+    hideAlert('users-error');
+    hideAlert('users-success');
+    try {
+      const res = await fetch(`${API}/api/v1/users/${userId}/role`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(_apiErrMsg(err, `Error ${res.status}`));
+      }
+      showAlert('users-success', 'Rol actualizado correctamente.', 'success');
+    } catch (err) {
+      if (selectEl && prev) selectEl.value = prev;
+      showAlert('users-error', err.message || 'No se pudo cambiar el rol.');
+    } finally {
+      if (selectEl) selectEl.disabled = false;
+    }
+  }
+
+  const _DOC_PHOTO_SVG = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b9edd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+
+  function previewDoctorPhoto(input) {
+    if (!input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('doc-photo-preview').innerHTML =
+        `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+
+  function openDoctorModal(doctorId) {
+    hideAlert('doc-error');
+    hideAlert('doc-success');
+    const d    = doctorId ? _doctorMap[doctorId] : null;
+    const edit = !!d;
+
+    document.getElementById('doc-modal-title').textContent  = edit ? 'Editar Doctor'   : 'Nuevo Doctor';
+    document.getElementById('doc-submit-label').textContent = edit ? 'Guardar Cambios' : 'Agregar Doctor';
+    document.getElementById('doc-id').value      = edit ? d.id      : '';
+    document.getElementById('doc-user-id').value = edit ? d.user_id : '';
+
+    const pwdGroup     = document.getElementById('doc-password-group');
+    const pwdInput     = document.getElementById('doc-password');
+    const emailInput   = document.getElementById('doc-email');
+    const emailReqMark = document.getElementById('doc-email-required');
+    const changePwdRow = document.getElementById('doc-change-pwd-row');
+
+    pwdGroup.style.display     = edit ? 'none' : '';
+    pwdInput.required          = !edit;
+    changePwdRow.style.display = edit ? '' : 'none';
+    emailInput.required        = !edit;
+    emailReqMark.style.display = edit ? 'none' : '';
+
+    if (edit) {
+      document.getElementById('doc-title').value     = d.title     || 'Dr.';
+      document.getElementById('doc-name').value      = d.full_name || '';
+      document.getElementById('doc-specialty').value = d.specialty || '';
+      document.getElementById('doc-email').value     = d.email     || '';
+      document.getElementById('doc-phone').value     = d.phone     || '';
+      document.getElementById('doc-bio').value       = d.bio       || '';
+      document.getElementById('doc-photo-preview').innerHTML = d.avatar_s3_key
+        ? `<img src="/${d.avatar_s3_key}" style="width:100%;height:100%;object-fit:cover;">`
+        : _DOC_PHOTO_SVG;
+      document.getElementById('doc-photo').value = '';
+    } else {
+      document.getElementById('doctor-form').reset();
+      document.getElementById('doc-title').value = 'Dr.';
+      document.getElementById('doc-photo-preview').innerHTML = _DOC_PHOTO_SVG;
+    }
+
+    document.getElementById('doctor-modal').style.display = 'flex';
+  }
+
+  function closeDoctorModal() { document.getElementById('doctor-modal').style.display = 'none'; }
+  function closeDoctorModalOverlay(e) { if (e.target === document.getElementById('doctor-modal')) closeDoctorModal(); }
+
+  function _apiErrMsg(err, fallback) {
+    if (!err.detail) return fallback;
+    if (Array.isArray(err.detail)) return err.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+    return String(err.detail);
+  }
+
+  document.getElementById('doctor-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert('doc-error');
+    hideAlert('doc-success');
+    setLoading('doc-submit-btn', true);
+
+    const doctorId     = document.getElementById('doc-id').value;
+    const userId       = document.getElementById('doc-user-id').value;
+    const isEdit       = !!doctorId;
+    const docTitle     = document.getElementById('doc-title').value;
+    const docName      = document.getElementById('doc-name').value.trim();
+    const docSpecialty = document.getElementById('doc-specialty').value;
+    const docEmail     = document.getElementById('doc-email').value.trim();
+    const docPhone     = document.getElementById('doc-phone').value.trim();
+    const docBio       = document.getElementById('doc-bio').value.trim();
+    const photoFile    = document.getElementById('doc-photo').files[0];
+
+    try {
+      let savedDoctorId = doctorId;
+
+      if (isEdit) {
+        // 1) Update doctor profile (specialty, bio, title)
+        const putRes = await fetch(`${API}/api/v1/doctors/${doctorId}`, {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            title:     docTitle,
+            specialty: docSpecialty,
+            bio:       docBio || null,
+          })
+        });
+        if (!putRes.ok) {
+          const err = await putRes.json().catch(() => ({}));
+          throw new Error(_apiErrMsg(err, `Error al actualizar doctor: ${putRes.status}`));
+        }
+        const updated = await putRes.json();
+        _doctorMap[doctorId] = { ..._doctorMap[doctorId], ...updated };
+
+        // 2) Update user fields (name, email, phone) if changed
+        const prev = _doctorMap[doctorId];
+        const userPatch = {};
+        if (docName  && docName  !== (prev.full_name || '')) userPatch.full_name = docName;
+        if (docEmail && docEmail !== (prev.email     || '')) userPatch.email     = docEmail;
+        if (docPhone !== (prev.phone || ''))                 userPatch.phone     = docPhone;
+
+        if (Object.keys(userPatch).length > 0) {
+          const patchRes = await fetch(`${API}/api/v1/users/${userId}`, {
+            method: 'PATCH',
+            headers: authHeaders(),
+            body: JSON.stringify(userPatch),
+          });
+          if (!patchRes.ok) {
+            const err = await patchRes.json().catch(() => ({}));
+            throw new Error(_apiErrMsg(err, `Error al actualizar datos de contacto: ${patchRes.status}`));
+          }
+          _doctorMap[doctorId] = {
+            ..._doctorMap[doctorId],
+            full_name: userPatch.full_name ?? prev.full_name,
+            email:     userPatch.email     ?? prev.email,
+            phone:     userPatch.phone     ?? prev.phone,
+          };
+        }
+      } else {
+        const docPassword = document.getElementById('doc-password').value;
+
+        // 1) Create auth user
+        const regRes = await fetch(`${API}/api/v1/auth/register`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            email:     docEmail,
+            password:  docPassword,
+            full_name: docName,
+            role:      'doctor',
+            clinic_id: clinicId(),
+          })
+        });
+        if (!regRes.ok) {
+          const err = await regRes.json().catch(() => ({}));
+          throw new Error(_apiErrMsg(err, `Error al registrar usuario: ${regRes.status}`));
+        }
+        const { access_token } = await regRes.json();
+        const { sub: newUserId } = jwtPayload(access_token);
+        if (!newUserId) throw new Error('No se pudo obtener el ID del usuario registrado.');
+
+        // 2) Save phone if provided
+        if (docPhone) {
+          await fetch(`${API}/api/v1/users/${newUserId}`, {
+            method: 'PATCH',
+            headers: authHeaders(),
+            body: JSON.stringify({ phone: docPhone }),
+          });
+        }
+
+        // 3) Create doctor profile
+        const docRes = await fetch(`${API}/api/v1/doctors`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            user_id:   newUserId,
+            title:     docTitle,
+            specialty: docSpecialty,
+            bio:       docBio || null,
+          })
+        });
+        if (!docRes.ok) {
+          const err = await docRes.json().catch(() => ({}));
+          throw new Error(_apiErrMsg(err, `Error al crear perfil de doctor: ${docRes.status}`));
+        }
+        const created = await docRes.json();
+        savedDoctorId = created.id;
+      }
+
+      // Upload photo if selected
+      if (photoFile && savedDoctorId) {
+        const fd = new FormData();
+        fd.append('photo', photoFile);
+        await fetch(`${API}/api/v1/doctors/${savedDoctorId}/photo`, {
+          method:  'POST',
+          headers: { Authorization: `Bearer ${token()}` },
+          body:    fd,
+        });
+      }
+
+      showAlert('doc-success', `Doctor "${docName}" ${isEdit ? 'actualizado' : 'agregado'} exitosamente.`, 'success');
+      document.getElementById('doctor-form').reset();
+      document.getElementById('doc-photo-preview').innerHTML = _DOC_PHOTO_SVG;
+      await loadDoctors();
+      await loadUsers();
+    } catch (err) {
+      showAlert('doc-error', err.message || 'No se pudo guardar el doctor.');
+    } finally {
+      setLoading('doc-submit-btn', false);
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // ── Password change modal ─────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════
+
+  function openPasswordModal() {
+    hideAlert('pwd-error');
+    hideAlert('pwd-success');
+    document.getElementById('pwd-form').reset();
+    document.getElementById('pwd-modal').style.display = 'flex';
+  }
+
+  function closePwdModal() {
+    document.getElementById('pwd-modal').style.display = 'none';
+  }
+
+  function closePwdModalOverlay(e) {
+    if (e.target === document.getElementById('pwd-modal')) closePwdModal();
+  }
+
+  document.getElementById('pwd-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert('pwd-error');
+    hideAlert('pwd-success');
+    setLoading('pwd-submit-btn', true);
+
+    const userId  = document.getElementById('doc-user-id').value;
+    const current = document.getElementById('pwd-current').value;
+    const newPwd  = document.getElementById('pwd-new').value;
+    const confirm = document.getElementById('pwd-confirm').value;
+
+    try {
+      if (newPwd !== confirm) throw new Error('Las contraseñas nuevas no coinciden.');
+      if (!userId) throw new Error('No se pudo identificar al usuario.');
+
+      const res = await fetch(`${API}/api/v1/users/${userId}/password`, {
+        method:  'PATCH',
+        headers: authHeaders(),
+        body:    JSON.stringify({ current_password: current, new_password: newPwd }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(_apiErrMsg(err, `Error al cambiar contraseña: ${res.status}`));
+      }
+
+      showAlert('pwd-success', 'Contraseña actualizada correctamente.', 'success');
+      document.getElementById('pwd-form').reset();
+    } catch (err) {
+      showAlert('pwd-error', err.message || 'No se pudo cambiar la contraseña.');
+    } finally {
+      setLoading('pwd-submit-btn', false);
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════
+  // ── FullCalendar ──────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════
+
+  let calendar = null;
+  let _calCurrentView = 'timeGridWeek';
+  let _listViewActive = false;
+  let _listData       = [];
+  let _listSort       = { col: 'date', asc: true };
+  let _listFilter     = 'today';
+  let _pendingDrop    = null;
+
+  function apptToEvent(a) {
+    const start = a.starts_at || a.appointment_datetime || a.datetime || a.scheduled_at
+      || (a.date && a.time ? `${a.date}T${a.time}` : null)
+      || a.date;
+    const end   = a.ends_at || null;
+    const color = a.color || statusColor(a.status);
+
+    return {
+      id: String(a.id),
+      title: `${patientName(a)} — ${doctorName(a)}`,
+      start,
+      end,
+      backgroundColor: color,
+      borderColor:     color,
+      textColor:       '#ffffff',
+      extendedProps:   a
+    };
+  }
+
+  function initCalendar() {
+    if (calendar) return;
+
+    const calEl = document.getElementById('calendar');
+    if (!calEl) return;
+
+    calendar = new FullCalendar.Calendar(calEl, {
+      locale: 'es',
+      initialView: 'timeGridWeek',
+      headerToolbar: false,
+      editable: true,
+      selectable: true,
+      selectMirror: true,
+      nowIndicator: true,
+      height: 'auto',
+      slotMinTime: '07:00:00',
+      slotMaxTime: '21:00:00',
+      allDaySlot: false,
+
+      eventContent(arg) {
+        const a = arg.event.extendedProps;
+        const timeStr = arg.event.start
+          ? arg.event.start.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+          : '';
+        const loc = a.location_id && _locationMap[a.location_id]
+          ? `<span class="ev-loc">&#128205; ${_locationMap[a.location_id].name || ''}</span>`
+          : '';
+        return {
+          html: `<div class="fc-cal-event">
+            <span class="ev-time">${timeStr}</span>
+            <span class="ev-patient">${patientName(a)}</span>
+            <span class="ev-doctor">${doctorName(a)}</span>
+            ${loc}
+          </div>`
+        };
+      },
+
+      eventMouseEnter(info) {
+        const tip = document.getElementById('cal-tooltip');
+        if (!tip) return;
+        const a = info.event.extendedProps;
+        const start = info.event.start
+          ? info.event.start.toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })
+          : '—';
+        tip.innerHTML = `<strong>${patientName(a)}</strong><br>Doctor: ${doctorName(a)}<br>Inicio: ${start}<br>Estado: ${_statusLabel(a.status)}`;
+        tip.classList.add('visible');
+        const r = info.el.getBoundingClientRect();
+        tip.style.left = Math.min(r.right + 10, window.innerWidth - 220) + 'px';
+        tip.style.top  = r.top + 'px';
+      },
+
+      eventMouseLeave() {
+        const tip = document.getElementById('cal-tooltip');
+        if (tip) tip.classList.remove('visible');
+      },
+
+      events: async (info, successCb, failureCb) => {
+        try {
+          const res = await fetch(`${API}/api/v1/appointments`, { headers: authHeaders() });
+          if (res.status === 401) { logout(); return; }
+          if (!res.ok) throw new Error(`Error ${res.status}`);
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (data.items || data.data || []);
+          successCb(list.map(apptToEvent));
+        } catch (err) {
+          failureCb(err);
+          alert('Error al cargar citas: ' + err.message);
+        }
+      },
+
+      eventClick(info) {
+        openApptDetailModal(info.event);
+      },
+
+      dateClick(info) {
+        openCalCreateModal(info.dateStr);
+      },
+
+      eventDrop(info) {
+        _pendingDrop = info;
+        const a = info.event.extendedProps;
+        const newTime = info.event.start
+          ? info.event.start.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
+          : '—';
+        document.getElementById('drag-confirm-text').innerHTML =
+          `¿Mover la cita de <strong>${patientName(a)}</strong> al <strong>${newTime}</strong>?`;
+        document.getElementById('drag-confirm-modal').style.display = 'flex';
+      },
+
+      eventResize: async (info) => {
+        const { event } = info;
+        try {
+          const body = {
+            starts_at: event.start.toISOString(),
+            ends_at:   event.end ? event.end.toISOString() : undefined
+          };
+          const res = await fetch(`${API}/api/v1/appointments/${event.id}`, {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify(body)
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || `Error ${res.status}`);
+          }
+        } catch (err) {
+          alert('No se pudo actualizar la duración: ' + err.message);
+          info.revert();
+        }
+      },
+    });
+
+    calendar.render();
+  }
+
+  // ── Calendar toolbar helpers ──────────────────────────────────────────
+
+  function _statusLabel(s) {
+    const map = {
+      scheduled: 'Programada', confirmed: 'Confirmada', in_progress: 'En curso',
+      completed: 'Completada', canceled: 'Cancelada', canceled_by_patient: 'Cancelada (paciente)',
+      no_show: 'No asistió'
+    };
+    return map[s] || s || '—';
+  }
+
+  function _updateCalViewBtns(activeId) {
+    ['cvb-week', 'cvb-day', 'cvb-month'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.classList.toggle('active', id === activeId);
+    });
+  }
+
+  function calSetView(view) {
+    _calCurrentView = view;
+    if (_listViewActive) {
+      _listViewActive = false;
+      document.getElementById('calendar-container').style.display = '';
+      document.getElementById('cal-list-view').style.display = 'none';
+      document.getElementById('cvb-list').classList.remove('active');
+    }
+    if (calendar) calendar.changeView(view);
+    const btnId = view === 'timeGridWeek' ? 'cvb-week'
+                : view === 'timeGridDay'  ? 'cvb-day'
+                : 'cvb-month';
+    _updateCalViewBtns(btnId);
+  }
+
+  function calToggleListView() {
+    _listViewActive = !_listViewActive;
+    const calContainer = document.getElementById('calendar-container');
+    const listView     = document.getElementById('cal-list-view');
+    const btn          = document.getElementById('cvb-list');
+    if (_listViewActive) {
+      calContainer.style.display = 'none';
+      listView.style.display = '';
+      btn.classList.add('active');
+      ['cvb-week', 'cvb-day', 'cvb-month'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.classList.remove('active');
+      });
+      loadListView(_listFilter);
+    } else {
+      calContainer.style.display = '';
+      listView.style.display = 'none';
+      btn.classList.remove('active');
+      const btnId = _calCurrentView === 'timeGridWeek' ? 'cvb-week'
+                  : _calCurrentView === 'timeGridDay'  ? 'cvb-day'
+                  : 'cvb-month';
+      _updateCalViewBtns(btnId);
+    }
+  }
+
+  // ── List view ─────────────────────────────────────────────────────────
+
+  async function loadListView(filter) {
+    if (filter) _listFilter = filter;
+    ['lf-today', 'lf-week', 'lf-month', 'lf-all'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.classList.toggle('active', id === 'lf-' + _listFilter);
+    });
+
+    const today = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+
+    const params = new URLSearchParams({ limit: '500' });
+    if (_listFilter === 'today') {
+      params.set('fecha', todayStr);
+    } else if (_listFilter === 'week') {
+      const end = new Date(today);
+      end.setDate(end.getDate() + 6);
+      params.set('start_date', todayStr);
+      params.set('end_date', `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}`);
+    } else if (_listFilter === 'month') {
+      const end = new Date(today.getFullYear(), today.getMonth()+1, 0);
+      params.set('start_date', todayStr);
+      params.set('end_date', `${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}`);
+    }
+
+    const errEl = document.getElementById('list-view-error');
+    try {
+      const res = await fetch(`${API}/api/v1/appointments?${params}`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      const data = await res.json();
+      _listData = Array.isArray(data) ? data : (data.items || data.data || []);
+      if (errEl) errEl.style.display = 'none';
+      _renderListRows();
+    } catch (err) {
+      if (errEl) { errEl.textContent = 'Error: ' + err.message; errEl.style.display = ''; }
+    }
+  }
+
+  function sortListView(col) {
+    if (_listSort.col === col) {
+      _listSort.asc = !_listSort.asc;
+    } else {
+      _listSort.col = col;
+      _listSort.asc = true;
+    }
+    _renderListRows();
+  }
+
+  function filterListView(q) {
+    _renderListRows(q.trim().toLowerCase());
+  }
+
+  function _renderListRows(q) {
+    const tbody = document.getElementById('list-view-body');
+    if (!tbody) return;
+
+    let rows = [..._listData];
+    if (q) {
+      rows = rows.filter(a =>
+        patientName(a).toLowerCase().includes(q) || doctorName(a).toLowerCase().includes(q)
+      );
+    }
+
+    const { col, asc } = _listSort;
+    rows.sort((a, b) => {
+      let va, vb;
+      if (col === 'date' || col === 'time') {
+        va = a.starts_at || '';
+        vb = b.starts_at || '';
+      } else if (col === 'patient') {
+        va = patientName(a).toLowerCase();
+        vb = patientName(b).toLowerCase();
+      } else if (col === 'doctor') {
+        va = doctorName(a).toLowerCase();
+        vb = doctorName(b).toLowerCase();
+      } else if (col === 'status') {
+        va = a.status || '';
+        vb = b.status || '';
+      } else {
+        va = ''; vb = '';
+      }
+      return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+
+    tbody.innerHTML = rows.map(a => {
+      const dt = a.starts_at ? new Date(a.starts_at) : null;
+      const dateStr = dt ? dt.toLocaleDateString('es-MX', { dateStyle: 'medium' }) : '—';
+      const timeStr = dt ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '—';
+      const loc = a.location_id && _locationMap[a.location_id]
+        ? (_locationMap[a.location_id].name || '—') : '—';
+      const stColor = statusColor(a.status);
+      return `<tr>
+        <td style="width:32px;text-align:center;color:var(--gray-400);cursor:grab;">&#8285;</td>
+        <td>${dateStr}</td>
+        <td>${timeStr}</td>
+        <td>${patientName(a)}</td>
+        <td>${doctorName(a)}</td>
+        <td>${loc}</td>
+        <td><span class="badge" style="background:${stColor};color:#fff;padding:.2rem .55rem;border-radius:20px;font-size:.75rem;">${_statusLabel(a.status)}</span></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--gray-400);">Sin citas para este período.</td></tr>';
+  }
+
+  async function confirmDrop() {
+    if (!_pendingDrop) return;
+    document.getElementById('drag-confirm-modal').style.display = 'none';
+    const { event, revert } = _pendingDrop;
+    _pendingDrop = null;
+    try {
+      const body = { starts_at: event.start.toISOString() };
+      if (event.end) body.ends_at = event.end.toISOString();
+      const res = await fetch(`${API}/api/v1/appointments/${event.id}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+    } catch (err) {
+      alert('No se pudo mover la cita: ' + err.message);
+      revert();
+    }
+  }
+
+  function revertDrop() {
+    document.getElementById('drag-confirm-modal').style.display = 'none';
+    if (_pendingDrop) {
+      _pendingDrop.revert();
+      _pendingDrop = null;
+    }
+  }
+
+  // ── Appointment detail modal ──────────────────────────────────────────
+  let _detailAppt = null;
+
+  function _escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function _loadApptNotes(apptId) {
+    const list = document.getElementById('ad-notes-list');
+    let res;
+    try {
+      res = await fetch(`${API}/api/v1/appointments/${apptId}/notes`, { headers: authHeaders() });
+    } catch {
+      list.innerHTML = '<div style="color:var(--red,#ef4444);font-size:.82rem;">Sin conexión con el servidor. ¿Está activo el backend?</div>';
+      return;
+    }
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) {
+      list.innerHTML = `<div style="color:var(--red,#ef4444);font-size:.82rem;">Error ${res.status} al cargar notas.</div>`;
+      return;
+    }
+    const notes = await res.json();
+    _renderApptNotesList(notes, apptId);
+  }
+
+  function _renderApptNotesList(notes, apptId) {
+    const list = document.getElementById('ad-notes-list');
+    const isStaff = ['owner', 'assistant', 'doctor'].includes(userRole());
+    if (!notes.length) {
+      list.innerHTML = '<div style="color:var(--gray-400,#9ca3af);font-size:.82rem;text-align:center;padding:.3rem 0;">Sin notas aún.</div>';
+      return;
+    }
+    list.innerHTML = notes.map(n => {
+      const d = new Date(n.created_at);
+      const dateFmt = isNaN(d) ? '' : d.toLocaleDateString('es-MX', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
+      const author = _escHtml(n.author_name || 'Usuario');
+      const delBtn = isStaff
+        ? `<button onclick="deleteApptNote('${n.id}')" title="Eliminar nota"
+             style="background:none;border:none;cursor:pointer;color:var(--gray-400,#9ca3af);font-size:.85rem;padding:0;line-height:1;flex-shrink:0;"
+             onmouseenter="this.style.color='var(--red,#ef4444)'" onmouseleave="this.style.color='var(--gray-400,#9ca3af)'">✕</button>`
+        : '';
+      return `
+        <div style="background:var(--gray-50,#f9fafb);border-radius:6px;padding:.5rem .7rem;margin-bottom:.4rem;border-left:3px solid var(--blue,#3b82f6);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.2rem;gap:.5rem;">
+            <div style="font-size:.72rem;color:var(--gray-500,#6b7280);min-width:0;">
+              <strong style="color:var(--gray-700,#374151);">${author}</strong>
+              <span style="margin-left:.35rem;">${_escHtml(dateFmt)}</span>
+            </div>
+            ${delBtn}
+          </div>
+          <div style="font-size:.85rem;color:var(--gray-800,#1f2937);white-space:pre-wrap;line-height:1.5;word-break:break-word;">${_escHtml(n.content)}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function toggleAddNoteForm() {
+    const form = document.getElementById('ad-add-note-form');
+    const show = form.style.display === 'none';
+    form.style.display = show ? '' : 'none';
+    if (show) document.getElementById('ad-note-input').focus();
+  }
+
+  function cancelAddNote() {
+    const form = document.getElementById('ad-add-note-form');
+    if (form) form.style.display = 'none';
+    const input = document.getElementById('ad-note-input');
+    if (input) input.value = '';
+  }
+
+  async function submitAddNote() {
+    const id      = document.getElementById('appt-detail-id').value;
+    const content = document.getElementById('ad-note-input').value.trim();
+    if (!content) { alert('La nota no puede estar vacía.'); return; }
+    let res;
+    try {
+      res = await fetch(`${API}/api/v1/appointments/${id}/notes`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ content }),
+      });
+    } catch {
+      alert('No se pudo guardar la nota: el servidor no respondió. Verifica que el backend esté activo y que la migración haya sido ejecutada.');
+      return;
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const msg = Array.isArray(err.detail) ? err.detail[0]?.msg : err.detail;
+      alert(`No se pudo guardar la nota: ${msg || `Error ${res.status}`}`);
+      return;
+    }
+    cancelAddNote();
+    _loadApptNotes(id);
+  }
+
+  async function deleteApptNote(noteId) {
+    if (!confirm('¿Eliminar esta nota? Esta acción no se puede deshacer.')) return;
+    const id = document.getElementById('appt-detail-id').value;
+    try {
+      const res = await fetch(`${API}/api/v1/appointments/${id}/notes/${noteId}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+      _loadApptNotes(id);
+    } catch (err) {
+      alert(`No se pudo eliminar la nota: ${err.message}`);
+    }
+  }
+
+  function openApptDetailModal(event) {
+    const a = event.extendedProps;
+    _detailAppt = { ...a, _id: event.id, _start: event.start, _end: event.end };
+
+    // Status badge in header
+    document.getElementById('ad-status-badge').innerHTML = statusBadge(a.status);
+
+    // Patient hero — initials avatar
+    const pat = _patientMap[a.patient_id];
+    const patFull = pat ? (pat.full_name_enc || pat.full_name || pat.name || '') : patientName(a);
+    const patCode = pat ? (pat.medical_record_code || '') : '';
+    const initials = patFull.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+    document.getElementById('ad-avatar').textContent = initials;
+    document.getElementById('ad-patient-name').textContent = patFull || '—';
+    document.getElementById('ad-patient-code').textContent = patCode ? `Código: ${patCode}` : '';
+
+    // Doctor + specialty
+    const doc = _doctorMap[a.doctor_id];
+    const docFull = doc
+      ? (doc.full_name ? `Dr. ${doc.full_name}` : dLabel(doc))
+      : doctorName(a);
+    const docSpec = doc?.specialty ? ` · ${doc.specialty}` : '';
+    document.getElementById('ad-doctor').textContent = docFull + docSpec;
+
+    // Date & time — long readable format
+    const startStr = event.start
+      ? event.start.toLocaleString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : '—';
+    const endStr = event.end
+      ? event.end.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+      : '';
+    document.getElementById('ad-datetime').textContent = endStr ? `${startStr} – ${endStr}` : startStr;
+
+    // Location — name · room · unit
+    const loc = a.location_id ? _locationMap[a.location_id] : null;
+    const locParts = [loc?.name, a.room_name, a.unit_name].filter(Boolean);
+    document.getElementById('ad-location').textContent = locParts.length ? locParts.join(' · ') : '—';
+
+    // Reason
+    document.getElementById('ad-reason').textContent = a.reason || a.notes || a.description || '—';
+
+    // Pre-fill edit panel inputs
+    const isoDate  = event.start ? event.start.toISOString().split('T')[0] : '';
+    const startTm  = event.start ? event.start.toTimeString().slice(0, 5) : '';
+    const endTm    = event.end   ? event.end.toTimeString().slice(0, 5)   : '';
+    document.getElementById('ad-edit-date').value    = isoDate;
+    document.getElementById('ad-edit-start').value   = startTm;
+    document.getElementById('ad-edit-end').value     = endTm;
+    document.getElementById('ad-edit-reason').value  = a.reason || a.notes || a.description || '';
+    document.getElementById('ad-rs-date').value      = isoDate;
+    document.getElementById('ad-rs-start').value     = startTm;
+    document.getElementById('ad-rs-end').value       = endTm;
+    document.getElementById('ad-rs-reason').value    = '';
+
+    // Reset and load notes history
+    cancelAddNote();
+    document.getElementById('ad-notes-list').innerHTML =
+      '<div style="color:var(--gray-400,#9ca3af);font-size:.82rem;text-align:center;padding:.4rem 0;">Cargando...</div>';
+
+    // Close any open inline panels
+    ['ad-edit-panel', 'ad-reschedule-panel'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+
+    // Button visibility: hide action buttons for terminal states or non-staff roles
+    const status = (a.status || '').toLowerCase();
+    const terminal = ['completed', 'canceled', 'canceled_by_patient', 'no_show'].includes(status);
+    const role = userRole();
+    const isStaff = ['owner', 'assistant', 'doctor'].includes(role);
+    const isDoctorOrOwner = ['owner', 'doctor'].includes(role);
+    _setDisplay('ad-btn-edit',       !terminal && isStaff);
+    _setDisplay('ad-btn-reschedule', !terminal && isStaff);
+    _setDisplay('ad-btn-complete',   !terminal && isStaff);
+    _setDisplay('ad-btn-add-note',   !terminal && isDoctorOrOwner);
+    _setDisplay('ad-notes-block',    isDoctorOrOwner);
+    _setDisplay('ad-btn-cancel',     !terminal && isStaff);
+    _setDisplay('ad-btn-no-show',    !terminal && isDoctorOrOwner);
+
+    document.getElementById('appt-detail-id').value = event.id;
+    document.getElementById('appt-detail-modal').style.display = 'flex';
+
+    _loadApptNotes(event.id);
+  }
+
+  function _setDisplay(id, show) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  }
+
+  function closeApptDetailModal() {
+    document.getElementById('appt-detail-modal').style.display = 'none';
+    _detailAppt = null;
+  }
+  function closeApptDetailModalOverlay(e) {
+    if (e.target === document.getElementById('appt-detail-modal')) closeApptDetailModal();
+  }
+
+  function toggleDetailPanel(panelId) {
+    const panels = ['ad-edit-panel', 'ad-reschedule-panel'];
+    panels.forEach(id => {
+      const el = document.getElementById(id);
+      el.style.display = (id === panelId && el.style.display === 'none') ? '' : 'none';
+    });
+  }
+
+  function closeDetailPanel(panelId) {
+    document.getElementById(panelId).style.display = 'none';
+  }
+
+  async function changeApptStatus(newStatus) {
+    if (newStatus === 'canceled') {
+      document.getElementById('confirm-cancel-modal').style.display = 'flex';
+      return;
+    }
+    await _doChangeApptStatus(newStatus);
+  }
+
+  async function executeCancelAppt() {
+    closeConfirmCancel();
+    await _doChangeApptStatus('canceled');
+  }
+
+  function closeConfirmCancel() {
+    document.getElementById('confirm-cancel-modal').style.display = 'none';
+  }
+
+  function closeConfirmCancelOverlay(e) {
+    if (e.target === document.getElementById('confirm-cancel-modal')) closeConfirmCancel();
+  }
+
+  async function _doChangeApptStatus(newStatus) {
+    const id = document.getElementById('appt-detail-id').value;
+    try {
+      const res = await fetch(`${API}/api/v1/appointments/${id}/status`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(_apiErrMsg(err, `Error ${res.status}`));
+      }
+      closeApptDetailModal();
+      if (calendar) calendar.refetchEvents();
+    } catch (err) {
+      alert(`No se pudo actualizar la cita: ${err.message}`);
+    }
+  }
+
+  async function markNoShow() {
+    const id = document.getElementById('appt-detail-id').value;
+    if (!confirm('¿Confirmar que el paciente no asistió a esta cita?')) return;
+    try {
+      const res = await fetch(`${API}/api/v1/appointments/${id}/mark-no-show`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(_apiErrMsg(err, `Error ${res.status}`));
+      }
+      closeApptDetailModal();
+      if (calendar) calendar.refetchEvents();
+      await loadPatients();
+    } catch (err) {
+      alert(`No se pudo registrar el no-show: ${err.message}`);
+    }
+  }
+
+  async function submitApptEdit() {
+    const id    = document.getElementById('appt-detail-id').value;
+    const date  = document.getElementById('ad-edit-date').value;
+    const start = document.getElementById('ad-edit-start').value;
+    const end   = document.getElementById('ad-edit-end').value;
+    const reason = document.getElementById('ad-edit-reason').value.trim();
+    if (!date || !start) { alert('Fecha y hora de inicio son obligatorias.'); return; }
+    const body = { starts_at: `${date}T${start}:00` };
+    if (end)    body.ends_at = `${date}T${end}:00`;
+    if (reason) body.reason  = reason;
+    try {
+      const res = await fetch(`${API}/api/v1/appointments/${id}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+      closeApptDetailModal();
+      if (calendar) calendar.refetchEvents();
+    } catch (err) {
+      alert(`No se pudo guardar la cita: ${err.message}`);
+    }
+  }
+
+  async function submitReschedule() {
+    const id    = document.getElementById('appt-detail-id').value;
+    const date  = document.getElementById('ad-rs-date').value;
+    const start = document.getElementById('ad-rs-start').value;
+    const end   = document.getElementById('ad-rs-end').value;
+    const reason = document.getElementById('ad-rs-reason').value.trim();
+    if (!date || !start) { alert('Fecha y hora de inicio son obligatorias.'); return; }
+    const body = { proposed_starts_at: `${date}T${start}:00` };
+    if (end)    body.proposed_ends_at = `${date}T${end}:00`;
+    if (reason) body.reason           = reason;
+    try {
+      const res = await fetch(`${API}/api/v1/appointments/${id}/propose-reschedule`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+      closeApptDetailModal();
+      if (calendar) calendar.refetchEvents();
+    } catch (err) {
+      alert(`No se pudo enviar la propuesta: ${err.message}`);
+    }
+  }
+
+  // ── Create appointment modal (calendar) ───────────────────────────────
+  function openCalCreateModal(dateStr) {
+    hideAlert('cal-appt-error');
+    hideAlert('cal-appt-success');
+    document.getElementById('cal-appt-form').reset();
+
+    if (dateStr) {
+      const hasTime = dateStr.includes('T');
+      const [datePart, timePart] = hasTime ? dateStr.split('T') : [dateStr, '09:00'];
+      const startHH = parseInt(timePart.slice(0, 2), 10);
+      const endHH   = String(Math.min(startHH + 1, 23)).padStart(2, '0');
+      document.getElementById('cal-appt-date').value  = datePart;
+      document.getElementById('cal-appt-start').value = timePart.slice(0, 5);
+      document.getElementById('cal-appt-end').value   = `${endHH}:${timePart.slice(3, 5) || '00'}`;
+    } else {
+      document.getElementById('cal-appt-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('cal-appt-start').value = '09:00';
+      document.getElementById('cal-appt-end').value   = '10:00';
+    }
+
+    // Reset location cascade
+    document.getElementById('cal-loc-select').value = '';
+    document.getElementById('cal-room-row').style.display = 'none';
+    document.getElementById('cal-unit-color').style.background = '';
+    _syncCalLocSelect();
+
+    document.getElementById('cal-create-modal').style.display = 'flex';
+  }
+
+  function closeCalCreateModal() { document.getElementById('cal-create-modal').style.display = 'none'; }
+  function closeCalCreateModalOverlay(e) { if (e.target === document.getElementById('cal-create-modal')) closeCalCreateModal(); }
+
+  async function submitCalAppt(e) {
+    e.preventDefault();
+    hideAlert('cal-appt-error');
+    hideAlert('cal-appt-success');
+    setLoading('cal-appt-btn', true);
+
+    const patientId  = document.getElementById('cal-patient-select').value;
+    const doctorId   = document.getElementById('cal-doctor-select').value;
+    const date       = document.getElementById('cal-appt-date').value;
+    const startTime  = document.getElementById('cal-appt-start').value;
+    const endTime    = document.getElementById('cal-appt-end').value;
+    const reason     = document.getElementById('cal-appt-reason').value.trim();
+    const locationId = document.getElementById('cal-loc-select').value;
+    const room       = document.getElementById('cal-room-select').value;
+    const unit       = document.getElementById('cal-unit-select').value;
+
+    if (!reason) {
+      showAlert('cal-appt-error', 'El motivo de la cita es obligatorio.');
+      setLoading('cal-appt-btn', false);
+      return;
+    }
+
+    const startsAt = `${date}T${startTime}:00`;
+    const endsAt   = `${date}T${endTime}:00`;
+
+    // Build notes: append room/unit if selected
+    let fullNotes = reason;
+    if (room)  fullNotes += ` | ${room}`;
+    if (unit)  fullNotes += ` — ${unit}`;
+
+    const payload = {
+      patient_id: patientId,
+      doctor_id:  doctorId,
+      date,
+      time:                 startTime,
+      appointment_date:     date,
+      appointment_time:     startTime,
+      appointment_datetime: startsAt,
+      starts_at:            startsAt,
+      ends_at:              endsAt,
+      reason:               fullNotes,
+      notes:                fullNotes,
+      ...(locationId && { location_id: locationId }),
+      status: 'scheduled'
+    };
+
+    try {
+      const res = await fetch(`${API}/api/v1/appointments`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.detail
+          ? (Array.isArray(err.detail) ? err.detail.map(d => d.msg || JSON.stringify(d)).join(', ') : err.detail)
+          : `Error ${res.status}`;
+        throw new Error(msg);
+      }
+
+      showAlert('cal-appt-success', '¡Cita creada exitosamente!', 'success');
+      if (calendar) calendar.refetchEvents();
+      loadAppointments();
+      setTimeout(closeCalCreateModal, 1200);
+    } catch (err) {
+      showAlert('cal-appt-error', err.message || 'No se pudo crear la cita.');
+    } finally {
+      setLoading('cal-appt-btn', false);
+    }
+  }
+
+  // ── Expediente Modal (placeholder) ───────────────────────────────────
+  // ── Expedientes ───────────────────────────────────────────────────────
+
+  function _populateExpPatientSelect() {
+    const patients = Object.values(_patientMap);
+    const emptyOpt = '<option value="">— Seleccionar paciente —</option>';
+    const opts = patients.map(p => `<option value="${p.id}">${pSelectLabel(p)}</option>`).join('');
+    ['exp-patient-select', 'exp-patient'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = emptyOpt + opts;
+    });
+    const doctors = Object.values(_doctorMap);
+    const emptyDoc = '<option value="">— Seleccionar doctor —</option>';
+    const docOpts  = doctors.map(d => `<option value="${d.id}">${dLabel(d)}</option>`).join('');
+    const expDoc = document.getElementById('exp-doctor');
+    if (expDoc) expDoc.innerHTML = emptyDoc + docOpts;
+  }
+
+  async function loadExpedientes(patientId) {
+    const tbody = document.getElementById('exp-body');
+    hideAlert('exp-error');
+    const isAssistant = userRole() === 'assistant';
+    const colCount = isAssistant ? 2 : 4;
+    const thNotas = document.getElementById('exp-th-notas');
+    const thPdf   = document.getElementById('exp-th-pdf');
+    if (thNotas) thNotas.style.display = isAssistant ? 'none' : '';
+    if (thPdf)   thPdf.style.display   = isAssistant ? 'none' : '';
+
+    if (!patientId) {
+      tbody.innerHTML = `<tr><td colspan="${colCount}"><div class="empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <p>Selecciona un paciente para ver sus expedientes</p>
+      </div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = `<tr><td colspan="${colCount}"><div class="loading"><div class="spinner"></div></div></td></tr>`;
+    try {
+      const res = await fetch(`${API}/api/v1/medical-records?patient_id=${patientId}`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(_apiErrMsg(err, `Error ${res.status}`));
+      }
+      const list = await res.json();
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="${colCount}"><div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <p>Este paciente no tiene expedientes</p>
+        </div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(r => {
+        const fecha  = r.created_at ? new Date(r.created_at).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+        const doctor = _doctorMap[r.doctor_id] ? dLabel(_doctorMap[r.doctor_id]) : '—';
+        if (isAssistant) {
+          return `<tr>
+            <td style="white-space:nowrap;">${fecha}</td>
+            <td>${doctor}</td>
+          </tr>`;
+        }
+        const notas  = r.observations ? (r.observations.length > 80 ? r.observations.slice(0, 80) + '…' : r.observations) : '<span style="color:#9ca3af;">Sin notas</span>';
+        const pdfBtn = r.s3_pdf_key
+          ? `<button class="btn btn-outline btn-sm" onclick="viewExpedientePdf('${r.id}')">
+               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+               Ver PDF
+             </button>`
+          : '<span style="color:#9ca3af;font-size:.8rem;">—</span>';
+        return `<tr>
+          <td style="white-space:nowrap;">${fecha}</td>
+          <td>${notas}</td>
+          <td>${doctor}</td>
+          <td>${pdfBtn}</td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = '';
+      showAlert('exp-error', err.message || 'No se pudieron cargar los expedientes.');
+    }
+  }
+
+  async function viewExpedientePdf(recordId) {
+    try {
+      const res = await fetch(`${API}/api/v1/medical-records/${recordId}/download?inline=true`, { headers: authHeaders() });
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      alert('No se pudo abrir el PDF: ' + err.message);
+    }
+  }
+
+  function openExpedienteModal() {
+    hideAlert('exp-modal-error');
+    hideAlert('exp-modal-success');
+    document.getElementById('exp-form').reset();
+    _populateExpPatientSelect();
+    // Pre-select patient if one is already chosen in the tab
+    const tabSel = document.getElementById('exp-patient-select');
+    if (tabSel && tabSel.value) {
+      const modalSel = document.getElementById('exp-patient');
+      if (modalSel) modalSel.value = tabSel.value;
+    }
+    document.getElementById('exp-modal').style.display = 'flex';
+  }
+
+  function closeExpModal() { document.getElementById('exp-modal').style.display = 'none'; }
+  function closeExpModalOverlay(e) { if (e.target === document.getElementById('exp-modal')) closeExpModal(); }
+
+  document.getElementById('exp-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert('exp-modal-error');
+    hideAlert('exp-modal-success');
+    setLoading('exp-submit-btn', true);
+
+    const patientId = document.getElementById('exp-patient').value;
+    const doctorId  = document.getElementById('exp-doctor').value;
+    const notes     = document.getElementById('exp-notes').value.trim();
+    const pdfFile   = document.getElementById('exp-pdf').files[0];
+
+    try {
+      const res = await fetch(`${API}/api/v1/medical-records`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          patient_id: patientId,
+          doctor_id:  doctorId,
+          ...(notes && { observations: notes }),
+        })
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(_apiErrMsg(err, `Error ${res.status}`));
+      }
+      const record = await res.json();
+
+      if (pdfFile) {
+        const fd = new FormData();
+        fd.append('file', pdfFile);
+        const upRes = await fetch(`${API}/api/v1/medical-records/${record.id}/upload`, {
+          method:  'POST',
+          headers: { Authorization: `Bearer ${token()}` },
+          body:    fd
+        });
+        if (!upRes.ok) {
+          const err = await upRes.json().catch(() => ({}));
+          throw new Error('Expediente creado pero falló la subida del PDF: ' + _apiErrMsg(err, `Error ${upRes.status}`));
+        }
+      }
+
+      showAlert('exp-modal-success', 'Expediente guardado exitosamente.', 'success');
+      document.getElementById('exp-form').reset();
+      // Refresh list if the same patient is selected in the tab
+      const tabSel = document.getElementById('exp-patient-select');
+      if (tabSel && tabSel.value === patientId) loadExpedientes(patientId);
+      setTimeout(closeExpModal, 1200);
+    } catch (err) {
+      showAlert('exp-modal-error', err.message || 'No se pudo guardar el expediente.');
+    } finally {
+      setLoading('exp-submit-btn', false);
+    }
+  });
+
+  // ── Quick Patient Modal ───────────────────────────────────────────────
+
+  const _PHONE_RE = /^[+\d][\d\s\-(). ]{5,19}$/;
+  const _EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function openQuickPatientModal() {
+    hideAlert('qp-error');
+    hideAlert('qp-success');
+    document.getElementById('quick-patient-form').reset();
+    document.getElementById('quick-patient-modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('qp-name').focus(), 60);
+  }
+
+  function closeQuickPatientModal() {
+    document.getElementById('quick-patient-modal').style.display = 'none';
+  }
+
+  function closeQuickPatientModalOverlay(e) {
+    if (e.target === document.getElementById('quick-patient-modal')) closeQuickPatientModal();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('quick-patient-modal').style.display === 'flex') {
+      closeQuickPatientModal();
+    }
+  });
+
+  async function submitQuickPatient(e) {
+    e.preventDefault();
+    hideAlert('qp-error');
+    hideAlert('qp-success');
+
+    const name  = document.getElementById('qp-name').value.trim();
+    const phone = document.getElementById('qp-phone').value.trim();
+    const email_val = document.getElementById('qp-email').value.trim();
+
+    if (!name) {
+      showAlert('qp-error', 'El nombre es requerido.');
+      document.getElementById('qp-name').focus();
+      return;
+    }
+    if (phone && !_PHONE_RE.test(phone)) {
+      showAlert('qp-error', 'Formato de teléfono inválido. Ej: +52 55 1234 5678');
+      document.getElementById('qp-phone').focus();
+      return;
+    }
+    if (email_val && !_EMAIL_RE.test(email_val)) {
+      showAlert('qp-error', 'Formato de correo inválido.');
+      document.getElementById('qp-email').focus();
+      return;
+    }
+
+    setLoading('qp-submit-btn', true);
+
+    const payload = { full_name: name };
+    if (phone)     payload.phone = phone;
+    if (email_val) payload.email = email_val;
+
+    try {
+      const res = await fetch(`${API}/api/v1/patients`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 401) { logout(); return; }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.detail
+          ? (Array.isArray(err.detail) ? err.detail.map(d => d.msg || JSON.stringify(d)).join(', ') : err.detail)
+          : `Error ${res.status}`;
+        throw new Error(msg);
+      }
+
+      showAlert('qp-success', `Paciente "${name}" registrado exitosamente.`, 'success');
+      document.getElementById('quick-patient-form').reset();
+      await loadPatients();
+      setTimeout(closeQuickPatientModal, 1400);
+    } catch (err) {
+      showAlert('qp-error', err.message || 'No se pudo registrar el paciente.');
+    } finally {
+      setLoading('qp-submit-btn', false);
+    }
+  }
+
+  // ── Ubicaciones ───────────────────────────────────────────────────────
+
+  async function loadLocations() {
+    hideAlert('loc-error');
+    const tbody = document.getElementById('loc-body');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5"><div class="loading"><div class="spinner"></div></div></td></tr>';
+    try {
+      const res = await fetch(`${API}/api/v1/locations`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      const list = await res.json();
+      _locationMap = {};
+      list.forEach(l => { _locationMap[l.id] = l; });
+      _syncCalLocSelect();
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          <p>No hay ubicaciones registradas</p></div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(l => {
+        const rooms    = l.rooms || {};
+        const nRooms   = Object.keys(rooms).length;
+        const mapsLink = l.google_maps_url
+          ? `<a href="${l.google_maps_url}" target="_blank" rel="noopener" style="color:var(--blue);">Ver mapa</a>`
+          : '<span style="color:#9ca3af;">—</span>';
+        return `<tr>
+          <td><strong>${l.name}</strong></td>
+          <td style="font-size:.85rem;color:#6b7280;">${l.address}</td>
+          <td>${mapsLink}</td>
+          <td>
+            <button class="btn btn-outline btn-sm" onclick="openRoomsModal('${l.id}')">
+              ${nRooms} consultorio${nRooms !== 1 ? 's' : ''}
+            </button>
+          </td>
+          <td style="white-space:nowrap;">
+            <button class="btn btn-outline btn-sm" onclick="openLocModal('${l.id}')" style="margin-right:.25rem;">Editar</button>
+            <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteLocation('${l.id}','${l.name.replace(/'/g,"\\'")}')">Eliminar</button>
+          </td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = '';
+      showAlert('loc-error', err.message || 'No se pudieron cargar las ubicaciones.');
+    }
+  }
+
+  function openLocModal(locationId) {
+    hideAlert('loc-modal-error');
+    hideAlert('loc-modal-success');
+    const l    = locationId ? _locationMap[locationId] : null;
+    const edit = !!l;
+    document.getElementById('loc-modal-title').textContent  = edit ? 'Editar Ubicación'  : 'Nueva Ubicación';
+    document.getElementById('loc-submit-label').textContent = edit ? 'Guardar Cambios'   : 'Guardar';
+    document.getElementById('loc-id').value      = edit ? l.id             : '';
+    document.getElementById('loc-name').value    = edit ? l.name           : '';
+    document.getElementById('loc-address').value = edit ? l.address        : '';
+    document.getElementById('loc-maps').value    = edit ? (l.google_maps_url || '') : '';
+    document.getElementById('loc-modal').style.display = 'flex';
+  }
+  function closeLocModal() { document.getElementById('loc-modal').style.display = 'none'; }
+  function closeLocModalOverlay(e) { if (e.target === document.getElementById('loc-modal')) closeLocModal(); }
+
+  document.getElementById('loc-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert('loc-modal-error');
+    hideAlert('loc-modal-success');
+    setLoading('loc-submit-btn', true);
+    const locId   = document.getElementById('loc-id').value;
+    const isEdit  = !!locId;
+    const name    = document.getElementById('loc-name').value.trim();
+    const address = document.getElementById('loc-address').value.trim();
+    const maps    = document.getElementById('loc-maps').value.trim();
+    try {
+      const url    = isEdit ? `${API}/api/v1/locations/${locId}` : `${API}/api/v1/locations`;
+      const method = isEdit ? 'PUT' : 'POST';
+      const body   = { name, address, ...(maps && { google_maps_url: maps }) };
+      if (!isEdit) body.rooms = {};
+      const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(body) });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(_apiErrMsg(err, `Error ${res.status}`));
+      }
+      showAlert('loc-modal-success', `Ubicación "${name}" ${isEdit ? 'actualizada' : 'creada'} exitosamente.`, 'success');
+      await loadLocations();
+      setTimeout(closeLocModal, 1000);
+    } catch (err) {
+      showAlert('loc-modal-error', err.message || 'No se pudo guardar la ubicación.');
+    } finally {
+      setLoading('loc-submit-btn', false);
+    }
+  });
+
+  async function confirmDeleteLocation(locId, locName) {
+    if (!confirm(`¿Eliminar la ubicación "${locName}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      const res = await fetch(`${API}/api/v1/locations/${locId}`, { method: 'DELETE', headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      await loadLocations();
+    } catch (err) {
+      showAlert('loc-error', err.message || 'No se pudo eliminar la ubicación.');
+    }
+  }
+
+  // ── Rooms modal ──────────────────────────────────────────────────────
+
+  function openRoomsModal(locationId) {
+    hideAlert('rooms-modal-error');
+    hideAlert('rooms-modal-success');
+    _roomsLocId = locationId;
+    const loc = _locationMap[locationId];
+    document.getElementById('rooms-modal-loc-name').textContent = loc ? loc.name : '';
+    _renderRoomsEditor(loc ? (loc.rooms || {}) : {});
+    document.getElementById('rooms-modal').style.display = 'flex';
+  }
+  function closeRoomsModal() { document.getElementById('rooms-modal').style.display = 'none'; }
+  function closeRoomsModalOverlay(e) { if (e.target === document.getElementById('rooms-modal')) closeRoomsModal(); }
+
+  function _renderRoomsEditor(rooms) {
+    const ed = document.getElementById('rooms-editor');
+    const entries = Object.entries(rooms);
+    ed.innerHTML = entries.length ? '' : '<p style="color:#9ca3af;font-size:.85rem;margin:0 0 .5rem;">Sin consultorios. Agrega uno abajo.</p>';
+    entries.forEach(([roomName, roomData]) => {
+      ed.appendChild(_makeRoomBlock(roomName, roomData));
+    });
+  }
+
+  function _makeRoomBlock(roomName, roomData) {
+    const units  = roomData.units  || [];
+    const colors = roomData.colors || {};
+    const div = document.createElement('div');
+    div.className = 'room-block';
+    div.style.cssText = 'border:1px solid #e5e7eb;border-radius:8px;padding:.75rem;margin-bottom:.65rem;';
+    div.innerHTML = `
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
+        <input type="text" value="${roomName}" placeholder="Nombre del consultorio"
+          style="flex:1;padding:.35rem .6rem;border:1px solid #d1d5db;border-radius:6px;font-size:.9rem;" />
+        <button type="button" onclick="this.closest('.room-block').remove()"
+          style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:.25rem .5rem;cursor:pointer;font-size:.85rem;">✕</button>
+      </div>
+      <div class="units-list" style="padding-left:.75rem;"></div>
+      <button type="button" onclick="addUnit(this)"
+        style="margin-top:.4rem;font-size:.8rem;padding:.2rem .5rem;border:1px dashed #d1d5db;border-radius:5px;background:none;cursor:pointer;color:#6b7280;">
+        + Unidad
+      </button>`;
+    const list = div.querySelector('.units-list');
+    units.forEach(u => list.appendChild(_makeUnitRow(u, colors[u] || '#3b9edd')));
+    return div;
+  }
+
+  function _makeUnitRow(unitName, color) {
+    const row = document.createElement('div');
+    row.className = 'unit-row';
+    row.style.cssText = 'display:flex;gap:.4rem;align-items:center;margin-bottom:.35rem;';
+    row.innerHTML = `
+      <input type="text" value="${unitName}" placeholder="Nombre de unidad"
+        style="flex:1;padding:.3rem .5rem;border:1px solid #d1d5db;border-radius:5px;font-size:.85rem;" />
+      <input type="color" value="${color}"
+        style="width:32px;height:28px;padding:2px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;" />
+      <button type="button" onclick="this.closest('.unit-row').remove()"
+        style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1rem;line-height:1;">✕</button>`;
+    return row;
+  }
+
+  function addRoom() {
+    const ed = document.getElementById('rooms-editor');
+    const placeholder = ed.querySelector('p');
+    if (placeholder) placeholder.remove();
+    ed.appendChild(_makeRoomBlock('', { units: [], colors: {} }));
+    ed.lastElementChild.querySelector('input[type="text"]').focus();
+  }
+
+  function addUnit(btn) {
+    const list = btn.previousElementSibling;
+    list.appendChild(_makeUnitRow('', '#3b9edd'));
+    list.lastElementChild.querySelector('input[type="text"]').focus();
+  }
+
+  async function saveRooms() {
+    hideAlert('rooms-modal-error');
+    hideAlert('rooms-modal-success');
+    setLoading('rooms-save-btn', true);
+    const rooms = {};
+    document.querySelectorAll('#rooms-editor .room-block').forEach(rb => {
+      const roomName = rb.querySelector(':scope > div > input[type="text"]').value.trim();
+      if (!roomName) return;
+      const units = [], colors = {};
+      rb.querySelectorAll('.unit-row').forEach(ur => {
+        const [nameIn, colorIn] = ur.querySelectorAll('input');
+        const uName = nameIn.value.trim();
+        if (!uName) return;
+        units.push(uName);
+        colors[uName] = colorIn.value;
+      });
+      rooms[roomName] = { units, colors };
+    });
+    try {
+      const res = await fetch(`${API}/api/v1/locations/${_roomsLocId}`, {
+        method: 'PUT', headers: authHeaders(), body: JSON.stringify({ rooms })
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(_apiErrMsg(err, `Error ${res.status}`));
+      }
+      const updated = await res.json();
+      _locationMap[_roomsLocId] = updated;
+      _syncCalLocSelect();
+      showAlert('rooms-modal-success', 'Consultorios guardados.', 'success');
+      await loadLocations();
+      setTimeout(closeRoomsModal, 900);
+    } catch (err) {
+      showAlert('rooms-modal-error', err.message || 'No se pudo guardar.');
+    } finally {
+      setLoading('rooms-save-btn', false);
+    }
+  }
+
+  // ── Appointment modal — location cascade ─────────────────────────────
+
+  function _syncCalLocSelect() {
+    const sel = document.getElementById('cal-loc-select');
+    if (!sel) return;
+    const locs = Object.values(_locationMap);
+    const grp  = document.getElementById('cal-loc-group');
+    if (!locs.length) { grp.style.display = 'none'; return; }
+    grp.style.display = '';
+    sel.innerHTML = '<option value="">— Sin ubicación —</option>' +
+      locs.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+    document.getElementById('cal-room-row').style.display = 'none';
+  }
+
+  function onCalLocChange() {
+    const locId   = document.getElementById('cal-loc-select').value;
+    const roomRow = document.getElementById('cal-room-row');
+    const roomSel = document.getElementById('cal-room-select');
+    const unitSel = document.getElementById('cal-unit-select');
+    document.getElementById('cal-unit-color').style.background = '';
+    if (!locId) { roomRow.style.display = 'none'; return; }
+    const loc   = _locationMap[locId];
+    const rooms = Object.keys(loc?.rooms || {});
+    if (!rooms.length) { roomRow.style.display = 'none'; return; }
+    roomSel.innerHTML = '<option value="">— Seleccionar —</option>' +
+      rooms.map(r => `<option value="${r}">${r}</option>`).join('');
+    unitSel.innerHTML = '<option value="">— Seleccionar —</option>';
+    roomRow.style.display = '';
+  }
+
+  function onCalRoomChange() {
+    const locId   = document.getElementById('cal-loc-select').value;
+    const room    = document.getElementById('cal-room-select').value;
+    const unitSel = document.getElementById('cal-unit-select');
+    document.getElementById('cal-unit-color').style.background = '';
+    if (!locId || !room) { unitSel.innerHTML = '<option value="">— Seleccionar —</option>'; return; }
+    const roomData = _locationMap[locId]?.rooms?.[room] || {};
+    const units    = roomData.units  || [];
+    const colors   = roomData.colors || {};
+    unitSel.innerHTML = '<option value="">— Seleccionar —</option>' +
+      units.map(u => `<option value="${u}" data-color="${colors[u] || ''}">${u}</option>`).join('');
+  }
+
+  function onCalUnitChange() {
+    const sel   = document.getElementById('cal-unit-select');
+    const color = sel.options[sel.selectedIndex]?.dataset?.color || '';
+    document.getElementById('cal-unit-color').style.background = color;
+  }
+
+  // ── Forgot password modal ────────────────────────────────────────────
+  function openForgotModal() {
+    hideAlert('forgot-error');
+    hideAlert('forgot-success');
+    document.getElementById('forgot-email').value = '';
+    document.getElementById('forgot-modal').style.display = 'flex';
+  }
+  function closeForgotModal() {
+    document.getElementById('forgot-modal').style.display = 'none';
+  }
+  function closeForgotModalOverlay(e) {
+    if (e.target === document.getElementById('forgot-modal')) closeForgotModal();
+  }
+
+  document.getElementById('forgot-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert('forgot-error');
+    hideAlert('forgot-success');
+    setLoading('forgot-submit-btn', true);
+
+    const emailVal = document.getElementById('forgot-email').value.trim();
+
+    try {
+      const res = await fetch(`${API}/api/v1/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailVal }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+      showAlert('forgot-success', data.message || 'Si el correo existe, recibirás un enlace en breve.');
+      document.getElementById('forgot-email').value = '';
+    } catch (err) {
+      showAlert('forgot-error', err.message || 'Error de conexión.');
+    } finally {
+      setLoading('forgot-submit-btn', false);
+    }
+  });
+
+  // ── Reset password modal ─────────────────────────────────────────────
+  let _resetToken = null;
+
+  function openResetModal(token) {
+    _resetToken = token;
+    hideAlert('reset-error');
+    hideAlert('reset-success');
+    document.getElementById('reset-new').value     = '';
+    document.getElementById('reset-confirm').value = '';
+    document.getElementById('reset-modal').style.display = 'flex';
+  }
+  function closeResetModal() {
+    document.getElementById('reset-modal').style.display = 'none';
+    _resetToken = null;
+    // Remove token from URL without reloading
+    const url = new URL(window.location.href);
+    url.searchParams.delete('reset_token');
+    window.history.replaceState({}, '', url.toString());
+  }
+  function closeResetModalOverlay(e) {
+    if (e.target === document.getElementById('reset-modal')) closeResetModal();
+  }
+
+  document.getElementById('reset-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert('reset-error');
+    hideAlert('reset-success');
+
+    const newPwd     = document.getElementById('reset-new').value;
+    const confirmPwd = document.getElementById('reset-confirm').value;
+
+    if (newPwd !== confirmPwd) {
+      showAlert('reset-error', 'Las contraseñas no coinciden.');
+      return;
+    }
+
+    setLoading('reset-submit-btn', true);
+
+    try {
+      const res = await fetch(`${API}/api/v1/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: _resetToken, new_password: newPwd }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+
+      showAlert('reset-success', data.message || 'Contraseña actualizada. Ya puedes iniciar sesión.');
+      document.getElementById('reset-form').reset();
+      _resetToken = null;
+      const url = new URL(window.location.href);
+      url.searchParams.delete('reset_token');
+      window.history.replaceState({}, '', url.toString());
+    } catch (err) {
+      showAlert('reset-error', err.message || 'El enlace es inválido o ha expirado.');
+    } finally {
+      setLoading('reset-submit-btn', false);
+    }
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  (function init() {
+    const today = new Date().toISOString().split('T')[0];
+
+    // Check for password reset token in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('reset_token');
+    if (resetToken) {
+      showLogin();
+      openResetModal(resetToken);
+      return;
+    }
+
+    _initDashFilters();
+
+    if (token()) {
+      const payload = jwtPayload(token());
+      if (!localStorage.getItem('user_role')) localStorage.setItem('user_role', payload.role || '');
+      if (!localStorage.getItem('clinic_id')) localStorage.setItem('clinic_id', payload.clinic_id || '');
+      showDashboard();  // calls switchTab('tab-dashboard') → loadDashboard()
+      loadPatients();
+      loadDoctorSelects().then(() => loadAppointments());
+      if (userRole() === 'owner') { loadDoctors(); loadUsers(); }
+      loadLocations();
+    } else {
+      showLogin();
+    }
+  })();
+</script>
+<div class="cal-tooltip" id="cal-tooltip"></div>
+</body>
+</html>

@@ -89,6 +89,12 @@ class User(TenantBase):
         comment="Encrypted display name. Decrypted only when rendering UI.",
     )
 
+    phone_enc: Mapped[Optional[str]] = mapped_column(
+        EncryptedString,
+        nullable=True,
+        comment="Encrypted contact phone. Decrypted only at the API layer.",
+    )
+
     # ── Auth ──────────────────────────────────────────────────────────────────
     hashed_password: Mapped[str] = mapped_column(
         String(255),
