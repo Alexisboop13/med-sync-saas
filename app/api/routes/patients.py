@@ -13,11 +13,13 @@ from sqlalchemy.orm import joinedload
 from app.api.deps import AnyStaff, CurrentUser, DoctorOrAbove, OwnerOnly, Role, TenantContext
 from app.core.limiter import get_ip_and_clinic, limiter
 from app.core.crypto import _load_keyring, make_search_hash
+from app.models.audit_log import EventType
 from app.models.appointment import Appointment
 from app.models.doctor import Doctor
 from app.models.medical_record import MedicalRecord
 from app.models.patient import Patient
 from app.schemas.patient import PatientCreate, PatientResponse, PatientUpdate, PaginatedPatientResponse
+from app.services.audit import log_audit
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
 
@@ -81,7 +83,7 @@ async def create_patient(
     request: Request,
     body: PatientCreate,
     ctx: TenantContext,
-    _: DoctorOrAbove,
+    current_user: DoctorOrAbove,
 ):
     patient = Patient(
         clinic_id=ctx.clinic_id,
@@ -104,6 +106,24 @@ async def create_patient(
         key_version=_key_version(),
     )
     ctx.db.add(patient)
+    await ctx.db.flush()
+    await log_audit(
+        ctx.db,
+        event_type=EventType.PATIENT_CREATED,
+        entity_type="Patient",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=patient.id,
+        source=request.url.path,
+        data={
+            "actor_role": current_user.role,
+            "medical_record_code": patient.medical_record_code,
+            "masked_fields": ["full_name_enc", "phone_enc", "email_enc", "date_of_birth_enc"],
+        },
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
     await ctx.db.refresh(patient)
     return patient
@@ -381,7 +401,7 @@ async def update_patient(
     patient_id: uuid.UUID,
     body: PatientUpdate,
     ctx: TenantContext,
-    _: DoctorOrAbove,
+    current_user: DoctorOrAbove,
 ):
     result = await ctx.db.execute(
         select(Patient).where(
@@ -417,6 +437,27 @@ async def update_patient(
         )
 
     patient.key_version = _key_version()
+    changed = list(updates.keys())
+    masked = [_ENC_FIELD_MAP[f] for f in changed if f in _ENC_FIELD_MAP]
+    plain_changes = {f: updates[f] for f in changed if f not in _ENC_FIELD_MAP}
+    await log_audit(
+        ctx.db,
+        event_type=EventType.PATIENT_UPDATED,
+        entity_type="Patient",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=patient_id,
+        source=request.url.path,
+        data={
+            "actor_role": current_user.role,
+            "changed_fields": changed,
+            "masked_fields": masked,
+            "after": plain_changes,
+        },
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
     await ctx.db.refresh(patient)
     return patient
@@ -517,7 +558,7 @@ async def delete_patient(
     request: Request,
     patient_id: uuid.UUID,
     ctx: TenantContext,
-    _: DoctorOrAbove,
+    current_user: DoctorOrAbove,
 ):
     result = await ctx.db.execute(
         select(Patient).where(
@@ -531,4 +572,17 @@ async def delete_patient(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found.")
     patient.is_active = False
+    await log_audit(
+        ctx.db,
+        event_type=EventType.PATIENT_DELETED,
+        entity_type="Patient",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=patient_id,
+        source=request.url.path,
+        data={"actor_role": current_user.role, "soft_delete": True},
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()

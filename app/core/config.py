@@ -82,6 +82,18 @@ class Settings(BaseSettings):
     # ── Stripe ────────────────────────────────────────────────────────────────
     STRIPE_SECRET_KEY:     str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
+    # Price IDs from Stripe Dashboard → Products → Prices
+    STRIPE_PRICE_STARTER_MONTHLY:    str = ""
+    STRIPE_PRICE_STARTER_ANNUAL:     str = ""
+    STRIPE_PRICE_GROWTH_MONTHLY:     str = ""
+    STRIPE_PRICE_GROWTH_ANNUAL:      str = ""
+    STRIPE_PRICE_ENTERPRISE_MONTHLY: str = ""
+    STRIPE_PRICE_ENTERPRISE_ANNUAL:  str = ""
+
+    # ── Redis (rate limiting) ──────────────────────────────────────────────────
+    # Empty = in-process memory (single-worker only).
+    # Set to redis:// or rediss:// URL for multi-worker / production deployments.
+    REDIS_URL: str = ""
 
     # ── CORS ──────────────────────────────────────────────────────────────────
     CORS_ORIGINS: str = "http://localhost:3000,https://medsync.clinic"

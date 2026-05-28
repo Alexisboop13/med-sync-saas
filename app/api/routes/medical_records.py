@@ -11,11 +11,15 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import DoctorOrAbove, TenantContext, ClinicContext, Role
+from app.core import s3
+from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.crypto import _load_keyring
+from app.models.audit_log import EventType
 from app.models.doctor import Doctor
 from app.models.medical_record import MedicalRecord
 from app.models.patient import Patient
+from app.services.audit import log_audit
 from app.schemas.medical_record import (
     MedicalRecordCreate,
     MedicalRecordResponse,
@@ -103,6 +107,25 @@ async def create_medical_record(
         key_version=_key_version(),
     )
     ctx.db.add(record)
+    await ctx.db.flush()
+    await log_audit(
+        ctx.db,
+        event_type=EventType.RECORD_CREATED,
+        entity_type="MedicalRecord",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=record.id,
+        source=request.url.path,
+        data={
+            "actor_role": current_user.role,
+            "patient_id": str(body.patient_id),
+            "doctor_id": str(body.doctor_id),
+            "masked_fields": list(_ENC_FIELD_MAP.values()),
+        },
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
     await ctx.db.refresh(record)
     return record
@@ -165,6 +188,20 @@ async def get_medical_record(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Medical record not found.")
 
     await _assert_can_access(ctx, record, current_user)
+    await log_audit(
+        ctx.db,
+        event_type=EventType.RECORD_VIEWED,
+        entity_type="MedicalRecord",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=record_id,
+        source=request.url.path,
+        data={"actor_role": current_user.role},
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        commit=True,
+    )
     return record
 
 
@@ -211,6 +248,27 @@ async def update_medical_record(
         record.s3_pdf_key = updates["s3_pdf_key"]
 
     record.key_version = _key_version()
+    was_signed = record.is_signed and "is_signed" in body.model_dump(exclude_unset=True)
+    changed_fields = list(updates.keys())
+    masked = [_ENC_FIELD_MAP[f] for f in changed_fields if f in _ENC_FIELD_MAP]
+    _event = EventType.RECORD_SIGNED if was_signed else EventType.RECORD_UPDATED
+    await log_audit(
+        ctx.db,
+        event_type=_event,
+        entity_type="MedicalRecord",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=record_id,
+        source=request.url.path,
+        data={
+            "actor_role": current_user.role,
+            "changed_fields": changed_fields,
+            "masked_fields": masked,
+        },
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
     await ctx.db.refresh(record)
     return record
@@ -242,8 +300,24 @@ async def delete_medical_record(
             detail="Signed records cannot be deleted.",
         )
 
+    key = record.s3_pdf_key
+    await log_audit(
+        ctx.db,
+        event_type="medical_record.deleted",
+        entity_type="MedicalRecord",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=record_id,
+        source=request.url.path,
+        data={"actor_role": current_user.role, "had_pdf": bool(key)},
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.delete(record)
     await ctx.db.commit()
+    if key and not key.startswith("uploads/"):
+        await s3.delete_file(key)
 
 
 async def _fetch_and_authorize(
@@ -286,13 +360,23 @@ async def upload_pdf(
             detail="File exceeds the 10 MB limit.",
         )
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S%f")
-    upload_dir = Path("uploads") / "medical-records" / str(ctx.clinic_id) / str(record_id)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    dest = upload_dir / f"{timestamp}.pdf"
-    dest.write_bytes(content)
+    key = s3.build_key(str(ctx.clinic_id), str(record_id))
+    await s3.upload_file(content, key)
 
-    record.s3_pdf_key = dest.as_posix()
+    record.s3_pdf_key = key
+    await log_audit(
+        ctx.db,
+        event_type=EventType.RECORD_PDF_UPLOADED,
+        entity_type="MedicalRecord",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=record_id,
+        source=request.url.path,
+        data={"actor_role": current_user.role, "s3_key": key},
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
     await ctx.db.refresh(record)
     return record
@@ -315,20 +399,42 @@ async def download_pdf(
             detail="This record has no PDF attached.",
         )
 
-    base = Path("uploads").resolve()
-    file_path = Path(record.s3_pdf_key).resolve()
-    if not str(file_path).startswith(str(base) + "/"):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
-    if not file_path.exists():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="PDF file not found on disk.",
+    key = record.s3_pdf_key
+    filename = f"record_{record_id}.pdf"
+
+    await log_audit(
+        ctx.db,
+        event_type=EventType.RECORD_PDF_DOWNLOADED,
+        entity_type="MedicalRecord",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=record_id,
+        source=request.url.path,
+        data={"actor_role": current_user.role},
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        commit=True,
+    )
+
+    # Backward compat: records uploaded before S3 migration have a local path.
+    # Run scripts/migrate_pdfs_to_s3.py to convert these and remove this branch.
+    if key.startswith("uploads/"):
+        base = Path("uploads").resolve()
+        file_path = Path(key).resolve()
+        if not str(file_path).startswith(str(base) + "/"):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
+        if not file_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="PDF file not found on disk.",
+            )
+        disposition = "inline" if inline else "attachment"
+        return FileResponse(
+            path=str(file_path),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'{disposition}; filename="{filename}"'},
         )
 
-    disposition = "inline" if inline else "attachment"
-    filename = f"record_{record_id}.pdf"
-    return FileResponse(
-        path=str(file_path),
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'{disposition}; filename="{filename}"'},
-    )
+    url = await s3.presigned_download_url(key, filename=filename, inline=inline)
+    return {"url": url, "expires_in": settings.S3_PRESIGNED_URL_TTL}

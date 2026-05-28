@@ -1,0 +1,52 @@
+version: "3.9"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Med-Sync — desarrollo local
+#
+# Levanta los servicios de infraestructura (DB + Redis).
+# La aplicación corre fuera del compose para que --reload funcione:
+#
+#   docker compose up -d
+#   APP_ENV=development uvicorn app.main:app --reload --workers 1
+#
+# Para probar con múltiples workers (requiere REDIS_URL configurado):
+#
+#   APP_ENV=development REDIS_URL=redis://localhost:6379 \
+#     gunicorn app.main:app -k uvicorn.workers.UvicornWorker --workers 4
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  redis:
+    image: redis:7-alpine
+    container_name: medsync_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: medsync_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: medsync
+      POSTGRES_PASSWORD: medsync_dev
+      POSTGRES_DB: medsync_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medsync -d medsync_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

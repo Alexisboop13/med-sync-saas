@@ -12,8 +12,10 @@ from app.api.deps import CurrentUser, OwnerOnly, Role, TenantContext
 from app.core.crypto import decrypt, encrypt, make_search_hash
 from app.core.limiter import limiter
 from app.core.security import get_password_hash, verify_password
+from app.models.audit_log import EventType
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
+from app.services.audit import log_audit
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -95,7 +97,25 @@ async def update_user_role(
             detail="Cannot change the role of an owner.",
         )
 
+    prev_role = user.role
     user.role = body.role
+    await log_audit(
+        ctx.db,
+        event_type=EventType.USER_ROLE_CHANGED,
+        entity_type="User",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=user.id,
+        source=request.url.path,
+        data={
+            "before": {"role": prev_role},
+            "after": {"role": body.role},
+            "target_user_id": str(user.id),
+        },
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
 
 
@@ -140,6 +160,19 @@ async def deactivate_user(
     for token in tokens_result.scalars().all():
         token.revoked_at = datetime.now(timezone.utc)
 
+    await log_audit(
+        ctx.db,
+        event_type=EventType.USER_DEACTIVATED,
+        entity_type="User",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=user_id,
+        source=request.url.path,
+        data={"target_user_id": str(user_id)},
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
 
 

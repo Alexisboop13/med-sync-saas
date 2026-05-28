@@ -4,11 +4,16 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import AnyStaff, CurrentUser, DBSession, TenantContext, require_role, Role
+from app.api.routes.clinics import resolve_notify_email
+from app.core.crypto import decrypt
+from app.core.email import send_reschedule_request_notification
 from app.models.appointment import Appointment
+from app.models.doctor import Doctor
 from app.models.reschedule_request import RescheduleRequest, RescheduleRequestStatus
 from app.schemas.reschedule_request import (
     RescheduleRequestCreate,
@@ -23,7 +28,13 @@ router = APIRouter(prefix="/reschedule-requests", tags=["Reschedule Requests"])
 
 async def _load_public_appt(token: str, db) -> Appointment:
     result = await db.execute(
-        select(Appointment).where(Appointment.magic_token == token)
+        select(Appointment)
+        .options(
+            selectinload(Appointment.clinic),
+            selectinload(Appointment.patient),
+            selectinload(Appointment.doctor).selectinload(Doctor.user),
+        )
+        .where(Appointment.magic_token == token)
     )
     appt = result.scalar_one_or_none()
     if appt is None:
@@ -39,6 +50,15 @@ async def _load_public_appt(token: str, db) -> Appointment:
     return appt
 
 
+def _safe_decrypt(enc: str | None, fallback: str) -> str:
+    if not enc:
+        return fallback
+    try:
+        return decrypt(enc)
+    except Exception:
+        return fallback
+
+
 # ── Public: patient submits request via magic token ───────────────────────────
 
 @router.post(
@@ -51,6 +71,7 @@ async def create_reschedule_request(
     token: str,
     body: RescheduleRequestCreate,
     db: DBSession,
+    background_tasks: BackgroundTasks,
 ) -> RescheduleRequestResponse:
     appt = await _load_public_appt(token, db)
 
@@ -64,6 +85,22 @@ async def create_reschedule_request(
     db.add(req)
     await db.commit()
     await db.refresh(req)
+
+    patient_name = _safe_decrypt(appt.patient.full_name_enc if appt.patient else None, "Paciente")
+    doctor_name = "Doctor"
+    if appt.doctor and appt.doctor.user:
+        doctor_name = _safe_decrypt(appt.doctor.user.full_name_enc, "Doctor")
+
+    notify_email = await resolve_notify_email(appt.clinic, db)
+    send_reschedule_request_notification(
+        notify_email=notify_email,
+        patient_name=patient_name,
+        doctor_name=doctor_name,
+        starts_at=appt.starts_at,
+        patient_note=body.patient_note,
+        background_tasks=background_tasks,
+    )
+
     return RescheduleRequestResponse.model_validate(req)
 
 

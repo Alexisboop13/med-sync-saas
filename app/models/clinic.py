@@ -19,7 +19,7 @@ in deps.py to block access when a subscription lapses.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from typing import TYPE_CHECKING, List, Optional
 
@@ -102,6 +102,12 @@ class Clinic(SystemBase):
         comment="S3 object key for the clinic logo (served via presigned URL).",
     )
 
+    notify_email: Mapped[Optional[str]] = mapped_column(
+        String(254),
+        nullable=True,
+        comment="Inbox for patient reschedule-request notifications. Falls back to owner email.",
+    )
+
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
@@ -148,6 +154,12 @@ class Clinic(SystemBase):
         comment="When NULL, the clinic is on a paid plan.",
     )
 
+    past_due_since: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When the subscription first entered past_due. Cleared on payment recovery. Used for the 15-day grace period.",
+    )
+
     # ── Relationships (lazy='select' — avoid N+1 in list endpoints) ───────────
     users: Mapped[List["User"]] = relationship(
         "User",
@@ -190,20 +202,37 @@ class Clinic(SystemBase):
 
     # ── Business logic helpers ────────────────────────────────────────────────
 
+    _GRACE_DAYS = 15
+
     @property
     def is_suspended(self) -> bool:
         """
         True when the clinic should be denied access to the API.
         Used by get_clinic() in deps.py as the single access-gate check.
 
-        PAST_DUE gets a grace window — Stripe retries for 72 h by default.
-        During that window the clinic stays accessible; after 72 h Stripe moves
-        it to CANCELED and we block on the next request.
+        PAST_DUE gets a 15-day grace window tracked via past_due_since.
+        During those 15 days the clinic stays accessible; after that every
+        request is blocked until the payment is recovered (status → ACTIVE).
         """
-        return self.subscription_status in (
+        if self.subscription_status in (
             SubscriptionStatus.CANCELED,
             SubscriptionStatus.SUSPENDED,
-        )
+        ):
+            return True
+        if self.subscription_status == SubscriptionStatus.PAST_DUE:
+            if self.past_due_since is None:
+                return False
+            grace_end = self.past_due_since + timedelta(days=self._GRACE_DAYS)
+            return datetime.now(timezone.utc) > grace_end
+        return False
+
+    @property
+    def grace_days_remaining(self) -> Optional[int]:
+        """Days left in the past_due grace window (None when not past_due)."""
+        if self.subscription_status != SubscriptionStatus.PAST_DUE or self.past_due_since is None:
+            return None
+        remaining = (self.past_due_since + timedelta(days=self._GRACE_DAYS) - datetime.now(timezone.utc)).days
+        return max(0, remaining)
 
     @property
     def on_trial(self) -> bool:

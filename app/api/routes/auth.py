@@ -24,10 +24,12 @@ from app.core.security import (
     hash_refresh_token,
     verify_password,
 )
+from app.models.audit_log import EventType
 from app.models.clinic import Clinic
 from app.models.password_reset_token import PasswordResetToken
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
+from app.services.audit import log_audit
 from app.schemas.auth import (
     ForgotPasswordRequest,
     LogoutRequest,
@@ -232,8 +234,35 @@ async def login(request: Request, body: UserLogin, db: AsyncSession = Depends(ge
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is deactivated.")
 
     if not verify_password(body.password, user.hashed_password):
+        await log_audit(
+            db,
+            event_type=EventType.USER_LOGIN_FAILED,
+            entity_type="User",
+            clinic_id=user.clinic_id,
+            actor_id=user.id,
+            actor_role=user.role,
+            entity_id=user.id,
+            source=request.url.path,
+            data={"reason": "invalid_password"},
+            ip=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            commit=True,
+        )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials.")
 
+    await log_audit(
+        db,
+        event_type=EventType.USER_LOGIN,
+        entity_type="User",
+        clinic_id=user.clinic_id,
+        actor_id=user.id,
+        actor_role=user.role,
+        entity_id=user.id,
+        source=request.url.path,
+        data={"actor_role": user.role},
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     return await _create_tokens(db, user)
 
 
@@ -270,6 +299,19 @@ async def refresh_token(request: Request, body: RefreshTokenRequest, db: AsyncSe
     stored.revoked_at = datetime.now(timezone.utc)
     await db.flush()
 
+    await log_audit(
+        db,
+        event_type=EventType.USER_TOKEN_REFRESHED,
+        entity_type="User",
+        clinic_id=user.clinic_id,
+        actor_id=user.id,
+        actor_role=user.role,
+        entity_id=user.id,
+        source=request.url.path,
+        data={"actor_role": user.role},
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     return await _create_tokens(db, user)
 
 
@@ -285,6 +327,17 @@ async def logout(request: Request, body: LogoutRequest, db: AsyncSession = Depen
 
     if stored is not None and stored.revoked_at is None:
         stored.revoked_at = datetime.now(timezone.utc)
+        await log_audit(
+            db,
+            event_type=EventType.USER_LOGOUT,
+            entity_type="User",
+            clinic_id=stored.clinic_id,
+            actor_id=stored.user_id,
+            source=request.url.path,
+            data={},
+            ip=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
         await db.commit()
 
 

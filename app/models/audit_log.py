@@ -106,6 +106,8 @@ class EventType:
     # User / auth events
     USER_LOGIN = "user.login"
     USER_LOGIN_FAILED = "user.login.failed"
+    USER_LOGOUT = "user.logout"
+    USER_TOKEN_REFRESHED = "user.token.refreshed"
     USER_CREATED = "user.created"
     USER_ROLE_CHANGED = "user.role.changed"
     USER_DEACTIVATED = "user.deactivated"

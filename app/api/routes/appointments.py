@@ -4,7 +4,6 @@ import csv
 import io
 import uuid
 from datetime import date, datetime, timedelta, timezone
-from pathlib import Path
 from typing import List, Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -14,9 +13,13 @@ from sqlalchemy import func, outerjoin, select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import AnyStaff, ClinicContext, CurrentUser, DBSession, DoctorOrAbove, TenantContext
+from app.core import s3
 from app.core.crypto import DecryptionError, _load_keyring, decrypt
 from app.core.config import settings
 from app.core.email import send_appointment_confirmation, send_reschedule_proposal, send_reschedule_request_notification
+from app.api.routes.clinics import resolve_notify_email
+from app.models.audit_log import EventType
+from app.services.audit import log_audit
 from app.core.limiter import get_ip_and_clinic, limiter
 from app.models.appointment import ACTIVE_STATUSES, Appointment, AppointmentStatus
 from app.models.clinic import Clinic
@@ -152,6 +155,26 @@ async def create_appointment(
         magic_token_expires_at=datetime.now(timezone.utc) + timedelta(hours=72),
     )
     ctx.db.add(appointment)
+    await ctx.db.flush()
+    await log_audit(
+        ctx.db,
+        event_type=EventType.APPT_CREATED,
+        entity_type="Appointment",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=appointment.id,
+        source=request.url.path,
+        data={
+            "actor_role": current_user.role,
+            "doctor_id": str(body.doctor_id),
+            "patient_id": str(body.patient_id),
+            "starts_at": body.starts_at.isoformat(),
+            "ends_at": body.ends_at.isoformat(),
+        },
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
     await ctx.db.refresh(appointment)
 
@@ -903,8 +926,9 @@ async def request_reschedule_public(
     if appt.doctor and appt.doctor.user:
         doctor_name = _decrypt_name(appt.doctor.user.full_name_enc, "Doctor")
 
+    notify_email = await resolve_notify_email(appt.clinic, db)
     send_reschedule_request_notification(
-        notify_email=settings.CLINIC_NOTIFY_EMAIL,
+        notify_email=notify_email,
         patient_name=patient_name,
         doctor_name=doctor_name,
         starts_at=appt.starts_at,
@@ -1003,7 +1027,7 @@ async def patch_appointment_status(
     appointment_id: uuid.UUID,
     body: AppointmentStatusPatch,
     ctx: TenantContext,
-    _: DoctorOrAbove,
+    current_user: DoctorOrAbove,
 ):
     result = await ctx.db.execute(
         select(Appointment).where(
@@ -1028,7 +1052,29 @@ async def patch_appointment_status(
             ),
         )
 
+    prev_status = str(current)
     appointment.status = target
+    _event = (
+        EventType.APPT_COMPLETED if target == AppointmentStatus.COMPLETED
+        else EventType.APPT_CANCELED_STAFF
+    )
+    await log_audit(
+        ctx.db,
+        event_type=_event,
+        entity_type="Appointment",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=appointment_id,
+        source=request.url.path,
+        data={
+            "actor_role": current_user.role,
+            "before": {"status": prev_status},
+            "after": {"status": str(target)},
+        },
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
     await ctx.db.refresh(appointment)
     return appointment
@@ -1040,7 +1086,7 @@ async def mark_no_show(
     request: Request,
     appointment_id: uuid.UUID,
     ctx: TenantContext,
-    _: DoctorOrAbove,
+    current_user: DoctorOrAbove,
 ):
     appt_result = await ctx.db.execute(
         select(Appointment).where(
@@ -1074,6 +1120,24 @@ async def mark_no_show(
         patient.no_show_count = (patient.no_show_count or 0) + 1
         patient.last_no_show_at = now
 
+    await log_audit(
+        ctx.db,
+        event_type=EventType.APPT_NO_SHOW,
+        entity_type="Appointment",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=appointment_id,
+        source=request.url.path,
+        data={
+            "actor_role": current_user.role,
+            "before": {"status": "scheduled"},
+            "after": {"status": "no_show"},
+            "patient_id": str(appointment.patient_id),
+        },
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
     await ctx.db.refresh(appointment)
     return appointment
@@ -1143,7 +1207,7 @@ async def cancel_appointment(
     request: Request,
     appointment_id: uuid.UUID,
     ctx: TenantContext,
-    _: DoctorOrAbove,
+    current_user: DoctorOrAbove,
 ):
     result = await ctx.db.execute(
         select(Appointment).where(
@@ -1155,7 +1219,25 @@ async def cancel_appointment(
     if appointment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found.")
 
+    prev_status = appointment.status
     appointment.status = AppointmentStatus.CANCELED
+    await log_audit(
+        ctx.db,
+        event_type=EventType.APPT_CANCELED_STAFF,
+        entity_type="Appointment",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=appointment_id,
+        source=request.url.path,
+        data={
+            "actor_role": current_user.role,
+            "before": {"status": prev_status},
+            "after": {"status": "canceled"},
+        },
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     await ctx.db.commit()
 
 
@@ -1368,13 +1450,10 @@ async def attach_pdf_to_appointment(
         ctx.db.add(record)
         await ctx.db.flush()
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S%f")
-    upload_dir = Path("uploads") / "medical-records" / str(ctx.clinic_id) / str(record.id)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    dest = upload_dir / f"{timestamp}.pdf"
-    dest.write_bytes(content)
+    key = s3.build_key(str(ctx.clinic_id), str(record.id))
+    await s3.upload_file(content, key)
 
-    record.s3_pdf_key = dest.as_posix()
+    record.s3_pdf_key = key
     await ctx.db.commit()
     await ctx.db.refresh(record)
     return record

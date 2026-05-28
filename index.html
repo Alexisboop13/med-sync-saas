@@ -876,6 +876,18 @@
         </svg>
         Ubicaciones
       </button>
+      <button class="tab-btn" data-tab="tab-planes" id="tab-btn-planes" onclick="switchTab('tab-planes')" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+        </svg>
+        Planes
+      </button>
+      <button class="tab-btn" data-tab="tab-configuracion" id="tab-btn-configuracion" onclick="switchTab('tab-configuracion')" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Configuración
+      </button>
     </nav>
 
     <!-- ═══ TAB: DASHBOARD ═══ -->
@@ -1340,6 +1352,145 @@
         </div>
       </div>
     </div><!-- /tab-ubicaciones -->
+
+    <!-- ═══ TAB: PLANES ═══ -->
+    <div id="tab-planes" class="tab-panel">
+
+      <!-- Status banner (past_due / canceled) -->
+      <div id="billing-alert" class="alert" style="margin-bottom:1.25rem;"></div>
+
+      <!-- Current plan ─────────────────────────────────────────────── -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            Suscripción actual
+          </h2>
+          <button id="btn-portal" class="btn btn-sm" style="background:var(--blue-light);color:var(--blue-dark);border:1px solid var(--blue-mid);" onclick="openBillingPortal()">
+            Gestionar suscripción
+          </button>
+        </div>
+        <div id="billing-status-body" style="padding:1.25rem 1.5rem;">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Pricing cards ────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="card-header" style="flex-direction:column;align-items:flex-start;gap:.75rem;">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+            </svg>
+            Planes disponibles
+          </h2>
+          <!-- Monthly / Annual toggle -->
+          <div style="display:flex;align-items:center;gap:.6rem;font-size:.875rem;">
+            <span id="lbl-monthly" style="font-weight:600;color:var(--blue-dark);">Mensual</span>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;">
+              <input type="checkbox" id="toggle-annual" onchange="toggleBillingPeriod()" style="opacity:0;width:0;height:0;">
+              <span style="position:absolute;inset:0;background:var(--gray-200);border-radius:24px;transition:var(--transition);"></span>
+              <span id="toggle-knob" style="position:absolute;top:3px;left:3px;width:18px;height:18px;background:white;border-radius:50%;transition:var(--transition);box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>
+            </label>
+            <span id="lbl-annual" style="color:var(--gray-600);">Anual <span style="background:#e6f6ed;color:var(--green);padding:.15rem .45rem;border-radius:999px;font-size:.75rem;font-weight:700;">-2 meses</span></span>
+          </div>
+        </div>
+        <div style="padding:1.5rem;">
+          <div id="pricing-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
+
+            <!-- Starter -->
+            <div class="pricing-card" style="border:2px solid var(--gray-200);border-radius:var(--radius);padding:1.5rem;display:flex;flex-direction:column;gap:.75rem;">
+              <div>
+                <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);margin-bottom:.25rem;">Starter</div>
+                <div style="font-size:1.5rem;font-weight:800;color:var(--gray-800);">—</div>
+                <div style="font-size:.8rem;color:var(--gray-600);">hasta 1 doctor · 200 citas/mes</div>
+              </div>
+              <ul style="list-style:none;font-size:.83rem;color:var(--gray-600);display:flex;flex-direction:column;gap:.35rem;flex:1;">
+                <li>✓ Agenda completa</li>
+                <li>✓ Expedientes médicos</li>
+                <li>✓ Confirmaciones por email</li>
+                <li>✓ 1 doctor</li>
+              </ul>
+              <button class="btn btn-primary btn-sm" onclick="startCheckout('starter')">Contratar Starter</button>
+            </div>
+
+            <!-- Growth -->
+            <div class="pricing-card" style="border:2px solid var(--blue);border-radius:var(--radius);padding:1.5rem;display:flex;flex-direction:column;gap:.75rem;position:relative;">
+              <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--blue);color:white;font-size:.72rem;font-weight:700;padding:.2rem .75rem;border-radius:999px;">Más popular</div>
+              <div>
+                <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);margin-bottom:.25rem;">Growth</div>
+                <div style="font-size:1.5rem;font-weight:800;color:var(--gray-800);">—</div>
+                <div style="font-size:.8rem;color:var(--gray-600);">hasta 5 doctores · ilimitado</div>
+              </div>
+              <ul style="list-style:none;font-size:.83rem;color:var(--gray-600);display:flex;flex-direction:column;gap:.35rem;flex:1;">
+                <li>✓ Todo lo de Starter</li>
+                <li>✓ Hasta 5 doctores</li>
+                <li>✓ Citas ilimitadas</li>
+                <li>✓ Analíticas avanzadas</li>
+              </ul>
+              <button class="btn btn-primary btn-sm" onclick="startCheckout('growth')">Contratar Growth</button>
+            </div>
+
+            <!-- Enterprise -->
+            <div class="pricing-card" style="border:2px solid var(--gray-200);border-radius:var(--radius);padding:1.5rem;display:flex;flex-direction:column;gap:.75rem;">
+              <div>
+                <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);margin-bottom:.25rem;">Enterprise</div>
+                <div style="font-size:1.5rem;font-weight:800;color:var(--gray-800);">—</div>
+                <div style="font-size:.8rem;color:var(--gray-600);">doctores ilimitados · SLA dedicado</div>
+              </div>
+              <ul style="list-style:none;font-size:.83rem;color:var(--gray-600);display:flex;flex-direction:column;gap:.35rem;flex:1;">
+                <li>✓ Todo lo de Growth</li>
+                <li>✓ Doctores ilimitados</li>
+                <li>✓ Soporte prioritario</li>
+                <li>✓ SLA personalizado</li>
+              </ul>
+              <button class="btn btn-primary btn-sm" onclick="startCheckout('enterprise')">Contratar Enterprise</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-planes -->
+
+    <!-- ═══ TAB: CONFIGURACIÓN ═══ -->
+    <div id="tab-configuracion" class="tab-panel">
+      <div class="card" style="max-width:560px;">
+        <div class="card-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Configuración de la clínica
+          </h2>
+        </div>
+        <div style="padding:1.5rem;">
+          <div id="cfg-error"   class="alert alert-error"   style="margin-bottom:1rem;"></div>
+          <div id="cfg-success" class="alert alert-success" style="margin-bottom:1rem;"></div>
+          <form id="cfg-notify-form" onsubmit="saveClinicSettings(event)" novalidate>
+            <div class="form-group" style="margin-bottom:1.25rem;">
+              <label for="cfg-notify-email" style="display:block;font-size:.875rem;font-weight:600;margin-bottom:.4rem;color:var(--gray-800);">
+                Email de notificaciones de reagendado
+              </label>
+              <p style="font-size:.8rem;color:var(--gray-600);margin-bottom:.6rem;">
+                Cuando un paciente solicita reagendar, la notificación se envía a este email. Si se deja vacío, se usa el email del dueño de la cuenta.
+              </p>
+              <input
+                id="cfg-notify-email"
+                type="email"
+                placeholder="notificaciones@tuclinica.com"
+                autocomplete="off"
+                style="width:100%;"
+              />
+            </div>
+            <button id="cfg-save-btn" type="submit" class="btn btn-primary">
+              Guardar cambios
+            </button>
+          </form>
+        </div>
+      </div>
+    </div><!-- /tab-configuracion -->
 
   </div><!-- /container -->
 </div><!-- /dashboard-page -->
@@ -2468,6 +2619,12 @@
     if (tabId === 'tab-doctores') {
       loadUsers();
     }
+    if (tabId === 'tab-configuracion') {
+      loadClinicSettings();
+    }
+    if (tabId === 'tab-planes') {
+      loadBillingStatus();
+    }
 
     const fab = document.getElementById('fab-new-patient');
     const cfg = FAB_CONFIG[tabId];
@@ -2491,8 +2648,10 @@
     document.getElementById('navbar-email').textContent = email() || '';
     const isOwner = userRole() === 'owner';
     const showAdmin = isOwner || userRole() === 'assistant';
-    document.getElementById('tab-btn-doctores').style.display   = isOwner   ? '' : 'none';
-    document.getElementById('tab-btn-ubicaciones').style.display = showAdmin ? '' : 'none';
+    document.getElementById('tab-btn-doctores').style.display      = isOwner   ? '' : 'none';
+    document.getElementById('tab-btn-ubicaciones').style.display   = showAdmin ? '' : 'none';
+    document.getElementById('tab-btn-planes').style.display        = isOwner   ? '' : 'none';
+    document.getElementById('tab-btn-configuracion').style.display = isOwner   ? '' : 'none';
     switchTab('tab-dashboard');
   }
 
@@ -2555,7 +2714,7 @@
       showDashboard();  // calls switchTab('tab-dashboard') → loadDashboard()
       loadPatients();
       loadDoctorSelects().then(() => loadAppointments());
-      if (payload.role === 'owner') { loadDoctors(); loadUsers(); }
+      if (payload.role === 'owner') { loadDoctors(); loadUsers(); loadClinicSettings(); loadBillingStatus(); }
       loadLocations();
     } catch (err) {
       showAlert('login-error', err.message || 'Error de conexión. ¿Está el servidor corriendo?');
@@ -2843,6 +3002,184 @@
       if (selectEl) selectEl.disabled = false;
     }
   }
+
+  // ── Clinic settings ────────────────────────────────────────────────────
+  async function loadClinicSettings() {
+    hideAlert('cfg-error');
+    hideAlert('cfg-success');
+    try {
+      const res = await fetch(`${API}/api/v1/clinics/me/notify-email`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) return;
+      const data = await res.json();
+      document.getElementById('cfg-notify-email').value = data.notify_email || '';
+    } catch (_) {}
+  }
+
+  async function saveClinicSettings(e) {
+    e.preventDefault();
+    hideAlert('cfg-error');
+    hideAlert('cfg-success');
+    const emailVal = document.getElementById('cfg-notify-email').value.trim();
+    if (emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+      showAlert('cfg-error', 'Ingresa un email válido.');
+      return;
+    }
+    setLoading('cfg-save-btn', true);
+    try {
+      const res = await fetch(`${API}/api/v1/clinics/notify-email`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ notify_email: emailVal || null }),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+      showAlert('cfg-success', 'Email de notificaciones actualizado.', 'success');
+    } catch (err) {
+      showAlert('cfg-error', err.message || 'No se pudo guardar.');
+    } finally {
+      setLoading('cfg-save-btn', false);
+    }
+  }
+
+  // ── Billing / Planes ──────────────────────────────────────────────────
+  let _billingPeriod = 'monthly';
+
+  function toggleBillingPeriod() {
+    const annual = document.getElementById('toggle-annual').checked;
+    _billingPeriod = annual ? 'annual' : 'monthly';
+    const knob = document.getElementById('toggle-knob');
+    const lblM = document.getElementById('lbl-monthly');
+    const lblA = document.getElementById('lbl-annual');
+    if (annual) {
+      knob.style.transform = 'translateX(20px)';
+      knob.parentElement.querySelector('span').style.background = 'var(--blue)';
+      lblA.style.fontWeight = '600'; lblA.style.color = 'var(--blue-dark)';
+      lblM.style.fontWeight = '400'; lblM.style.color = 'var(--gray-600)';
+    } else {
+      knob.style.transform = '';
+      knob.parentElement.querySelector('span').style.background = 'var(--gray-200)';
+      lblM.style.fontWeight = '600'; lblM.style.color = 'var(--blue-dark)';
+      lblA.style.fontWeight = '400'; lblA.style.color = 'var(--gray-600)';
+    }
+  }
+
+  async function loadBillingStatus() {
+    const body = document.getElementById('billing-status-body');
+    if (!body) return;
+    body.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    try {
+      const res = await fetch(`${API}/api/v1/billing/status`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) { body.innerHTML = '<p style="color:var(--gray-600);padding:.5rem 0;">No se pudo cargar el estado de la suscripción.</p>'; return; }
+      const d = await res.json();
+      _renderBillingStatus(d);
+    } catch (_) {
+      body.innerHTML = '<p style="color:var(--gray-600);padding:.5rem 0;">Error de conexión.</p>';
+    }
+  }
+
+  const _STATUS_LABELS = {
+    active: { label: 'Activa', color: 'var(--green)', bg: '#e6f6ed' },
+    trialing: { label: 'Período de prueba', color: '#b45309', bg: '#fef3c7' },
+    past_due: { label: 'Pago vencido', color: 'var(--red)', bg: '#fdecea' },
+    canceled: { label: 'Cancelada', color: 'var(--gray-600)', bg: 'var(--gray-100)' },
+    suspended: { label: 'Suspendida', color: 'var(--red)', bg: '#fdecea' },
+  };
+  const _TIER_LABELS = { starter: 'Starter', growth: 'Growth', enterprise: 'Enterprise' };
+
+  function _renderBillingStatus(d) {
+    const body = document.getElementById('billing-status-body');
+    const st = _STATUS_LABELS[d.subscription_status] || { label: d.subscription_status, color: 'var(--gray-600)', bg: 'var(--gray-100)' };
+    const tier = _TIER_LABELS[d.plan_tier] || d.plan_tier;
+
+    // Dashboard alert banner
+    const alertEl = document.getElementById('billing-alert');
+    if (alertEl) {
+      if (d.subscription_status === 'past_due') {
+        const days = d.grace_days_remaining ?? '?';
+        alertEl.textContent = `⚠ Tu pago está vencido. Tienes ${days} día(s) de gracia restantes antes de que se bloquee el acceso. Actualiza tu método de pago en "Gestionar suscripción".`;
+        alertEl.className = 'alert alert-error show';
+      } else if (d.subscription_status === 'canceled' || d.is_suspended) {
+        alertEl.textContent = 'Tu suscripción está cancelada. Contrata un plan para continuar usando MedSync.';
+        alertEl.className = 'alert alert-error show';
+      } else {
+        alertEl.className = 'alert';
+      }
+    }
+
+    body.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:center;">
+        <div>
+          <div style="font-size:.75rem;color:var(--gray-600);margin-bottom:.2rem;">Plan</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--gray-800);">${_escHtml(tier)}</div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:var(--gray-600);margin-bottom:.2rem;">Estado</div>
+          <span style="background:${st.bg};color:${st.color};padding:.25rem .75rem;border-radius:999px;font-size:.83rem;font-weight:600;">${_escHtml(st.label)}</span>
+        </div>
+        ${d.trial_ends_at ? `<div><div style="font-size:.75rem;color:var(--gray-600);margin-bottom:.2rem;">Prueba hasta</div><div style="font-size:.9rem;font-weight:600;">${new Date(d.trial_ends_at).toLocaleDateString('es-MX')}</div></div>` : ''}
+        ${d.past_due_since && d.grace_days_remaining !== null ? `<div><div style="font-size:.75rem;color:var(--gray-600);margin-bottom:.2rem;">Gracia restante</div><div style="font-size:.9rem;font-weight:600;color:var(--red);">${d.grace_days_remaining} día(s)</div></div>` : ''}
+      </div>`;
+  }
+
+  async function startCheckout(tier) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.dataset.orig = btn.textContent;
+    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;margin:0 auto;border-width:2px;"></div>';
+    try {
+      const res = await fetch(`${API}/api/v1/billing/checkout`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ tier, period: _billingPeriod }),
+      });
+      if (res.status === 401) { logout(); return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+      window.location.href = data.checkout_url;
+    } catch (err) {
+      showAlert('billing-alert', err.message || 'No se pudo iniciar el pago.', 'error');
+      btn.disabled = false;
+      btn.textContent = btn.dataset.orig || tier;
+    }
+  }
+
+  async function openBillingPortal() {
+    const btn = document.getElementById('btn-portal');
+    if (btn) { btn.disabled = true; btn.textContent = 'Abriendo...'; }
+    try {
+      const res = await fetch(`${API}/api/v1/billing/portal`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+      window.open(data.portal_url, '_blank', 'noopener');
+    } catch (err) {
+      showAlert('billing-alert', err.message || 'No se pudo abrir el portal.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Gestionar suscripción'; }
+    }
+  }
+
+  // Handle Stripe redirect back to the app
+  (function _handleCheckoutReturn() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('checkout')) {
+      window.history.replaceState({}, '', window.location.pathname);
+      if (params.get('checkout') === 'success') {
+        setTimeout(() => {
+          if (userRole() === 'owner') {
+            switchTab('tab-planes');
+            showAlert('billing-alert', '¡Suscripción activada! Tu plan ya está activo.', 'success');
+            loadBillingStatus();
+          }
+        }, 600);
+      }
+    }
+  })();
 
   const _DOC_PHOTO_SVG = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b9edd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
 
@@ -3970,10 +4307,18 @@
     try {
       const res = await fetch(`${API}/api/v1/medical-records/${recordId}/download?inline=true`, { headers: authHeaders() });
       if (!res.ok) throw new Error(`Error ${res.status}`);
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        // S3 path: server returns a presigned URL
+        const { url } = await res.json();
+        window.open(url, '_blank');
+      } else {
+        // Legacy local path: server streams the file bytes
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }
     } catch (err) {
       alert('No se pudo abrir el PDF: ' + err.message);
     }

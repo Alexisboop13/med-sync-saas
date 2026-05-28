@@ -23,6 +23,9 @@ from app.api.routes.users import router as users_router
 from app.api.routes.reschedule_requests import router as reschedule_requests_router
 from app.api.routes.booking import router as booking_router
 from app.api.routes.verify import router as verify_router
+from app.api.routes.clinics import router as clinics_router
+from app.api.routes.billing import router as billing_router
+from app.api.routes.webhooks import router as webhooks_router
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +109,9 @@ def get_application() -> FastAPI:
     application.include_router(reschedule_requests_router, prefix="/api/v1")
     application.include_router(booking_router, prefix="/api/v1")
     application.include_router(verify_router, prefix="/api/v1")
+    application.include_router(clinics_router, prefix="/api/v1")
+    application.include_router(billing_router, prefix="/api/v1")
+    application.include_router(webhooks_router, prefix="/api/v1")
 
     @application.get("/", tags=["Health Check"])
     async def root():

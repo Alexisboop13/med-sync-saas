@@ -267,10 +267,14 @@ async def get_clinic(
         )
 
     if getattr(clinic, "is_suspended", False):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Clinic account is suspended. Please contact support.",
-        )
+        sub_status = getattr(clinic, "subscription_status", "")
+        if sub_status == "canceled":
+            detail = "Suscripción cancelada. Accede a Planes y precios para reactivar tu cuenta."
+        elif sub_status == "past_due":
+            detail = "Período de gracia vencido. Actualiza tu método de pago para continuar."
+        else:
+            detail = "Clinic account is suspended. Please contact support."
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
     return ClinicContext(clinic_id=clinic.id, db=db)
 
