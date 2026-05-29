@@ -76,7 +76,6 @@ class Clinic(SystemBase):
         String(80),
         nullable=False,
         unique=True,
-        index=True,
         comment="URL-safe identifier used in magic links: /book/{slug}/...",
     )
 
@@ -128,7 +127,6 @@ class Clinic(SystemBase):
         nullable=False,
         default=SubscriptionStatus.TRIALING,
         server_default="trialing",
-        index=True,
         comment="Synced from Stripe webhooks. Drives access control in get_clinic().",
     )
 
@@ -196,8 +194,6 @@ class Clinic(SystemBase):
     # ── Additional indexes ────────────────────────────────────────────────────
     __table_args__ = (
         Index("ix_clinics_subscription_status", "subscription_status"),
-        # already unique, explicit idx for clarity
-        Index("ix_clinics_slug", "slug"),
     )
 
     # ── Business logic helpers ────────────────────────────────────────────────

@@ -63,7 +63,6 @@ class Doctor(TenantBase):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,          # 1-to-1: one user → at most one doctor profile
-        index=True,
     )
 
     # ── Professional info ─────────────────────────────────────────────────────
