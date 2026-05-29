@@ -122,6 +122,11 @@ class Settings(BaseSettings):
     GREENAPI_INSTANCE_ID: str = ""
     GREENAPI_API_TOKEN:   str = ""
 
+    # ── Agente automático ─────────────────────────────────────────────────────
+    # Token para proteger POST /internal/agent/run (trigger externo desde cron)
+    # Genera uno con: python -c "import secrets; print(secrets.token_urlsafe(32))"
+    AGENT_SECRET_KEY: str = ""
+
     # ── Validators ────────────────────────────────────────────────────────────
     @field_validator("ENCRYPTION_KEYS")
     @classmethod

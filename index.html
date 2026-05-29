@@ -920,6 +920,12 @@
         </svg>
         Configuración
       </button>
+      <button class="tab-btn" data-tab="tab-agente" id="tab-btn-agente" onclick="switchTab('tab-agente')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        Agente
+      </button>
     </nav>
 
     <!-- ═══ TAB: DASHBOARD ═══ -->
@@ -1524,6 +1530,80 @@
         </div>
       </div>
     </div><!-- /tab-configuracion -->
+
+    <!-- ═══ TAB: AGENTE ═══ -->
+    <div id="tab-agente" class="tab-panel">
+
+      <!-- Header + refresh -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
+        <div>
+          <p class="section-title" style="margin-bottom:.25rem;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Agente de Citas
+          </p>
+          <p style="font-size:.82rem;color:var(--gray-600);margin:0;">Recordatorios automáticos · log de actividad · próximas acciones</p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="loadAgentStatus()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Actualizar
+        </button>
+      </div>
+
+      <div id="agent-error" class="alert alert-error" style="margin-bottom:1rem;"></div>
+
+      <!-- Próximas acciones -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <h2>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Próximas 3 horas
+          </h2>
+          <span id="agent-window-label" style="font-size:.78rem;color:var(--gray-600);"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Paciente</th>
+                <th>Doctor</th>
+                <th>Inicio</th>
+                <th>Faltan</th>
+                <th>Recordatorio</th>
+                <th>Confirmó</th>
+              </tr>
+            </thead>
+            <tbody id="agent-upcoming-body">
+              <tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Log de actividad -->
+      <div class="card">
+        <div class="card-header">
+          <h2>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Log de actividad (últimas 24 h)
+          </h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Hora</th>
+                <th>Canal</th>
+                <th>Estado</th>
+                <th>ID Cita</th>
+              </tr>
+            </thead>
+            <tbody id="agent-log-body">
+              <tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tab-agente -->
 
   </div><!-- /container -->
 </div><!-- /dashboard-page -->
@@ -2706,6 +2786,9 @@
     }
     if (tabId === 'tab-planes') {
       loadBillingStatus();
+    }
+    if (tabId === 'tab-agente') {
+      loadAgentStatus();
     }
 
     const fab = document.getElementById('fab-new-patient');
@@ -4978,6 +5061,95 @@
       showLogin();
     }
   })();
+
+  // ── Agent dashboard ───────────────────────────────────────────────────────
+  async function loadAgentStatus() {
+    hideAlert('agent-error');
+    const upcomingBody = document.getElementById('agent-upcoming-body');
+    const logBody      = document.getElementById('agent-log-body');
+    const windowLabel  = document.getElementById('agent-window-label');
+    upcomingBody.innerHTML = '<tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>';
+    logBody.innerHTML      = '<tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr>';
+
+    try {
+      const res = await fetch(`${API}/api/v1/internal/agent/status`, { headers: authHeaders() });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Error ${res.status}`);
+      }
+      const data = await res.json();
+
+      // Leyenda de ventana
+      if (windowLabel && data.reminder_window_minutes) {
+        const [min, max] = data.reminder_window_minutes;
+        windowLabel.textContent = `Ventana de recordatorio: ${min}–${max} min antes`;
+      }
+
+      // Próximas citas
+      const upcoming = data.upcoming_appointments || [];
+      if (!upcoming.length) {
+        upcomingBody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <p>Sin citas en las próximas 3 horas</p></div></td></tr>`;
+      } else {
+        upcomingBody.innerHTML = upcoming.map(u => {
+          const t = new Date(u.starts_at);
+          const timeStr = t.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+          const min = u.minutes_away;
+          const urgency = min <= 45
+            ? 'style="color:var(--red);font-weight:700;"'
+            : min <= 90 ? 'style="color:var(--orange);font-weight:600;"' : '';
+          const reminderBadge = u.reminder_sent
+            ? '<span class="badge badge-green">Enviado</span>'
+            : '<span class="badge badge-orange">Pendiente</span>';
+          const confirmBadge = u.patient_confirmed
+            ? '<span class="badge badge-green">Sí</span>'
+            : '<span class="badge badge-gray">No</span>';
+          return `<tr>
+            <td>${_escHtml(u.patient_name)}</td>
+            <td>${_escHtml(u.doctor_name)}</td>
+            <td>${timeStr}</td>
+            <td ${urgency}>${min} min</td>
+            <td>${reminderBadge}</td>
+            <td>${confirmBadge}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      // Log de notificaciones
+      const log = data.recent_notifications || [];
+      if (!log.length) {
+        logBody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>Sin actividad en las últimas 24 horas</p></div></td></tr>`;
+      } else {
+        const channelIcon = { email: '📧', whatsapp: '📱', sms: '💬' };
+        const statusBadgeMap = {
+          sent:    '<span class="badge badge-green">Enviado</span>',
+          failed:  '<span class="badge badge-red">Fallido</span>',
+          pending: '<span class="badge badge-orange">Pendiente</span>',
+          skipped: '<span class="badge badge-gray">Saltado</span>',
+        };
+        logBody.innerHTML = log.map(n => {
+          const ts = n.sent_at || n.created_at;
+          const timeStr = ts ? new Date(ts).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '—';
+          const icon = channelIcon[n.channel] || '📨';
+          const badge = statusBadgeMap[n.status] || `<span class="badge badge-gray">${n.status}</span>`;
+          const apptShort = n.appointment_id ? n.appointment_id.slice(0, 8) + '…' : '—';
+          return `<tr>
+            <td>${timeStr}</td>
+            <td>${icon} ${n.channel}</td>
+            <td>${badge}</td>
+            <td><code style="font-size:.75rem;">${apptShort}</code></td>
+          </tr>`;
+        }).join('');
+      }
+    } catch (err) {
+      showAlert('agent-error', err.message || 'No se pudo cargar el estado del agente.');
+      upcomingBody.innerHTML = '<tr><td colspan="6"></td></tr>';
+      logBody.innerHTML      = '<tr><td colspan="4"></td></tr>';
+    }
+  }
+
 </script>
 </body>
 </html>

@@ -85,4 +85,14 @@ async def startup_event():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     print("✅ Tablas creadas/verificadas en startup")
+    from app.agent.background import start_scheduler
+    start_scheduler()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    from app.agent.background import stop_scheduler
+    stop_scheduler()
+
+
 app.include_router(internal_router)
