@@ -1,5 +1,7 @@
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from app.core.config import settings
 from app.api.routes import (
     auth_router,
@@ -25,6 +27,8 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.db.session import engine
 from app.models.base import Base
+
+_ROOT = Path(__file__).resolve().parent.parent
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -69,6 +73,11 @@ app.include_router(clinics_router, prefix="/api/v1")
 app.include_router(billing_router, prefix="/api/v1")
 app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(reschedule_requests_router, prefix="/api/v1")
+
+
+@app.get("/app", include_in_schema=False)
+async def admin_frontend():
+    return FileResponse(_ROOT / "index.html", media_type="text/html")
 
 
 @app.on_event("startup")
