@@ -1,6 +1,5 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime, timezone
 from app.core.config import settings
 from app.api.routes import (
     auth_router,
@@ -15,6 +14,7 @@ from app.api.routes import (
     internal_router,
     public_page_router,
     booking_router,
+    verify_router,
     clinics_router,
     billing_router,
     webhooks_router,
@@ -33,14 +33,6 @@ app = FastAPI(
     openapi_url=None if settings.is_production else "/openapi.json",
 )
 
-@app.get("/health")
-async def health():
-    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
-
-@app.get("/")
-async def root():
-    return {"status": "online", "message": "Bienvenido a la API de Med-Sync", "docs": "/docs"}
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
@@ -52,9 +44,13 @@ app.add_middleware(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-app.include_router(public_page_router)
-app.include_router(booking_router, prefix="/api/v1")
-app.include_router(health_router)
+# ── Public routes (no JWT required) ─────────────────────────────────────────
+app.include_router(health_router)                        # GET /health, /health/db
+app.include_router(public_page_router)                   # HTML pages (no prefix)
+app.include_router(booking_router, prefix="/api/v1")     # /api/v1/public/book/*
+app.include_router(verify_router, prefix="/api/v1")      # /api/v1/public/verify/*
+
+# ── Authenticated routes ─────────────────────────────────────────────────────
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(patients_router, prefix="/api/v1")
 app.include_router(doctors_router, prefix="/api/v1")

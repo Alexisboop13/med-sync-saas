@@ -10,6 +10,7 @@ from app.api.routes.health import router as health_router
 from app.api.routes.internal import router as internal_router
 from app.api.routes.public_page import router as public_page_router
 from app.api.routes.booking import router as booking_router
+from app.api.routes.verify import router as verify_router
 from app.api.routes.clinics import router as clinics_router
 from app.api.routes.billing import router as billing_router
 from app.api.routes.webhooks import router as webhooks_router
@@ -19,5 +20,6 @@ __all__ = [
     "auth_router", "patients_router", "doctors_router", "appointments_router",
     "medical_records_router", "analytics_router", "locations_router", "users_router",
     "health_router", "internal_router", "public_page_router", "booking_router",
-    "clinics_router", "billing_router", "webhooks_router", "reschedule_requests_router"
+    "verify_router", "clinics_router", "billing_router", "webhooks_router",
+    "reschedule_requests_router",
 ]
