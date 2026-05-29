@@ -23,6 +23,8 @@ from app.api.routes import (
 from app.core.limiter import limiter
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from app.db.session import engine
+from app.models.base import Base
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -45,10 +47,14 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ── Public routes (no JWT required) ─────────────────────────────────────────
-app.include_router(health_router)                        # GET /health, /health/db
-app.include_router(public_page_router)                   # HTML pages (no prefix)
-app.include_router(booking_router, prefix="/api/v1")     # /api/v1/public/book/*
-app.include_router(verify_router, prefix="/api/v1")      # /api/v1/public/verify/*
+# GET /health, /health/db
+app.include_router(health_router)
+# HTML pages (no prefix)
+app.include_router(public_page_router)
+# /api/v1/public/book/*
+app.include_router(booking_router, prefix="/api/v1")
+# /api/v1/public/verify/*
+app.include_router(verify_router, prefix="/api/v1")
 
 # ── Authenticated routes ─────────────────────────────────────────────────────
 app.include_router(auth_router, prefix="/api/v1")
@@ -63,4 +69,11 @@ app.include_router(clinics_router, prefix="/api/v1")
 app.include_router(billing_router, prefix="/api/v1")
 app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(reschedule_requests_router, prefix="/api/v1")
+
+
+@app.on_event("startup")
+async def startup_event():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    print("✅ Tablas creadas/verificadas en startup")
 app.include_router(internal_router)
