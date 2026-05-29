@@ -137,7 +137,8 @@ def _build_reminder_email(task: ReminderTask, minutes_away: int) -> MIMEMultipar
         f"{settings.APP_BASE_URL}/appointments/public/{task.magic_token}"
         if task.magic_token else None
     )
-    magic_link_section = _MAGIC_LINK_SECTION.format(magic_link=magic_url) if magic_url else ""
+    magic_link_section = _MAGIC_LINK_SECTION.format(
+        magic_link=magic_url) if magic_url else ""
     magic_link_line = f"\nGestionar mi cita: {magic_url}\n" if magic_url else ""
     reason_line = f"  Motivo : {task.reason}\n" if task.reason else ""
 
@@ -175,22 +176,17 @@ def _send_email_sync(msg: MIMEMultipart, to_email: str) -> bool:
     if not settings.SMTP_HOST or not settings.SMTP_USER:
         log.debug("SMTP no configurado — saltando recordatorio por email.")
         return False
+    # Send email
     try:
-        if settings.SMTP_TLS:
-            ctx = ssl.create_default_context()
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as smtp:
-                smtp.ehlo()
-                smtp.starttls(context=ctx)
-                smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                smtp.sendmail(settings.EMAILS_FROM, [to_email], msg.as_bytes())
-        else:
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as smtp:
-                smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                smtp.sendmail(settings.EMAILS_FROM, [to_email], msg.as_bytes())
-        log.info("Recordatorio enviado por email a %s", to_email)
+        import ssl
+        ctx = ssl.create_default_context()
+        with smtplib.SMTP_SSL(settings.SMTP_HOST, 465, timeout=15, context=ctx) as smtp:
+            smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            smtp.send_message(msg)
+        logger.info(f"[Notifier] Reminder email sent to {to_email}")
         return True
-    except Exception:
-        log.error("Error enviando recordatorio a %s", to_email, exc_info=True)
+    except Exception as e:
+        logger.error(f"[Notifier] Failed to send email to {to_email}: {e}")
         return False
 
 
