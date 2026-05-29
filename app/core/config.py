@@ -117,6 +117,11 @@ class Settings(BaseSettings):
     SMTP_TLS:           bool = True
     CLINIC_NOTIFY_EMAIL: str = ""  # Inbox that receives patient reschedule requests
 
+    # ── WhatsApp (GreenAPI — plan gratuito: 100 mensajes/mes) ─────────────────
+    # Regístrate en dashboard.greenapi.com → crea instancia → copia estos valores
+    GREENAPI_INSTANCE_ID: str = ""
+    GREENAPI_API_TOKEN:   str = ""
+
     # ── Validators ────────────────────────────────────────────────────────────
     @field_validator("ENCRYPTION_KEYS")
     @classmethod

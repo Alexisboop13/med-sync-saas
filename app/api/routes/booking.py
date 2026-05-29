@@ -33,10 +33,13 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+import pytz
+
 from app.core.config import settings
 from app.core.crypto import _load_keyring, make_search_hash
 from app.core.email import send_booking_confirmation
 from app.core.limiter import limiter
+from app.core.whatsapp import format_appointment_confirmation, send_whatsapp
 from app.db.session import get_db
 from app.models.appointment import ACTIVE_STATUSES, Appointment, AppointmentStatus
 from app.models.clinic import Clinic
@@ -476,6 +479,22 @@ async def create_public_booking(
         magic_link_url=magic_link_url,
         background_tasks=background_tasks,
     )
+
+    # WhatsApp confirmation (si GreenAPI está configurado)
+    if body.patient_phone and settings.GREENAPI_INSTANCE_ID:
+        try:
+            tz = pytz.timezone(clinic.timezone or "America/Mexico_City")
+            starts_local = body.starts_at.astimezone(tz).strftime("%A %d de %B %Y a las %H:%M")
+        except Exception:
+            starts_local = body.starts_at.strftime("%Y-%m-%d %H:%M UTC")
+        wa_msg = format_appointment_confirmation(
+            patient_name=body.patient_name,
+            doctor_name=doctor_name,
+            clinic_name=clinic.name,
+            starts_at_local=starts_local,
+            magic_link=magic_link_url,
+        )
+        background_tasks.add_task(send_whatsapp, body.patient_phone, wa_msg)
 
     return BookingResponse(
         appointment_id=appointment.id,

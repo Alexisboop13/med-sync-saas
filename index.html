@@ -707,6 +707,38 @@
     .coming-soon svg { margin-bottom: 1rem; opacity: .4; }
     .coming-soon h3 { font-size: 1.05rem; font-weight: 700; color: var(--gray-600); margin-bottom: .5rem; }
     .coming-soon p { font-size: .88rem; }
+
+    /* ── Toast notifications ── */
+    .toast-container {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 9999; display: flex; flex-direction: column; align-items: center;
+      gap: .45rem; pointer-events: none;
+    }
+    .toast {
+      background: var(--gray-800); color: #fff;
+      padding: .7rem 1.2rem; border-radius: 12px;
+      font-size: .875rem; font-weight: 500;
+      box-shadow: 0 4px 24px rgba(0,0,0,.28);
+      display: flex; align-items: center; gap: .6rem;
+      min-width: 240px; max-width: 420px;
+      animation: toast-in .22s ease;
+      pointer-events: all;
+    }
+    .toast-success { background: #065f46; border-left: 4px solid #34d399; }
+    .toast-error   { background: #7f1d1d; border-left: 4px solid #f87171; }
+    .toast-info    { background: var(--blue-dark); border-left: 4px solid var(--blue); }
+    .toast-warn    { background: #78350f; border-left: 4px solid #fbbf24; }
+    .toast-out     { animation: toast-out .22s ease forwards; }
+    @keyframes toast-in  { from { opacity:0; transform:translateY(14px) scale(.95); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes toast-out { from { opacity:1; } to { opacity:0; transform:translateY(6px); } }
+
+    /* ── Doctor color legend ── */
+    .doc-legend {
+      display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+      padding: .4rem .8rem; font-size: .77rem; color: var(--gray-600);
+    }
+    .doc-legend-item { display: flex; align-items: center; gap: .3rem; }
+    .doc-legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -1137,6 +1169,7 @@
             <button class="cal-view-btn active" id="cvb-week" onclick="calSetView('timeGridWeek')">Semana</button>
             <button class="cal-view-btn" id="cvb-day"  onclick="calSetView('timeGridDay')">Día</button>
             <button class="cal-view-btn" id="cvb-month" onclick="calSetView('dayGridMonth')">Mes</button>
+            <div class="doc-legend" id="doc-color-legend"></div>
             <span class="cal-sep"></span>
             <button class="cal-view-btn" id="cvb-list" onclick="calToggleListView()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2043,6 +2076,11 @@
   </div>
 </div>
 
+<!-- Toast container -->
+<div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+<!-- Calendar tooltip -->
+<div id="cal-tooltip" class="cal-tooltip"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
@@ -2110,6 +2148,50 @@
       canceled_by_patient: '#ef4444',
     };
     return map[(status || '').toLowerCase()] || '#6b7280';
+  }
+
+  // ── Toast notification system ─────────────────────────────────────────
+  function showToast(msg, type = 'info', duration = 3800) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const icons = { success: '✓', error: '✗', info: 'ℹ', warn: '⚠' };
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span style="font-size:1rem;flex-shrink:0;">${icons[type] || 'ℹ'}</span><span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('toast-out');
+      toast.addEventListener('animationend', () => toast.remove(), { once: true });
+    }, duration);
+    toast.addEventListener('click', () => toast.remove());
+  }
+
+  // ── Doctor color palette ─────────────────────────────────────────────
+  const DOCTOR_COLORS = [
+    '#2c7da0', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444',
+    '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1',
+  ];
+  let _doctorColorMap = {};
+
+  function getDoctorColor(doctorId) {
+    if (!doctorId) return '#6b7280';
+    if (!_doctorColorMap[doctorId]) {
+      const idx = Object.keys(_doctorColorMap).length % DOCTOR_COLORS.length;
+      _doctorColorMap[doctorId] = DOCTOR_COLORS[idx];
+    }
+    return _doctorColorMap[doctorId];
+  }
+
+  function _renderDocLegend() {
+    const legend = document.getElementById('doc-color-legend');
+    if (!legend) return;
+    const entries = Object.entries(_doctorColorMap);
+    if (!entries.length) { legend.innerHTML = ''; return; }
+    legend.innerHTML = entries.map(([id, color]) => {
+      const doc = _doctorMap[id];
+      const name = doc ? (doc.title ? `${doc.title} ${doc.full_name}` : `Dr. ${doc.full_name}`) : `#${id.slice(0,6)}`;
+      return `<span class="doc-legend-item"><span class="doc-legend-dot" style="background:${color}"></span>${name}</span>`;
+    }).join('');
   }
 
   function formatDate(str) {
@@ -2867,15 +2949,19 @@
       if (!res.ok) return;
       const raw  = await res.json();
       const list = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
-      list.forEach(d => { _doctorMap[d.id] = d; });
+      _doctorColorMap = {};
+      list.forEach((d, i) => {
+        _doctorMap[d.id] = d;
+        _doctorColorMap[d.id] = DOCTOR_COLORS[i % DOCTOR_COLORS.length];
+      });
       const emptyOpt = '<option value="">— Seleccionar doctor —</option>';
       const opts = list.map(d => `<option value="${d.id}">${dLabel(d)}</option>`).join('');
       const ds = document.getElementById('doctor-select');
       if (ds) ds.innerHTML = emptyOpt + opts;
       document.getElementById('cal-doctor-select').innerHTML = emptyOpt + opts;
-      // Populate dashboard filter doctor select
       const fd = document.getElementById('filter-doctor');
       if (fd) fd.innerHTML = '<option value="">Todos los doctores</option>' + opts;
+      _renderDocLegend();
     } catch (_) {}
   }
 
@@ -3451,7 +3537,10 @@
       || (a.date && a.time ? `${a.date}T${a.time}` : null)
       || a.date;
     const end   = a.ends_at || null;
-    const color = a.color || statusColor(a.status);
+    const isCanceled = ['canceled', 'canceled_by_patient', 'no_show'].includes((a.status || '').toLowerCase());
+    const isCompleted = (a.status || '').toLowerCase() === 'completed';
+    const baseColor = getDoctorColor(a.doctor_id);
+    const color = isCanceled ? '#9ca3af' : isCompleted ? '#6b7280' : baseColor;
 
     return {
       id: String(a.id),
@@ -3459,8 +3548,9 @@
       start,
       end,
       backgroundColor: color,
-      borderColor:     color,
+      borderColor:     isCanceled || isCompleted ? color : baseColor,
       textColor:       '#ffffff',
+      opacity:         isCanceled ? 0.6 : 1,
       extendedProps:   a
     };
   }
@@ -3531,7 +3621,7 @@
           successCb(list.map(apptToEvent));
         } catch (err) {
           failureCb(err);
-          alert('Error al cargar citas: ' + err.message);
+          showToast('Error al cargar citas: ' + err.message, 'error');
         }
       },
 
@@ -3571,7 +3661,7 @@
             throw new Error(err.detail || `Error ${res.status}`);
           }
         } catch (err) {
-          alert('No se pudo actualizar la duración: ' + err.message);
+          showToast('No se pudo actualizar la duración: ' + err.message, 'error');
           info.revert();
         }
       },
@@ -3761,8 +3851,9 @@
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail || `Error ${res.status}`);
       }
+      showToast('Cita movida exitosamente.', 'success');
     } catch (err) {
-      alert('No se pudo mover la cita: ' + err.message);
+      showToast('No se pudo mover la cita: ' + err.message, 'error');
       revert();
     }
   }
@@ -3858,16 +3949,17 @@
         body: JSON.stringify({ content }),
       });
     } catch {
-      alert('No se pudo guardar la nota: el servidor no respondió. Verifica que el backend esté activo y que la migración haya sido ejecutada.');
+      showToast('No se pudo guardar la nota: error de conexión con el backend.', 'error');
       return;
     }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       const msg = Array.isArray(err.detail) ? err.detail[0]?.msg : err.detail;
-      alert(`No se pudo guardar la nota: ${msg || `Error ${res.status}`}`);
+      showToast(`No se pudo guardar la nota: ${msg || 'Error ' + res.status}`, 'error');
       return;
     }
     cancelAddNote();
+    showToast('Nota guardada.', 'success');
     _loadApptNotes(id);
   }
 
@@ -3885,7 +3977,7 @@
       }
       _loadApptNotes(id);
     } catch (err) {
-      alert(`No se pudo eliminar la nota: ${err.message}`);
+      showToast(`No se pudo eliminar la nota: ${err.message}`, 'error');
     }
   }
 
@@ -4033,8 +4125,10 @@
       }
       closeApptDetailModal();
       if (calendar) calendar.refetchEvents();
+      const labels = { completed: 'Cita marcada como completada.', canceled: 'Cita cancelada.', canceled_by_patient: 'Cita cancelada.', no_show: 'No-show registrado.' };
+      showToast(labels[newStatus] || 'Estado actualizado.', 'success');
     } catch (err) {
-      alert(`No se pudo actualizar la cita: ${err.message}`);
+      showToast(`No se pudo actualizar la cita: ${err.message}`, 'error');
     }
   }
 
@@ -4053,8 +4147,9 @@
       closeApptDetailModal();
       if (calendar) calendar.refetchEvents();
       await loadPatients();
+      showToast('No-show registrado correctamente.', 'info');
     } catch (err) {
-      alert(`No se pudo registrar el no-show: ${err.message}`);
+      showToast(`No se pudo registrar el no-show: ${err.message}`, 'error');
     }
   }
 
@@ -4064,7 +4159,7 @@
     const start = document.getElementById('ad-edit-start').value;
     const end   = document.getElementById('ad-edit-end').value;
     const reason = document.getElementById('ad-edit-reason').value.trim();
-    if (!date || !start) { alert('Fecha y hora de inicio son obligatorias.'); return; }
+    if (!date || !start) { showToast('Fecha y hora de inicio son obligatorias.', 'warn'); return; }
     const body = { starts_at: `${date}T${start}:00` };
     if (end)    body.ends_at = `${date}T${end}:00`;
     if (reason) body.reason  = reason;
@@ -4080,8 +4175,9 @@
       }
       closeApptDetailModal();
       if (calendar) calendar.refetchEvents();
+      showToast('Cita actualizada exitosamente.', 'success');
     } catch (err) {
-      alert(`No se pudo guardar la cita: ${err.message}`);
+      showToast(`No se pudo guardar la cita: ${err.message}`, 'error');
     }
   }
 
@@ -4091,7 +4187,7 @@
     const start = document.getElementById('ad-rs-start').value;
     const end   = document.getElementById('ad-rs-end').value;
     const reason = document.getElementById('ad-rs-reason').value.trim();
-    if (!date || !start) { alert('Fecha y hora de inicio son obligatorias.'); return; }
+    if (!date || !start) { showToast('Fecha y hora de inicio son obligatorias.', 'warn'); return; }
     const body = { proposed_starts_at: `${date}T${start}:00` };
     if (end)    body.proposed_ends_at = `${date}T${end}:00`;
     if (reason) body.reason           = reason;
@@ -4107,8 +4203,9 @@
       }
       closeApptDetailModal();
       if (calendar) calendar.refetchEvents();
+      showToast('Propuesta de reagendado enviada al paciente.', 'success');
     } catch (err) {
-      alert(`No se pudo enviar la propuesta: ${err.message}`);
+      showToast(`No se pudo enviar la propuesta: ${err.message}`, 'error');
     }
   }
 
@@ -4206,10 +4303,10 @@
         throw new Error(msg);
       }
 
-      showAlert('cal-appt-success', '¡Cita creada exitosamente!', 'success');
+      closeCalCreateModal();
+      showToast('¡Cita creada exitosamente!', 'success');
       if (calendar) calendar.refetchEvents();
       loadAppointments();
-      setTimeout(closeCalCreateModal, 1200);
     } catch (err) {
       showAlert('cal-appt-error', err.message || 'No se pudo crear la cita.');
     } finally {
@@ -4320,7 +4417,7 @@
         setTimeout(() => URL.revokeObjectURL(url), 60000);
       }
     } catch (err) {
-      alert('No se pudo abrir el PDF: ' + err.message);
+      showToast('No se pudo abrir el PDF: ' + err.message, 'error');
     }
   }
 
@@ -4471,10 +4568,10 @@
         throw new Error(msg);
       }
 
-      showAlert('qp-success', `Paciente "${name}" registrado exitosamente.`, 'success');
+      closeQuickPatientModal();
+      showToast(`Paciente "${name}" registrado exitosamente.`, 'success');
       document.getElementById('quick-patient-form').reset();
       await loadPatients();
-      setTimeout(closeQuickPatientModal, 1400);
     } catch (err) {
       showAlert('qp-error', err.message || 'No se pudo registrar el paciente.');
     } finally {
@@ -4882,6 +4979,5 @@
     }
   })();
 </script>
-<div class="cal-tooltip" id="cal-tooltip"></div>
 </body>
 </html>
