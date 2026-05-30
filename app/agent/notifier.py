@@ -1,30 +1,38 @@
 """
 app/agent/notifier.py
 ──────────────────────────────────────────────────────────────────────────────
-Envío de recordatorios y registro del intento en la tabla `notifications`.
+Envío de recordatorios de citas.
 
-Flujo:
-  1. Construye el mensaje (email HTML + texto plano).
-  2. Intenta enviar por SMTP.
-  3. Si tiene teléfono y GreenAPI está configurado, también envía WhatsApp.
-  4. Registra el resultado en la tabla `notifications` (audit trail).
-  5. Devuelve True si al menos un canal tuvo éxito.
+Prioridad de canales:
+  1. SendGrid (si SENDGRID_API_KEY está configurada)
+  2. SMTP directo (si SMTP_HOST está configurado)
+  3. WhatsApp vía GreenAPI (si GREENAPI_INSTANCE_ID está configurado)
+
+Al menos un canal debe tener éxito para que la función devuelva True.
+Cada intento queda registrado en la tabla `notifications`.
 """
-
 from __future__ import annotations
-from app.models.notification import Notification, NotificationChannel, NotificationStatus, NotificationType
-from app.core.whatsapp import format_appointment_reminder, send_whatsapp
-from app.core.config import settings
-from app.agent.scheduler import ReminderTask
-from sqlalchemy.ext.asyncio import AsyncSession
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timezone
-import ssl
-import smtplib
-import logging
-logger = logging.getLogger(__name__)
 
+import asyncio
+import logging
+import smtplib
+import ssl
+from datetime import datetime, timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+import httpx
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.agent.scheduler import ReminderTask
+from app.core.config import settings
+from app.core.whatsapp import format_appointment_reminder, send_whatsapp
+from app.models.notification import (
+    Notification,
+    NotificationChannel,
+    NotificationStatus,
+    NotificationType,
+)
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +56,7 @@ _REMINDER_HTML = """\
            style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
       <tr>
         <td style="background:linear-gradient(135deg,#0891b2,#0e7490);padding:32px 40px;text-align:center;">
-          <div style="font-size:40px;margin-bottom:8px;">⏰</div>
+          <div style="font-size:40px;margin-bottom:8px;">&#9200;</div>
           <h1 style="color:#fff;margin:0;font-size:22px;font-weight:700;">{clinic_name}</h1>
           <p style="color:#cffafe;margin:6px 0 0;font-size:14px;">Recordatorio de Cita</p>
         </td>
@@ -87,7 +95,7 @@ _REMINDER_HTML = """\
 
 _MAGIC_LINK_SECTION = """\
           <p style="color:#475569;font-size:14px;margin:0 0 20px;line-height:1.6;">
-            ¿Necesitas cancelar o reagendar? Usa tu enlace personal:
+            &iquest;Necesitas cancelar o reagendar? Usa tu enlace personal:
           </p>
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
             <tr><td style="text-align:center;">
@@ -101,8 +109,7 @@ _MAGIC_LINK_SECTION = """\
           </table>"""
 
 _REMINDER_TEXT = """\
-Recordatorio de Cita — {clinic_name}
-======================================
+Recordatorio de Cita - {clinic_name}
 
 Hola, {patient_name}.
 
@@ -110,13 +117,13 @@ Tu cita es en aproximadamente {minutes_away} minutos.
 
   Doctor : {doctor_name}
   Fecha  : {date_str} a las {time_str}
-{reason_line}
-{magic_link_line}
-— {clinic_name} (mensaje automático, no responder)
+{reason_line}{magic_link_line}
+- {clinic_name} (mensaje automatico, no responder)
 """
 
 
-def _build_reminder_email(task: ReminderTask, minutes_away: int) -> MIMEMultipart:
+def _build_email_parts(task: ReminderTask, minutes_away: int) -> tuple[str, str, str]:
+    """Devuelve (subject, html_body, text_body)."""
     date_str = (
         f"{task.starts_at.day} de "
         f"{_ES_MONTHS[task.starts_at.month - 1]} de "
@@ -128,7 +135,8 @@ def _build_reminder_email(task: ReminderTask, minutes_away: int) -> MIMEMultipar
 
     reason_row = (
         f"<tr><td style='padding:16px 0;border-top:1px solid #e0f2fe;'>"
-        f"<span style='color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.5px;'>Motivo</span><br>"
+        f"<span style='color:#64748b;font-size:12px;text-transform:uppercase;"
+        f"letter-spacing:.5px;'>Motivo</span><br>"
         f"<span style='color:#1e293b;font-size:15px;'>{task.reason}</span>"
         f"</td></tr>"
     ) if task.reason else ""
@@ -137,8 +145,7 @@ def _build_reminder_email(task: ReminderTask, minutes_away: int) -> MIMEMultipar
         f"{settings.APP_BASE_URL}/appointments/public/{task.magic_token}"
         if task.magic_token else None
     )
-    magic_link_section = _MAGIC_LINK_SECTION.format(
-        magic_link=magic_url) if magic_url else ""
+    magic_link_section = _MAGIC_LINK_SECTION.format(magic_link=magic_url) if magic_url else ""
     magic_link_line = f"\nGestionar mi cita: {magic_url}\n" if magic_url else ""
     reason_line = f"  Motivo : {task.reason}\n" if task.reason else ""
 
@@ -162,51 +169,76 @@ def _build_reminder_email(task: ReminderTask, minutes_away: int) -> MIMEMultipar
         reason_line=reason_line,
         magic_link_line=magic_link_line,
     )
-
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"⏰ Recordatorio: tu cita es en {minutes_away} min — {task.clinic_name}"
-    msg["From"] = settings.EMAILS_FROM
-    msg["To"] = task.patient_email
-    msg.attach(MIMEText(text, "plain", "utf-8"))
-    msg.attach(MIMEText(html, "html", "utf-8"))
-    return msg
+    subject = f"Recordatorio: tu cita es en {minutes_away} min - {task.clinic_name}"
+    return subject, html, text
 
 
-def _send_email_sync(msg: MIMEMultipart, to_email: str) -> bool:
+async def _send_via_sendgrid(to_email: str, subject: str, html: str, text: str) -> bool:
+    """Envía email vía SendGrid HTTP API (asíncrono con httpx)."""
+    api_key = settings.SENDGRID_API_KEY
+    if not api_key:
+        return False
+
+    payload = {
+        "personalizations": [{"to": [{"email": to_email}]}],
+        "from": {"email": settings.EMAILS_FROM},
+        "subject": subject,
+        "content": [
+            {"type": "text/plain", "value": text},
+            {"type": "text/html",  "value": html},
+        ],
+    }
     try:
-        import requests
-        api_key = settings.SENDGRID_API_KEY
-        from_email = settings.EMAILS_FROM
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                "https://api.sendgrid.com/v3/mail/send",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json=payload,
+            )
+        if resp.status_code == 202:
+            log.info("Recordatorio enviado vía SendGrid a %s", to_email)
+            return True
+        log.warning("SendGrid respondió %s: %s", resp.status_code, resp.text[:300])
+        return False
+    except Exception:
+        log.error("Error enviando vía SendGrid a %s", to_email, exc_info=True)
+        return False
 
-        # Extraer el texto del email correctamente
-        if msg.is_multipart():
-            payload = msg.get_payload(0).get_payload(
-                decode=True).decode('utf-8')
+
+def _send_via_smtp_sync(to_email: str, subject: str, html: str, text: str) -> bool:
+    """Envía email vía SMTP directo (síncrono — se llama con run_in_executor)."""
+    if not settings.SMTP_HOST or not settings.SMTP_USER:
+        return False
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = settings.EMAILS_FROM
+        msg["To"] = to_email
+        msg.attach(MIMEText(text, "plain", "utf-8"))
+        msg.attach(MIMEText(html, "html", "utf-8"))
+
+        if settings.SMTP_TLS:
+            ctx = ssl.create_default_context()
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as smtp:
+                smtp.ehlo()
+                smtp.starttls(context=ctx)
+                smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                smtp.sendmail(settings.EMAILS_FROM, [to_email], msg.as_bytes())
         else:
-            payload = msg.get_payload(decode=True).decode('utf-8')
-
-        data = {
-            "personalizations": [{"to": [{"email": to_email}]}],
-            "from": {"email": from_email},
-            "subject": msg['Subject'],
-            "content": [{"type": "text/html", "value": payload}]
-        }
-
-        response = requests.post(
-            "https://api.sendgrid.com/v3/mail/send",
-            headers={"Authorization": f"Bearer {api_key}"},
-            json=data
-        )
-        return response.status_code == 202
-    except Exception as e:
-        logger.error(f"SendGrid error: {e}")
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as smtp:
+                smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                smtp.sendmail(settings.EMAILS_FROM, [to_email], msg.as_bytes())
+        log.info("Recordatorio enviado vía SMTP a %s", to_email)
+        return True
+    except Exception:
+        log.error("Error enviando vía SMTP a %s", to_email, exc_info=True)
         return False
 
 
 async def send_reminder(db: AsyncSession, task: ReminderTask) -> bool:
     """
-    Envía recordatorio por email y/o WhatsApp, luego registra en `notifications`.
-    Devuelve True si al menos un canal tuvo éxito.
+    Envía recordatorio por email (SendGrid o SMTP) y/o WhatsApp.
+    Registra el resultado en `notifications`. Devuelve True si al menos un canal tuvo éxito.
     """
     now = datetime.now(timezone.utc)
     minutes_away = max(1, int((task.starts_at - now).total_seconds() / 60))
@@ -216,34 +248,41 @@ async def send_reminder(db: AsyncSession, task: ReminderTask) -> bool:
 
     # ── Email ──────────────────────────────────────────────────────────────────
     if task.patient_email:
-        msg = _build_reminder_email(task, minutes_away)
-        import asyncio  # noqa: PLC0415
-        loop = asyncio.get_event_loop()
-        email_ok = await loop.run_in_executor(None, _send_email_sync, msg, task.patient_email)
+        subject, html, text = _build_email_parts(task, minutes_away)
+
+        # Intentar SendGrid primero, luego SMTP como fallback
+        if settings.SENDGRID_API_KEY:
+            email_ok = await _send_via_sendgrid(task.patient_email, subject, html, text)
+        if not email_ok and settings.SMTP_HOST:
+            loop = asyncio.get_event_loop()
+            email_ok = await loop.run_in_executor(
+                None, _send_via_smtp_sync, task.patient_email, subject, html, text
+            )
 
     # ── WhatsApp ───────────────────────────────────────────────────────────────
     if task.patient_phone and settings.GREENAPI_INSTANCE_ID:
         magic_url = (
             f"{settings.APP_BASE_URL}/appointments/public/{task.magic_token}"
-            if task.magic_token else None
+            if task.magic_token else ""
         )
         wa_msg = format_appointment_reminder(
             patient_name=task.patient_name,
             doctor_name=task.doctor_name,
             clinic_name=task.clinic_name,
             starts_at_local=task.starts_at.strftime("%d/%m/%Y %H:%M"),
-            magic_link=magic_url or "",
+            magic_link=magic_url,
         )
         whatsapp_ok = await send_whatsapp(task.patient_phone, wa_msg)
 
     success = email_ok or whatsapp_ok
 
-    # ── Registrar en notifications (audit trail) ───────────────────────────────
+    # ── Audit trail en notifications ───────────────────────────────────────────
     try:
+        channel = NotificationChannel.EMAIL if email_ok else NotificationChannel.WHATSAPP
         notif = Notification(
             clinic_id=task.clinic_id,
             appointment_id=task.appointment_id,
-            channel=NotificationChannel.EMAIL if email_ok else NotificationChannel.WHATSAPP,
+            channel=channel,
             notification_type=NotificationType.APPOINTMENT_REMINDER,
             status=NotificationStatus.SENT if success else NotificationStatus.FAILED,
             sent_at=now if success else None,
@@ -252,6 +291,7 @@ async def send_reminder(db: AsyncSession, task: ReminderTask) -> bool:
                 "email_ok": email_ok,
                 "whatsapp_ok": whatsapp_ok,
                 "minutes_away": minutes_away,
+                "provider": "sendgrid" if email_ok and settings.SENDGRID_API_KEY else "smtp",
             },
         )
         db.add(notif)

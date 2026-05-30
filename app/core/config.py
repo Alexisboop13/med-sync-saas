@@ -64,8 +64,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM:                str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES:  int = 30
     REFRESH_TOKEN_EXPIRE_DAYS:    int = 30
-    SENDGRID_API_KEY: str = os.getenv("SENDGRID_API_KEY", "")
-    EMAILS_FROM: str = os.getenv("EMAILS_FROM", "alexisdehesa@gmail.com")
+
+    # ── SendGrid ──────────────────────────────────────────────────────────────
+    SENDGRID_API_KEY: str = ""
+
     # ── Encryption ────────────────────────────────────────────────────────────
     # Comma-separated base64-encoded 32-byte keys, ordered oldest→newest.
     # The LAST key is always active for new encryptions.
