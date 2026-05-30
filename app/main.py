@@ -27,6 +27,10 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.db.session import engine
 from app.models.base import Base
+from app.api.routes.test_sendgrid import router as test_sendgrid_router
+
+# Después de los otros routers
+app.include_router(test_sendgrid_router)
 
 _ROOT = Path(__file__).resolve().parent.parent
 
