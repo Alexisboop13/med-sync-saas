@@ -10,21 +10,21 @@ Flujo:
   4. Registra el resultado en la tabla `notifications` (audit trail).
   5. Devuelve True si al menos un canal tuvo éxito.
 """
+
 from __future__ import annotations
-
-import logging
-import smtplib
-import ssl
-from datetime import datetime, timezone
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.agent.scheduler import ReminderTask
-from app.core.config import settings
-from app.core.whatsapp import format_appointment_reminder, send_whatsapp
 from app.models.notification import Notification, NotificationChannel, NotificationStatus, NotificationType
+from app.core.whatsapp import format_appointment_reminder, send_whatsapp
+from app.core.config import settings
+from app.agent.scheduler import ReminderTask
+from sqlalchemy.ext.asyncio import AsyncSession
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime, timezone
+import ssl
+import smtplib
+import logging
+logger = logging.getLogger(__name__)
+
 
 log = logging.getLogger(__name__)
 
@@ -173,20 +173,26 @@ def _build_reminder_email(task: ReminderTask, minutes_away: int) -> MIMEMultipar
 
 
 def _send_email_sync(msg: MIMEMultipart, to_email: str) -> bool:
-    if not settings.SMTP_HOST or not settings.SMTP_USER:
-        log.debug("SMTP no configurado — saltando recordatorio por email.")
-        return False
-    # Send email
     try:
-        import ssl
-        ctx = ssl.create_default_context()
-        with smtplib.SMTP_SSL(settings.SMTP_HOST, 465, timeout=15, context=ctx) as smtp:
-            smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            smtp.send_message(msg)
-        logger.info(f"[Notifier] Reminder email sent to {to_email}")
-        return True
+        import requests
+        api_key = settings.SENDGRID_API_KEY
+        from_email = settings.EMAILS_FROM
+
+        data = {
+            "personalizations": [{"to": [{"email": to_email}]}],
+            "from": {"email": from_email},
+            "subject": msg['Subject'],
+            "content": [{"type": "text/html", "value": msg.get_payload()}]
+        }
+
+        response = requests.post(
+            "https://api.sendgrid.com/v3/mail/send",
+            headers={"Authorization": f"Bearer {api_key}"},
+            json=data
+        )
+        return response.status_code == 202
     except Exception as e:
-        logger.error(f"[Notifier] Failed to send email to {to_email}: {e}")
+        logger.error(f"SendGrid error: {e}")
         return False
 
 
