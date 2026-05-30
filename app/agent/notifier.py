@@ -178,11 +178,18 @@ def _send_email_sync(msg: MIMEMultipart, to_email: str) -> bool:
         api_key = settings.SENDGRID_API_KEY
         from_email = settings.EMAILS_FROM
 
+        # Extraer el texto del email correctamente
+        if msg.is_multipart():
+            payload = msg.get_payload(0).get_payload(
+                decode=True).decode('utf-8')
+        else:
+            payload = msg.get_payload(decode=True).decode('utf-8')
+
         data = {
             "personalizations": [{"to": [{"email": to_email}]}],
             "from": {"email": from_email},
             "subject": msg['Subject'],
-            "content": [{"type": "text/html", "value": msg.get_payload()}]
+            "content": [{"type": "text/html", "value": payload}]
         }
 
         response = requests.post(
