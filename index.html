@@ -3856,17 +3856,18 @@
 
       events: async (info, successCb, failureCb) => {
         try {
-          // BUG FIX: pasar rango de fechas para obtener exactamente lo que se muestra
-          const params = new URLSearchParams({
-            start_date: info.startStr.slice(0, 10),
-            end_date:   info.endStr.slice(0, 10),
-            limit:      '100',
-          });
-          const res = await fetch(`${API}/api/v1/appointments?${params}`, { headers: authHeaders() });
-          if (res.status === 401) { logout(); return; }
-          if (!res.ok) throw new Error(`Error ${res.status}`);
+          // Sin filtro de fecha: pedimos los 100 eventos más recientes.
+          // FullCalendar ya sabe qué rango mostrar en cada vista y filtra él mismo.
+          // Filtrar aquí por ventana estrecha (semana/día) devolvía 0 resultados
+          // cuando el test data estaba en semanas anteriores.
+          const res = await fetch(
+            `${API}/api/v1/appointments?limit=100`,
+            { headers: authHeaders() }
+          );
+          if (res.status === 401) { logout(); failureCb(new Error('401')); return; }
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const data = await res.json();
-          const list = Array.isArray(data) ? data : (data.items || data.data || []);
+          const list = Array.isArray(data) ? data : (data.items || []);
           successCb(list.map(apptToEvent));
         } catch (err) {
           failureCb(err);
@@ -4068,7 +4069,7 @@
     const pad = n => String(n).padStart(2, '0');
     const todayStr = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
 
-    const params = new URLSearchParams({ limit: '500' });
+    const params = new URLSearchParams({ limit: '100' });
     if (_listFilter === 'today') {
       params.set('fecha', todayStr);
     } else if (_listFilter === 'week') {
