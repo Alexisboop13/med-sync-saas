@@ -3830,7 +3830,7 @@
           const params = new URLSearchParams({
             start_date: info.startStr.slice(0, 10),
             end_date:   info.endStr.slice(0, 10),
-            limit:      '500',
+            limit:      '100',
           });
           const res = await fetch(`${API}/api/v1/appointments?${params}`, { headers: authHeaders() });
           if (res.status === 401) { logout(); return; }
