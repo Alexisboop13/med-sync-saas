@@ -2043,16 +2043,74 @@
 
 <!-- ═══ MODAL: Drag & Drop Confirm ═══ -->
 <div id="drag-confirm-modal" class="modal-overlay" style="display:none;">
-  <div class="modal-card" style="max-width:420px;">
+  <div class="modal-card" style="max-width:460px;">
     <div class="modal-header">
-      <h3>Mover cita</h3>
+      <h3>Confirmar reagendado</h3>
       <button class="modal-close" onclick="revertDrop()" aria-label="Cerrar">&times;</button>
     </div>
     <div class="modal-body">
-      <p id="drag-confirm-text" style="margin-bottom:1.25rem;line-height:1.55;font-size:.95rem;"></p>
-      <div class="modal-actions">
-        <button class="btn btn-primary" onclick="confirmDrop()">Confirmar</button>
-        <button class="btn btn-outline" onclick="revertDrop()">Cancelar</button>
+      <!-- Resumen visual del cambio -->
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:.75rem;align-items:center;margin-bottom:1.25rem;">
+        <div style="background:var(--gray-100);border-radius:10px;padding:.85rem 1rem;text-align:center;">
+          <div style="font-size:.7rem;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem;">Horario actual</div>
+          <div id="dc-from-time" style="font-size:.95rem;font-weight:700;color:var(--gray-800);"></div>
+          <div id="dc-from-date" style="font-size:.77rem;color:var(--gray-600);margin-top:.15rem;"></div>
+        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <div style="background:var(--blue-light);border-radius:10px;padding:.85rem 1rem;text-align:center;border:1.5px solid var(--blue);">
+          <div style="font-size:.7rem;font-weight:700;color:var(--blue-dark);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem;">Nuevo horario</div>
+          <div id="dc-to-time" style="font-size:.95rem;font-weight:700;color:var(--blue-dark);"></div>
+          <div id="dc-to-date" style="font-size:.77rem;color:var(--blue-dark);margin-top:.15rem;"></div>
+        </div>
+      </div>
+      <p id="drag-confirm-text" style="margin-bottom:1rem;line-height:1.55;font-size:.9rem;color:var(--gray-600);"></p>
+      <div id="drag-confirm-error" class="alert alert-error" style="display:none;margin-bottom:1rem;"></div>
+      <div class="modal-actions" style="justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="revertDrop()" id="drag-cancel-btn">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmDrop()" id="drag-confirm-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Reagendar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Completar cita con notas ═══ -->
+<div id="complete-notes-modal" class="modal-overlay" style="display:none;" onclick="closeCompleteNotesOverlay(event)">
+  <div class="modal-card" style="max-width:520px;">
+    <div class="modal-header">
+      <div>
+        <h3>Completar consulta</h3>
+        <p style="font-size:.8rem;color:var(--gray-600);margin:.15rem 0 0;">Las notas quedan guardadas en el historial clínico</p>
+      </div>
+      <button class="modal-close" onclick="closeCompleteNotesModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="cn-error" class="alert alert-error" style="display:none;margin-bottom:1rem;"></div>
+      <div class="form-group">
+        <label for="cn-notes" style="font-weight:700;">
+          Notas de la consulta
+          <span style="font-weight:400;color:var(--gray-600);font-size:.78rem;margin-left:.4rem;">(opcional — visible solo para doctores y dueño)</span>
+        </label>
+        <textarea id="cn-notes" rows="4" placeholder="Evolución, observaciones, hallazgos clínicos..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cn-diagnosis">Diagnóstico</label>
+          <input type="text" id="cn-diagnosis" placeholder="CIE-10 o descripción libre..." autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="cn-treatment">Tratamiento indicado</label>
+          <input type="text" id="cn-treatment" placeholder="Medicamento, procedimiento..." autocomplete="off" />
+        </div>
+      </div>
+      <div class="modal-actions" style="justify-content:flex-end;margin-top:.75rem;">
+        <button class="btn btn-outline" onclick="closeCompleteNotesModal()">Cancelar</button>
+        <button class="btn btn-success" id="cn-submit-btn" onclick="submitCompleteWithNotes()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Completar consulta
+        </button>
       </div>
     </div>
   </div>
@@ -3719,11 +3777,37 @@
       eventDrop(info) {
         _pendingDrop = info;
         const a = info.event.extendedProps;
-        const newTime = info.event.start
-          ? info.event.start.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
+        const fmt = { hour: '2-digit', minute: '2-digit' };
+        const fmtDate = { weekday: 'short', day: 'numeric', month: 'short' };
+
+        // Horario original (oldEvent tiene la posición antes del drag)
+        const oldStart = info.oldEvent?.start;
+        const fromTime = oldStart ? oldStart.toLocaleTimeString('es-MX', fmt) : '—';
+        const fromDate = oldStart ? oldStart.toLocaleDateString('es-MX', fmtDate) : '';
+
+        // Nuevo horario
+        const newStart = info.event.start;
+        const newEnd   = info.event.end;
+        const toTime = newStart
+          ? newStart.toLocaleTimeString('es-MX', fmt) + (newEnd ? ' – ' + newEnd.toLocaleTimeString('es-MX', fmt) : '')
           : '—';
-        document.getElementById('drag-confirm-text').innerHTML =
-          `¿Mover la cita de <strong>${patientName(a)}</strong> al <strong>${newTime}</strong>?`;
+        const toDate = newStart ? newStart.toLocaleDateString('es-MX', fmtDate) : '';
+
+        document.getElementById('dc-from-time').textContent = fromTime;
+        document.getElementById('dc-from-date').textContent = fromDate;
+        document.getElementById('dc-to-time').textContent   = toTime;
+        document.getElementById('dc-to-date').textContent   = toDate;
+        document.getElementById('drag-confirm-text').textContent =
+          `Paciente: ${patientName(a)} · Doctor: ${doctorName(a)}`;
+
+        // Limpiar estado previo del modal
+        const errEl = document.getElementById('drag-confirm-error');
+        errEl.style.display = 'none';
+        errEl.textContent = '';
+        const btn = document.getElementById('drag-confirm-btn');
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Reagendar';
+
         document.getElementById('drag-confirm-modal').style.display = 'flex';
       },
 
@@ -3743,8 +3827,9 @@
             const err = await res.json().catch(() => ({}));
             throw new Error(err.detail || `Error ${res.status}`);
           }
+          showToast('Duración actualizada.', 'success');
         } catch (err) {
-          showToast('No se pudo actualizar la duración: ' + err.message, 'error');
+          showToast('No se pudo cambiar la duración: ' + err.message, 'error');
           info.revert();
         }
       },
@@ -3919,9 +4004,17 @@
 
   async function confirmDrop() {
     if (!_pendingDrop) return;
-    document.getElementById('drag-confirm-modal').style.display = 'none';
     const { event, revert } = _pendingDrop;
-    _pendingDrop = null;
+
+    // Estado de carga dentro del modal (no cerrarlo hasta saber el resultado)
+    const btn    = document.getElementById('drag-confirm-btn');
+    const errEl  = document.getElementById('drag-confirm-error');
+    const cancel = document.getElementById('drag-cancel-btn');
+    btn.disabled    = true;
+    cancel.disabled = true;
+    btn.innerHTML   = '<div class="spinner" style="width:16px;height:16px;margin:0;border-width:2px;"></div> Verificando…';
+    errEl.style.display = 'none';
+
     try {
       const body = { starts_at: event.start.toISOString() };
       if (event.end) body.ends_at = event.end.toISOString();
@@ -3934,10 +4027,20 @@
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail || `Error ${res.status}`);
       }
-      showToast('Cita movida exitosamente.', 'success');
+      // Éxito: cerrar modal y notificar
+      _pendingDrop = null;
+      document.getElementById('drag-confirm-modal').style.display = 'none';
+      if (calendar) calendar.refetchEvents();
+      showToast('Cita reagendada exitosamente.', 'success');
     } catch (err) {
-      showToast('No se pudo mover la cita: ' + err.message, 'error');
+      // Error: mostrar dentro del modal y revertir el drag
       revert();
+      _pendingDrop = null;
+      errEl.textContent   = err.message;
+      errEl.style.display = 'block';
+      btn.disabled    = false;
+      cancel.disabled = false;
+      btn.innerHTML   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Reintentar';
     }
   }
 
@@ -4178,7 +4281,88 @@
       document.getElementById('confirm-cancel-modal').style.display = 'flex';
       return;
     }
+    if (newStatus === 'completed') {
+      _openCompleteNotesModal();
+      return;
+    }
     await _doChangeApptStatus(newStatus);
+  }
+
+  function _openCompleteNotesModal() {
+    document.getElementById('cn-notes').value     = '';
+    document.getElementById('cn-diagnosis').value = '';
+    document.getElementById('cn-treatment').value = '';
+    const errEl = document.getElementById('cn-error');
+    errEl.style.display = 'none';
+    errEl.textContent   = '';
+    const btn = document.getElementById('cn-submit-btn');
+    btn.disabled  = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Completar consulta';
+    document.getElementById('complete-notes-modal').style.display = 'flex';
+  }
+
+  function closeCompleteNotesModal() {
+    document.getElementById('complete-notes-modal').style.display = 'none';
+  }
+
+  function closeCompleteNotesOverlay(e) {
+    if (e.target === document.getElementById('complete-notes-modal')) closeCompleteNotesModal();
+  }
+
+  async function submitCompleteWithNotes() {
+    const apptId    = document.getElementById('appt-detail-id').value;
+    const notes     = document.getElementById('cn-notes').value.trim();
+    const diagnosis = document.getElementById('cn-diagnosis').value.trim();
+    const treatment = document.getElementById('cn-treatment').value.trim();
+
+    const errEl = document.getElementById('cn-error');
+    const btn   = document.getElementById('cn-submit-btn');
+    errEl.style.display = 'none';
+    btn.disabled  = true;
+    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;margin:0;border-width:2px;"></div> Guardando…';
+
+    try {
+      // 1. Guardar nota clínica si hay contenido
+      const noteParts = [];
+      if (notes)     noteParts.push(notes);
+      if (diagnosis) noteParts.push(`Diagnóstico: ${diagnosis}`);
+      if (treatment) noteParts.push(`Tratamiento: ${treatment}`);
+
+      if (noteParts.length > 0) {
+        const noteRes = await fetch(`${API}/api/v1/appointments/${apptId}/notes`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ content: noteParts.join('\n\n') }),
+        });
+        if (!noteRes.ok) {
+          const err = await noteRes.json().catch(() => ({}));
+          throw new Error(err.detail || `Error guardando notas: ${noteRes.status}`);
+        }
+      }
+
+      // 2. Marcar como completada
+      const statusRes = await fetch(`${API}/api/v1/appointments/${apptId}/status`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ status: 'completed' }),
+      });
+      if (!statusRes.ok) {
+        const err = await statusRes.json().catch(() => ({}));
+        throw new Error(err.detail || `Error actualizando estado: ${statusRes.status}`);
+      }
+
+      // Éxito
+      closeCompleteNotesModal();
+      closeApptDetailModal();
+      if (calendar) calendar.refetchEvents();
+      showToast(noteParts.length ? 'Consulta completada y notas guardadas.' : 'Cita marcada como completada.', 'success');
+
+    } catch (err) {
+      errEl.textContent   = err.message;
+      errEl.style.display = 'block';
+      btn.disabled  = false;
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Completar consulta';
+    }
   }
 
   async function executeCancelAppt() {
