@@ -730,6 +730,34 @@
     .coming-soon h3 { font-size: 1.05rem; font-weight: 700; color: var(--gray-600); margin-bottom: .5rem; }
     .coming-soon p { font-size: .88rem; }
 
+    /* ── Modal animations ── */
+    .modal-overlay {
+      animation: modal-bg-in .16s ease both;
+    }
+    .modal-overlay .modal-card {
+      animation: modal-card-in .22s cubic-bezier(.34, 1.56, .64, 1) both;
+    }
+    @keyframes modal-bg-in  { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes modal-card-in {
+      from { opacity: 0; transform: translateY(14px) scale(.97); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ── Availability chip strip ── */
+    .avail-strip {
+      display: flex; gap: 4px; flex-wrap: wrap;
+      margin-top: .5rem; min-height: 24px;
+    }
+    .avail-chip {
+      padding: .15rem .5rem; border-radius: 5px;
+      font-size: .72rem; font-weight: 600; cursor: pointer;
+      border: 1px solid transparent; transition: all .12s;
+    }
+    .avail-chip.free   { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+    .avail-chip.free:hover { background: #a7f3d0; }
+    .avail-chip.busy   { background: #fee2e2; color: #991b1b; border-color: #fca5a5; cursor: not-allowed; opacity: .65; }
+    .avail-label { font-size: .73rem; color: var(--gray-600); margin-top: .3rem; display: block; }
+
     /* ── Toast notifications ── */
     .toast-container {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -2189,7 +2217,7 @@
         </div>
         <div class="form-group">
           <label for="cal-doctor-select">Doctor <span style="color:var(--red)">*</span></label>
-          <select id="cal-doctor-select" required>
+          <select id="cal-doctor-select" required onchange="onCalDoctorOrDateChange()">
             <option value="">— Seleccionar doctor —</option>
           </select>
         </div>
@@ -2218,12 +2246,14 @@
         </div>
         <div class="form-group form-group-wide">
           <label for="cal-appt-date">Fecha <span style="color:var(--red)">*</span></label>
-          <input type="date" id="cal-appt-date" required />
+          <input type="date" id="cal-appt-date" required onchange="onCalDoctorOrDateChange()" />
+          <div class="avail-strip" id="cal-avail-strip" style="display:none;"></div>
+          <span class="avail-label" id="cal-avail-label" style="display:none;"></span>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label for="cal-appt-start">Hora inicio <span style="color:var(--red)">*</span></label>
-            <input type="time" id="cal-appt-start" required />
+            <input type="time" id="cal-appt-start" required onchange="onCalStartChange()" />
           </div>
           <div class="form-group">
             <label for="cal-appt-end">Hora fin <span style="color:var(--red)">*</span></label>
@@ -4611,36 +4641,136 @@
     hideAlert('cal-appt-success');
     document.getElementById('cal-appt-form').reset();
 
+    // Ocultar strip de disponibilidad al abrir
+    document.getElementById('cal-avail-strip').style.display = 'none';
+    document.getElementById('cal-avail-label').style.display = 'none';
+
     if (dateStr) {
       const hasTime = dateStr.includes('T');
-      const [datePart, timePart] = hasTime ? dateStr.split('T') : [dateStr, '09:00'];
-      const startHH = parseInt(timePart.slice(0, 2), 10);
-      const endHH   = String(Math.min(startHH + 1, 23)).padStart(2, '0');
+      // FullCalendar puede pasar "2026-06-05T09:00:00+XX:XX" — tomamos solo fecha y hora local
+      const localPart = hasTime ? dateStr.replace(/[+-]\d{2}:\d{2}$|Z$/, '') : dateStr;
+      const [datePart, timePart = '09:00'] = localPart.split('T');
+      const start = timePart.slice(0, 5);
       document.getElementById('cal-appt-date').value  = datePart;
-      document.getElementById('cal-appt-start').value = timePart.slice(0, 5);
-      document.getElementById('cal-appt-end').value   = `${endHH}:${timePart.slice(3, 5) || '00'}`;
+      document.getElementById('cal-appt-start').value = start;
+      _setEndFromStart(start);
     } else {
-      document.getElementById('cal-appt-date').value = new Date().toISOString().split('T')[0];
+      const today = new Date();
+      document.getElementById('cal-appt-date').value  = today.toISOString().split('T')[0];
       document.getElementById('cal-appt-start').value = '09:00';
       document.getElementById('cal-appt-end').value   = '10:00';
     }
 
-    // Reset location cascade
     document.getElementById('cal-loc-select').value = '';
     document.getElementById('cal-room-row').style.display = 'none';
     document.getElementById('cal-unit-color').style.background = '';
     _syncCalLocSelect();
 
     document.getElementById('cal-create-modal').style.display = 'flex';
+    // Cargar disponibilidad si ya hay doctor y fecha
+    onCalDoctorOrDateChange();
   }
 
-  function closeCalCreateModal() { document.getElementById('cal-create-modal').style.display = 'none'; }
-  function closeCalCreateModalOverlay(e) { if (e.target === document.getElementById('cal-create-modal')) closeCalCreateModal(); }
+  function closeCalCreateModal() {
+    document.getElementById('cal-create-modal').style.display = 'none';
+  }
+
+  function closeCalCreateModalOverlay(e) {
+    if (e.target === document.getElementById('cal-create-modal')) closeCalCreateModal();
+  }
+
+  // Auto-calcula hora fin según la duración del doctor seleccionado
+  function _setEndFromStart(startHHMM) {
+    const doctorId = document.getElementById('cal-doctor-select').value;
+    const doc = doctorId ? _doctorMap[doctorId] : null;
+    const mins = doc?.appointment_duration_minutes || 60;
+    const [h, m] = startHHMM.split(':').map(Number);
+    const total = h * 60 + m + mins;
+    const eh = Math.floor(total / 60) % 24;
+    const em = total % 60;
+    document.getElementById('cal-appt-end').value =
+      `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`;
+  }
+
+  function onCalStartChange() {
+    const start = document.getElementById('cal-appt-start').value;
+    if (start) _setEndFromStart(start);
+  }
+
+  // Muestra chips de horarios libres/ocupados para el doctor en la fecha seleccionada
+  async function onCalDoctorOrDateChange() {
+    const doctorId = document.getElementById('cal-doctor-select').value;
+    const date     = document.getElementById('cal-appt-date').value;
+    const strip    = document.getElementById('cal-avail-strip');
+    const label    = document.getElementById('cal-avail-label');
+
+    if (!doctorId || !date) {
+      strip.style.display = 'none';
+      label.style.display = 'none';
+      return;
+    }
+
+    label.style.display = 'block';
+    label.textContent   = 'Cargando disponibilidad…';
+    strip.style.display = 'flex';
+    strip.innerHTML     = '<span style="color:var(--gray-400);font-size:.75rem;">…</span>';
+
+    try {
+      const qs  = new URLSearchParams({ doctor_id: doctorId, fecha: date, limit: '100' });
+      const res = await fetch(`${API}/api/v1/appointments?${qs}`, { headers: authHeaders() });
+      if (!res.ok) throw new Error();
+      const data  = await res.json();
+      const taken = (Array.isArray(data) ? data : (data.items || [])).filter(a =>
+        ['scheduled', 'confirmed', 'in_progress'].includes((a.status || '').toLowerCase())
+      );
+
+      // Slots cada 30 min de 07:00 a 20:30
+      const doc = _doctorMap[doctorId];
+      const durMins = doc?.appointment_duration_minutes || 60;
+      const chips   = [];
+      for (let h = 7; h < 21; h++) {
+        for (let m = 0; m < 60; m += 30) {
+          const slotStart = h * 60 + m;
+          const slotEnd   = slotStart + durMins;
+          const isBusy = taken.some(a => {
+            if (!a.starts_at) return false;
+            const as = new Date(a.starts_at);
+            const ae = a.ends_at ? new Date(a.ends_at) : new Date(as.getTime() + 60 * 60000);
+            const asMins = as.getHours() * 60 + as.getMinutes();
+            const aeMins = ae.getHours() * 60 + ae.getMinutes();
+            return slotStart < aeMins && slotEnd > asMins;
+          });
+          const lbl = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+          chips.push({ lbl, isBusy });
+        }
+      }
+
+      strip.innerHTML = chips.map(c =>
+        `<span class="avail-chip ${c.isBusy ? 'busy' : 'free'}"
+               title="${c.isBusy ? 'Ocupado' : 'Disponible'}"
+               onclick="${c.isBusy ? '' : `onAvailChipClick('${c.lbl}')`}">${c.lbl}</span>`
+      ).join('');
+
+      const freeCount = chips.filter(c => !c.isBusy).length;
+      label.textContent = `${freeCount} horarios disponibles · haz clic en un horario libre para seleccionarlo`;
+    } catch {
+      strip.style.display = 'none';
+      label.style.display = 'none';
+    }
+  }
+
+  function onAvailChipClick(timeStr) {
+    document.getElementById('cal-appt-start').value = timeStr;
+    _setEndFromStart(timeStr);
+    // Highlight selected chip
+    document.querySelectorAll('#cal-avail-strip .avail-chip.free').forEach(el => {
+      el.style.outline = el.textContent === timeStr ? '2px solid var(--blue)' : '';
+    });
+  }
 
   async function submitCalAppt(e) {
     e.preventDefault();
     hideAlert('cal-appt-error');
-    hideAlert('cal-appt-success');
     setLoading('cal-appt-btn', true);
 
     const patientId  = document.getElementById('cal-patient-select').value;
@@ -4650,61 +4780,61 @@
     const endTime    = document.getElementById('cal-appt-end').value;
     const reason     = document.getElementById('cal-appt-reason').value.trim();
     const locationId = document.getElementById('cal-loc-select').value;
-    const room       = document.getElementById('cal-room-select').value;
-    const unit       = document.getElementById('cal-unit-select').value;
 
-    if (!reason) {
-      showAlert('cal-appt-error', 'El motivo de la cita es obligatorio.');
-      setLoading('cal-appt-btn', false);
-      return;
-    }
+    // Validación front-end básica
+    if (!patientId)  { showAlert('cal-appt-error', 'Selecciona un paciente.'); setLoading('cal-appt-btn', false); return; }
+    if (!doctorId)   { showAlert('cal-appt-error', 'Selecciona un doctor.');   setLoading('cal-appt-btn', false); return; }
+    if (!date)       { showAlert('cal-appt-error', 'Selecciona una fecha.');    setLoading('cal-appt-btn', false); return; }
+    if (!startTime)  { showAlert('cal-appt-error', 'Indica la hora de inicio.');setLoading('cal-appt-btn', false); return; }
+    if (!endTime)    { showAlert('cal-appt-error', 'Indica la hora de fin.');   setLoading('cal-appt-btn', false); return; }
+    if (startTime >= endTime) { showAlert('cal-appt-error', 'La hora de fin debe ser posterior a la de inicio.'); setLoading('cal-appt-btn', false); return; }
 
-    const startsAt = `${date}T${startTime}:00`;
-    const endsAt   = `${date}T${endTime}:00`;
+    // FIX: construir ISO con timezone local para que el backend reciba UTC correcto.
+    // new Date('YYYY-MM-DDTHH:MM:SS') interpreta como hora local → .toISOString() convierte a UTC.
+    const startsAt = new Date(`${date}T${startTime}:00`).toISOString();
+    const endsAt   = new Date(`${date}T${endTime}:00`).toISOString();
 
-    // Build notes: append room/unit if selected
-    let fullNotes = reason;
-    if (room)  fullNotes += ` | ${room}`;
-    if (unit)  fullNotes += ` — ${unit}`;
-
+    // Payload limpio: solo los campos que AppointmentCreate acepta
     const payload = {
-      patient_id: patientId,
-      doctor_id:  doctorId,
-      date,
-      time:                 startTime,
-      appointment_date:     date,
-      appointment_time:     startTime,
-      appointment_datetime: startsAt,
-      starts_at:            startsAt,
-      ends_at:              endsAt,
-      reason:               fullNotes,
-      notes:                fullNotes,
+      patient_id:  patientId,
+      doctor_id:   doctorId,
+      starts_at:   startsAt,
+      ends_at:     endsAt,
+      reason:      reason || undefined,
       ...(locationId && { location_id: locationId }),
-      status: 'scheduled'
     };
 
     try {
       const res = await fetch(`${API}/api/v1/appointments`, {
-        method: 'POST',
+        method:  'POST',
         headers: authHeaders(),
-        body: JSON.stringify(payload)
+        body:    JSON.stringify(payload),
       });
 
       if (res.status === 401) { logout(); return; }
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         const msg = err.detail
-          ? (Array.isArray(err.detail) ? err.detail.map(d => d.msg || JSON.stringify(d)).join(', ') : err.detail)
+          ? (Array.isArray(err.detail)
+              ? err.detail.map(d => d.msg || JSON.stringify(d)).join(' · ')
+              : String(err.detail))
           : `Error ${res.status}`;
         throw new Error(msg);
       }
 
+      // Éxito: cerrar modal, toast con contexto, actualizar calendario
       closeCalCreateModal();
-      showToast('¡Cita creada exitosamente!', 'success');
+      const pat = _patientMap[patientId];
+      const patName = pat ? (pat.full_name_enc || pat.full_name || 'Paciente') : 'Paciente';
+      const docObj  = _doctorMap[doctorId];
+      const docName = docObj ? (docObj.title ? `${docObj.title} ${docObj.full_name}` : `Dr. ${docObj.full_name}`) : 'Doctor';
+      const timeLabel = startTime;
+      showToast(`Cita agendada para ${patName} con ${docName} a las ${timeLabel}`, 'success', 5000);
       if (calendar) calendar.refetchEvents();
       loadAppointments();
+
     } catch (err) {
-      showAlert('cal-appt-error', err.message || 'No se pudo crear la cita.');
+      showAlert('cal-appt-error', err.message || 'No se pudo crear la cita. Verifica los datos.');
     } finally {
       setLoading('cal-appt-btn', false);
     }
