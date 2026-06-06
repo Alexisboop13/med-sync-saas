@@ -468,77 +468,99 @@
 
     /* ── Calendar styles ── */
     #appointments-view { }
-    #calendar-container { padding: 1.5rem; }
-    #calendar { min-height: 620px; }
+    #calendar-container { padding: 0 1.25rem 1.25rem; }
+    #calendar { min-height: 640px; }
 
-    /* FullCalendar theme overrides */
+    /* ── FullCalendar theme overrides ── */
     .fc .fc-button-primary {
-      background-color: var(--blue);
-      border-color: var(--blue-dark);
-      font-size: .83rem;
-      font-weight: 600;
-      font-family: inherit;
+      background-color: var(--blue); border-color: var(--blue-dark);
+      font-size: .82rem; font-weight: 600; font-family: inherit;
       transition: background var(--transition);
     }
     .fc .fc-button-primary:hover { background-color: var(--blue-mid); border-color: var(--blue-dark); }
     .fc .fc-button-primary:not(:disabled):active,
     .fc .fc-button-primary:not(:disabled).fc-button-active {
-      background-color: var(--blue-dark);
-      border-color: var(--blue-dark);
+      background-color: var(--blue-dark); border-color: var(--blue-dark);
     }
-    .fc .fc-button-primary:focus { box-shadow: 0 0 0 3px rgba(44,125,160,.25); }
-    .fc-daygrid-event { border-radius: 5px; font-size: .79rem; }
-    .fc-timegrid-event { border-radius: 5px; font-size: .79rem; }
-    .fc .fc-toolbar-title { font-size: 1.05rem; font-weight: 700; color: var(--blue-dark); }
+    .fc .fc-button-primary:focus { box-shadow: 0 0 0 3px rgba(44,125,160,.25); outline: none; }
+    .fc-daygrid-event  { border-radius: 6px !important; font-size: .79rem; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+    .fc-timegrid-event { border-radius: 6px !important; font-size: .79rem; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+    .fc .fc-toolbar-title { font-size: 1rem; font-weight: 700; color: var(--blue-dark); }
+    /* Column headers in week/day */
+    .fc .fc-col-header-cell { background: var(--gray-50); }
+    .fc .fc-col-header-cell-cushion { color: var(--blue-dark); font-size: .8rem; font-weight: 700; text-decoration: none; padding: .5rem .4rem; }
+    /* Time slots */
+    .fc .fc-timegrid-slot { height: 2rem; }
+    .fc .fc-timegrid-slot-label { font-size: .72rem; color: var(--gray-400); }
+    /* Now indicator */
+    .fc .fc-timegrid-now-indicator-line { border-color: var(--red); }
+    .fc .fc-timegrid-now-indicator-arrow { border-top-color: var(--red); border-bottom-color: var(--red); }
+    /* Day number in month view */
+    .fc .fc-daygrid-day-number { font-size: .8rem; color: var(--gray-600); text-decoration: none; }
+    .fc .fc-day-today { background: var(--blue-light) !important; }
+    .fc .fc-day-today .fc-daygrid-day-number { color: var(--blue-dark); font-weight: 700; }
+    /* Dragging */
+    .fc .fc-event-dragging { box-shadow: 0 6px 20px rgba(0,0,0,.28) !important; opacity: .88 !important; }
+    .fc .fc-event-dragging .cal-tooltip { display: none; }
 
     /* ── Calendar custom toolbar ── */
     .cal-toolbar {
-      display: flex;
-      align-items: center;
-      gap: .45rem;
-      flex-wrap: wrap;
-      padding: .8rem 1.25rem;
-      border-bottom: 1px solid var(--gray-100);
+      display: flex; align-items: center; gap: .4rem; flex-wrap: wrap;
+      padding: .7rem 1.25rem; border-bottom: 1px solid var(--gray-100);
       background: var(--gray-50);
     }
-    .cal-toolbar-right { display: flex; gap: .45rem; margin-left: auto; }
-    .cal-view-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: .25rem;
-      background: none;
-      border: 1px solid var(--gray-200);
-      border-radius: 8px;
-      padding: .32rem .85rem;
-      font-size: .82rem;
-      font-weight: 600;
-      font-family: inherit;
-      color: var(--gray-600);
-      cursor: pointer;
+    .cal-toolbar-right { display: flex; gap: .4rem; margin-left: auto; align-items: center; }
+    .cal-nav-group { display: flex; align-items: center; gap: .2rem; }
+    .cal-nav-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px;
+      background: var(--white); border: 1px solid var(--gray-200);
+      border-radius: 7px; color: var(--gray-600);
+      cursor: pointer; font-size: .85rem; font-family: inherit;
       transition: all var(--transition);
-      line-height: 1.4;
+    }
+    .cal-nav-btn:hover { background: var(--blue-light); color: var(--blue-dark); border-color: var(--blue); }
+    .cal-nav-today {
+      padding: 0 .75rem; width: auto; font-size: .78rem; font-weight: 700;
+      letter-spacing: .01em;
+    }
+    #cal-title {
+      font-size: .9rem; font-weight: 700; color: var(--blue-dark);
+      white-space: nowrap; padding: 0 .4rem; letter-spacing: -.01em;
+    }
+    .cal-view-btn {
+      display: inline-flex; align-items: center; gap: .25rem;
+      background: none; border: 1px solid var(--gray-200); border-radius: 8px;
+      padding: .3rem .8rem; font-size: .8rem; font-weight: 600;
+      font-family: inherit; color: var(--gray-600);
+      cursor: pointer; transition: all var(--transition); line-height: 1.4;
     }
     .cal-view-btn:hover { background: var(--blue-light); color: var(--blue-dark); border-color: var(--blue); }
     .cal-view-btn.active { background: var(--blue); color: var(--white); border-color: var(--blue-dark); }
-    .cal-sep { width: 1px; height: 22px; background: var(--gray-200); margin: 0 .2rem; display: inline-block; align-self: center; }
+    .cal-sep { width: 1px; height: 22px; background: var(--gray-200); margin: 0 .15rem; display: inline-block; align-self: center; }
+
     /* ── Custom FC event card ── */
-    .fc-cal-event { padding: 2px 4px; overflow: hidden; width: 100%; }
-    .fc-cal-event .ev-time    { font-size: .7rem; font-weight: 700; opacity: .9; display: block; }
-    .fc-cal-event .ev-patient { font-size: .78rem; font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .fc-cal-event .ev-doctor  { font-size: .71rem; opacity: .85; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .fc-cal-event .ev-loc     { font-size: .68rem; opacity: .78; }
-    .fc-daygrid-event .fc-cal-event .ev-time { display: none; }
+    .fc-cal-event { padding: 3px 5px; overflow: hidden; width: 100%; }
+    .fc-cal-event .ev-time    { font-size: .69rem; font-weight: 700; opacity: .92; display: block; line-height: 1.3; }
+    .fc-cal-event .ev-patient { font-size: .79rem; font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+    .fc-cal-event .ev-doctor  { font-size: .7rem; opacity: .85; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fc-cal-event .ev-loc     { font-size: .67rem; opacity: .78; }
+    .fc-daygrid-event .fc-cal-event .ev-time   { display: none; }
+    .fc-daygrid-event .fc-cal-event .ev-doctor { display: none; }
     .fc .fc-event { cursor: grab; }
+    .fc .fc-event:active { cursor: grabbing; }
+
     /* ── Tooltip ── */
     .cal-tooltip {
       position: fixed; z-index: 9000;
       background: var(--gray-800); color: #fff;
-      border-radius: 10px; padding: .7rem 1rem;
-      font-size: .8rem; line-height: 1.6; max-width: 270px;
-      box-shadow: 0 4px 24px rgba(0,0,0,.28);
-      pointer-events: none; opacity: 0; transition: opacity .12s;
+      border-radius: 10px; padding: .65rem 1rem;
+      font-size: .8rem; line-height: 1.65; max-width: 260px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.3);
+      pointer-events: none; opacity: 0; transition: opacity .15s;
     }
     .cal-tooltip.visible { opacity: 1; }
+    .cal-tooltip .tt-reason { color: #94a3b8; font-size: .74rem; margin-top: .2rem; font-style: italic; }
     /* ── List view ── */
     #cal-list-view { padding: 1.25rem 1.5rem; }
     .list-filters {
@@ -1171,28 +1193,40 @@
 
           <!-- ── Custom toolbar ── -->
           <div class="cal-toolbar">
+            <!-- Nav: prev / hoy / next + título -->
+            <div class="cal-nav-group">
+              <button class="cal-nav-btn" onclick="calPrev()" title="Semana anterior" aria-label="Anterior">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button class="cal-nav-btn cal-nav-today" onclick="calToday()">Hoy</button>
+              <button class="cal-nav-btn" onclick="calNext()" title="Siguiente semana" aria-label="Siguiente">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+            <span id="cal-title" style="margin:0 .3rem;"></span>
+            <span class="cal-sep"></span>
             <!-- View toggles -->
             <button class="cal-view-btn active" id="cvb-week" onclick="calSetView('timeGridWeek')">Semana</button>
             <button class="cal-view-btn" id="cvb-day"  onclick="calSetView('timeGridDay')">Día</button>
             <button class="cal-view-btn" id="cvb-month" onclick="calSetView('dayGridMonth')">Mes</button>
-            <div class="doc-legend" id="doc-color-legend"></div>
             <span class="cal-sep"></span>
             <button class="cal-view-btn" id="cvb-list" onclick="calToggleListView()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
                 <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
               </svg>
-              Vista lista
+              Lista
             </button>
+            <div class="doc-legend" id="doc-color-legend" style="flex:1;"></div>
 
             <!-- Right actions -->
             <div class="cal-toolbar-right">
               <button class="btn btn-outline btn-sm" id="cvb-refresh"
-                      onclick="if(!_listViewActive && calendar) calendar.refetchEvents(); else loadListView()">
+                      onclick="if(!_listViewActive && calendar) calendar.refetchEvents(); else loadListView()"
+                      title="Recargar citas">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
                 </svg>
-                Actualizar
               </button>
               <button class="btn btn-success btn-sm" onclick="openCalCreateModal(null)" style="font-weight:700;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -3677,23 +3711,35 @@
     const start = a.starts_at || a.appointment_datetime || a.datetime || a.scheduled_at
       || (a.date && a.time ? `${a.date}T${a.time}` : null)
       || a.date;
-    const end   = a.ends_at || null;
-    const isCanceled = ['canceled', 'canceled_by_patient', 'no_show'].includes((a.status || '').toLowerCase());
+
+    // BUG FIX: timeGridWeek/timeGridDay requieren end para posicionar el bloque.
+    // Si ends_at es null, calculamos 60 min después (valor por defecto).
+    let end = a.ends_at || null;
+    if (!end && start) {
+      end = new Date(new Date(start).getTime() + 60 * 60000).toISOString();
+    }
+
+    const isCanceled  = ['canceled', 'canceled_by_patient', 'no_show'].includes((a.status || '').toLowerCase());
     const isCompleted = (a.status || '').toLowerCase() === 'completed';
-    const baseColor = getDoctorColor(a.doctor_id);
-    const color = isCanceled ? '#9ca3af' : isCompleted ? '#6b7280' : baseColor;
+    const baseColor   = getDoctorColor(a.doctor_id);
+    const color       = isCanceled ? '#9ca3af' : isCompleted ? '#6b7280' : baseColor;
 
     return {
-      id: String(a.id),
-      title: `${patientName(a)} — ${doctorName(a)}`,
+      id:              String(a.id),
+      title:           `${patientName(a)} — ${doctorName(a)}`,
       start,
       end,
       backgroundColor: color,
-      borderColor:     isCanceled || isCompleted ? color : baseColor,
+      borderColor:     color,
       textColor:       '#ffffff',
-      opacity:         isCanceled ? 0.6 : 1,
-      extendedProps:   a
+      classNames:      isCanceled ? ['fc-event-canceled'] : [],
+      extendedProps:   a,
     };
+  }
+
+  function _hideTooltip() {
+    const tip = document.getElementById('cal-tooltip');
+    if (tip) tip.classList.remove('visible');
   }
 
   function initCalendar() {
@@ -3703,31 +3749,46 @@
     if (!calEl) return;
 
     calendar = new FullCalendar.Calendar(calEl, {
-      locale: 'es',
-      initialView: 'timeGridWeek',
+      locale:       'es',
+      timeZone:     'local',
+      initialView:  'timeGridWeek',
       headerToolbar: false,
-      editable: true,
-      selectable: true,
+      editable:     true,
+      selectable:   true,
       selectMirror: true,
       nowIndicator: true,
-      height: 'auto',
-      slotMinTime: '07:00:00',
-      slotMaxTime: '21:00:00',
-      allDaySlot: false,
+      height:       'auto',
+      expandRows:   true,
+      slotMinTime:  '07:00:00',
+      slotMaxTime:  '21:00:00',
+      slotDuration: '00:30:00',
+      snapDuration: '00:30:00',
+      allDaySlot:   false,
+      eventMinHeight: 28,
+      dayMinWidth:  80,
+      stickyHeaderDates: true,
+      navLinks:     true,
+
+      // Actualizar título al cambiar de período/vista
+      datesSet(info) {
+        const el = document.getElementById('cal-title');
+        if (el) el.textContent = calendar.view.title;
+      },
 
       eventContent(arg) {
-        const a = arg.event.extendedProps;
-        const timeStr = arg.event.start
+        const a       = arg.event.extendedProps;
+        const isMonth = arg.view.type === 'dayGridMonth';
+        const timeStr = !isMonth && arg.event.start
           ? arg.event.start.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
           : '';
-        const loc = a.location_id && _locationMap[a.location_id]
+        const loc = !isMonth && a.location_id && _locationMap[a.location_id]
           ? `<span class="ev-loc">&#128205; ${_locationMap[a.location_id].name || ''}</span>`
           : '';
         return {
           html: `<div class="fc-cal-event">
-            <span class="ev-time">${timeStr}</span>
-            <span class="ev-patient">${patientName(a)}</span>
-            <span class="ev-doctor">${doctorName(a)}</span>
+            ${timeStr ? `<span class="ev-time">${timeStr}</span>` : ''}
+            <span class="ev-patient">${_escHtml(patientName(a))}</span>
+            ${!isMonth ? `<span class="ev-doctor">${_escHtml(doctorName(a))}</span>` : ''}
             ${loc}
           </div>`
         };
@@ -3736,25 +3797,42 @@
       eventMouseEnter(info) {
         const tip = document.getElementById('cal-tooltip');
         if (!tip) return;
-        const a = info.event.extendedProps;
+        const a     = info.event.extendedProps;
         const start = info.event.start
-          ? info.event.start.toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })
+          ? info.event.start.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
           : '—';
-        tip.innerHTML = `<strong>${patientName(a)}</strong><br>Doctor: ${doctorName(a)}<br>Inicio: ${start}<br>Estado: ${_statusLabel(a.status)}`;
+        const end = info.event.end
+          ? info.event.end.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+          : '';
+        const reason = a.reason ? `<div class="tt-reason">${_escHtml(a.reason)}</div>` : '';
+        tip.innerHTML = `<strong>${_escHtml(patientName(a))}</strong><br>
+          &#9784; ${_escHtml(doctorName(a))}<br>
+          &#128336; ${start}${end ? ' – ' + end : ''}<br>
+          ${reason}
+          <span style="opacity:.65;font-size:.72rem;">${_statusLabel(a.status)}</span>`;
         tip.classList.add('visible');
         const r = info.el.getBoundingClientRect();
-        tip.style.left = Math.min(r.right + 10, window.innerWidth - 220) + 'px';
-        tip.style.top  = r.top + 'px';
+        const tipX = Math.min(r.right + 12, window.innerWidth - 280);
+        const tipY = Math.min(r.top, window.innerHeight - 180);
+        tip.style.left = tipX + 'px';
+        tip.style.top  = tipY + 'px';
       },
 
-      eventMouseLeave() {
-        const tip = document.getElementById('cal-tooltip');
-        if (tip) tip.classList.remove('visible');
-      },
+      eventMouseLeave() { _hideTooltip(); },
+
+      // BUG FIX: ocultar tooltip al empezar a arrastrar
+      eventDragStart() { _hideTooltip(); },
+      eventResizeStart() { _hideTooltip(); },
 
       events: async (info, successCb, failureCb) => {
         try {
-          const res = await fetch(`${API}/api/v1/appointments`, { headers: authHeaders() });
+          // BUG FIX: pasar rango de fechas para obtener exactamente lo que se muestra
+          const params = new URLSearchParams({
+            start_date: info.startStr.slice(0, 10),
+            end_date:   info.endStr.slice(0, 10),
+            limit:      '500',
+          });
+          const res = await fetch(`${API}/api/v1/appointments?${params}`, { headers: authHeaders() });
           if (res.status === 401) { logout(); return; }
           if (!res.ok) throw new Error(`Error ${res.status}`);
           const data = await res.json();
@@ -3767,6 +3845,7 @@
       },
 
       eventClick(info) {
+        _hideTooltip();
         openApptDetailModal(info.event);
       },
 
@@ -3774,21 +3853,26 @@
         openCalCreateModal(info.dateStr);
       },
 
+      select(info) {
+        // Selección de rango en timeGrid → pre-rellenar fecha y horas en el modal
+        openCalCreateModal(info.startStr);
+      },
+
       eventDrop(info) {
+        _hideTooltip();
         _pendingDrop = info;
-        const a = info.event.extendedProps;
-        const fmt = { hour: '2-digit', minute: '2-digit' };
+
+        const a       = info.event.extendedProps;
+        const fmt     = { hour: '2-digit', minute: '2-digit' };
         const fmtDate = { weekday: 'short', day: 'numeric', month: 'short' };
 
-        // Horario original (oldEvent tiene la posición antes del drag)
         const oldStart = info.oldEvent?.start;
         const fromTime = oldStart ? oldStart.toLocaleTimeString('es-MX', fmt) : '—';
         const fromDate = oldStart ? oldStart.toLocaleDateString('es-MX', fmtDate) : '';
 
-        // Nuevo horario
         const newStart = info.event.start;
         const newEnd   = info.event.end;
-        const toTime = newStart
+        const toTime   = newStart
           ? newStart.toLocaleTimeString('es-MX', fmt) + (newEnd ? ' – ' + newEnd.toLocaleTimeString('es-MX', fmt) : '')
           : '—';
         const toDate = newStart ? newStart.toLocaleDateString('es-MX', fmtDate) : '';
@@ -3797,31 +3881,67 @@
         document.getElementById('dc-from-date').textContent = fromDate;
         document.getElementById('dc-to-time').textContent   = toTime;
         document.getElementById('dc-to-date').textContent   = toDate;
+
+        // ── Chequeo de conflicto client-side ──────────────────────────
+        const doctorId = a.doctor_id;
+        const ns = newStart ? newStart.getTime() : 0;
+        const ne = newEnd   ? newEnd.getTime()   : ns + 3600000;
+        let conflictMsg = null;
+
+        calendar.getEvents().forEach(ev => {
+          if (ev.id === info.event.id) return;
+          if (ev.extendedProps?.doctor_id !== doctorId) return;
+          const st = (ev.extendedProps?.status || '').toLowerCase();
+          if (['canceled', 'canceled_by_patient', 'no_show', 'completed'].includes(st)) return;
+          const es = ev.start ? ev.start.getTime() : 0;
+          const ee = ev.end   ? ev.end.getTime()   : es + 3600000;
+          if (ns < ee && ne > es) {
+            const conflictTime = ev.start
+              ? ev.start.toLocaleTimeString('es-MX', fmt)
+              : '?';
+            conflictMsg = `El doctor ya tiene una cita a las ${conflictTime} con ${_escHtml(patientName(ev.extendedProps))}.`;
+          }
+        });
+
+        const errEl  = document.getElementById('drag-confirm-error');
+        const btn    = document.getElementById('drag-confirm-btn');
+        const cancel = document.getElementById('drag-cancel-btn');
+
+        if (conflictMsg) {
+          // Conflicto detectado: mostrar error, revertir automáticamente
+          info.revert();
+          _pendingDrop = null;
+          errEl.textContent   = conflictMsg;
+          errEl.style.display = 'block';
+          btn.style.display   = 'none';
+          cancel.textContent  = 'Cerrar';
+        } else {
+          errEl.style.display = 'none';
+          errEl.textContent   = '';
+          btn.style.display   = '';
+          btn.disabled        = false;
+          btn.innerHTML       = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Confirmar reagendado';
+          cancel.textContent  = 'Cancelar';
+          cancel.disabled     = false;
+        }
+
         document.getElementById('drag-confirm-text').textContent =
-          `Paciente: ${patientName(a)} · Doctor: ${doctorName(a)}`;
-
-        // Limpiar estado previo del modal
-        const errEl = document.getElementById('drag-confirm-error');
-        errEl.style.display = 'none';
-        errEl.textContent = '';
-        const btn = document.getElementById('drag-confirm-btn');
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Reagendar';
-
+          `${_escHtml(patientName(a))} · ${_escHtml(doctorName(a))}`;
         document.getElementById('drag-confirm-modal').style.display = 'flex';
       },
 
       eventResize: async (info) => {
+        _hideTooltip();
         const { event } = info;
         try {
           const body = {
             starts_at: event.start.toISOString(),
-            ends_at:   event.end ? event.end.toISOString() : undefined
+            ends_at:   event.end ? event.end.toISOString() : undefined,
           };
           const res = await fetch(`${API}/api/v1/appointments/${event.id}`, {
             method: 'PUT',
             headers: authHeaders(),
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
           });
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -3836,9 +3956,18 @@
     });
 
     calendar.render();
+    // Título inicial
+    setTimeout(() => {
+      const el = document.getElementById('cal-title');
+      if (el && calendar) el.textContent = calendar.view.title;
+    }, 50);
   }
 
   // ── Calendar toolbar helpers ──────────────────────────────────────────
+
+  function calPrev()  { if (calendar) { calendar.prev();  } }
+  function calNext()  { if (calendar) { calendar.next();  } }
+  function calToday() { if (calendar) { calendar.today(); } }
 
   function _statusLabel(s) {
     const map = {
