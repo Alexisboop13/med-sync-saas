@@ -3758,21 +3758,21 @@
       selectMirror: true,
       nowIndicator: true,
       height:       'auto',
-      expandRows:   true,
       slotMinTime:  '07:00:00',
       slotMaxTime:  '21:00:00',
       slotDuration: '00:30:00',
       snapDuration: '00:30:00',
       allDaySlot:   false,
       eventMinHeight: 28,
-      dayMinWidth:  80,
       stickyHeaderDates: true,
       navLinks:     true,
 
       // Actualizar título al cambiar de período/vista
+      // Usar info.view.title (no calendar.view.title) porque datesSet
+      // puede dispararse antes de que la variable calendar esté asignada.
       datesSet(info) {
         const el = document.getElementById('cal-title');
-        if (el) el.textContent = calendar.view.title;
+        if (el) el.textContent = info.view.title;
       },
 
       eventContent(arg) {
