@@ -917,6 +917,52 @@
     }
     .sr-pagination-btns { display: flex; gap: .4rem; }
 
+    /* ── Semáforo KPI ── */
+    .semaforo-wrap { display: flex; align-items: center; gap: .45rem; margin-top: .5rem; }
+    .semaforo-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--gray-200); flex-shrink: 0;
+      transition: background .35s ease, box-shadow .35s ease;
+    }
+    .semaforo-dot.verde    { background: #2e9b56; box-shadow: 0 0 0 3px rgba(46,155,86,.18); }
+    .semaforo-dot.amarillo { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.18); }
+    .semaforo-dot.rojo     { background: #dc4a4a; box-shadow: 0 0 0 3px rgba(220,74,74,.18); }
+    .semaforo-lbl { font-size: .73rem; color: var(--gray-600); font-weight: 500; }
+    .kpi-cap-bar {
+      width: 100%; height: 3px; background: var(--gray-200);
+      border-radius: 2px; margin-top: .7rem; overflow: hidden;
+    }
+    .kpi-cap-fill {
+      height: 100%; border-radius: 2px; width: 0%;
+      background: var(--green); transition: width .45s ease, background .35s ease;
+    }
+    /* ── Trend badge ── */
+    .trend-badge {
+      display: inline-flex; align-items: center; gap: .2rem;
+      font-size: .74rem; font-weight: 600; padding: .15rem .48rem; border-radius: 6px;
+    }
+    .trend-badge.up   { background: #d1fae5; color: #065f46; }
+    .trend-badge.down { background: #fee2e2; color: #991b1b; }
+    .trend-badge.flat { background: var(--gray-100); color: var(--gray-600); }
+    .chart-trend-row {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .5rem 0 0; font-size: .78rem; color: var(--gray-600); flex-wrap: wrap;
+    }
+    /* ── Primer vistazo grid ── */
+    .primer-vistazo-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;
+    }
+    @media (max-width: 680px) { .primer-vistazo-grid { grid-template-columns: 1fr; } }
+    .pv-list { list-style: none; padding: 0; margin: 0; }
+    .pv-item {
+      display: flex; align-items: center; gap: .55rem;
+      padding: .42rem 0; border-bottom: 1px solid var(--gray-100); font-size: .82rem;
+    }
+    .pv-item:last-child { border-bottom: none; }
+    .pv-time    { min-width: 54px; font-weight: 600; color: var(--blue-dark); font-size: .78rem; }
+    .pv-patient { flex: 1; font-weight: 600; color: var(--gray-800); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pv-empty   { color: var(--gray-400); text-align: center; padding: .7rem 0; font-size: .82rem; }
+
     /* ── Expedientes placeholder ── */
     .coming-soon {
       text-align: center;
@@ -1783,6 +1829,11 @@
           </div>
           <div class="kpi-value" id="kpi-today">—</div>
           <div class="kpi-label">Citas hoy</div>
+          <div class="semaforo-wrap">
+            <div class="semaforo-dot" id="semaforo-dot"></div>
+            <span class="semaforo-lbl" id="semaforo-lbl">—</span>
+          </div>
+          <div class="kpi-cap-bar"><div class="kpi-cap-fill" id="kpi-cap-fill"></div></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-icon" style="background:#d1fae5;">
@@ -1886,6 +1937,37 @@
         </div>
       </div>
 
+      <!-- Primer vistazo: próxima hora + pendientes -->
+      <div class="primer-vistazo-grid">
+        <div class="card">
+          <div class="card-header">
+            <h2>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Próxima hora
+            </h2>
+          </div>
+          <div class="card-body" style="padding-top:.5rem;padding-bottom:.65rem;">
+            <ul class="pv-list" id="next-hour-list"><li class="pv-empty">Cargando…</li></ul>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              Pendientes hoy
+            </h2>
+            <span class="badge badge-blue" id="pending-count" style="font-size:.75rem;padding:.18rem .5rem;">—</span>
+          </div>
+          <div class="card-body" style="padding-top:.5rem;padding-bottom:.65rem;">
+            <ul class="pv-list" id="pending-list"><li class="pv-empty">Cargando…</li></ul>
+          </div>
+        </div>
+      </div>
+
       <!-- Citas de hoy -->
       <div class="card card-full" style="margin-bottom:1.5rem;">
         <div class="card-header">
@@ -1930,6 +2012,7 @@
           </div>
           <div class="card-body">
             <div class="chart-canvas-wrap"><canvas id="chart-monthly"></canvas></div>
+            <div class="chart-trend-row" id="chart-monthly-trend"></div>
           </div>
         </div>
 
@@ -3236,9 +3319,10 @@
   }
 
   // ── Dashboard / Analytics ─────────────────────────────────────────────
-  let _chartMonthly = null;
-  let _chartStatus  = null;
-  let _chartDoctors = null;
+  let _chartMonthly  = null;
+  let _chartStatus   = null;
+  let _chartDoctors  = null;
+  let _dailyCapacity = 0; // total_doctors × 8 slots — updated on loadDashboard (owner only)
 
   const MONTH_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
@@ -3409,6 +3493,8 @@
       const total = data.total ?? items.length;
 
       document.getElementById('kpi-today').textContent = total;
+      _renderSemaforo(total, _dailyCapacity);
+      _renderPrimerVistazo(items);
 
       if (!items.length) {
         list.innerHTML = '<li style="color:var(--gray-400);text-align:center;padding:1.25rem 0;">No hay citas para hoy con los filtros seleccionados</li>';
@@ -3447,6 +3533,17 @@
     if (f.startDate) qs.set('start_date', f.startDate);
     if (f.endDate)   qs.set('end_date',   f.endDate);
     if (f.doctorId)  qs.set('doctor_id',  f.doctorId);
+
+    // Fetch capacity for semáforo (owners only)
+    if (userRole() === 'owner') {
+      try {
+        const ownerRes = await fetch(`${API}/api/v1/analytics/owner-dashboard`, { headers: authHeaders() });
+        if (ownerRes.ok) {
+          const ownerData = await ownerRes.json();
+          _dailyCapacity = (ownerData.total_doctors || 0) * 8;
+        }
+      } catch (_) {}
+    }
 
     // Always fetch today's list independently
     _loadTodayAppointments();
@@ -3593,20 +3690,29 @@
 
   function _renderChartMonthly(rows) {
     _chartMonthly = destroyChart(_chartMonthly);
-    const labels = rows.map(r => MONTH_NAMES[(r.month || 1) - 1] || r.month);
+    const display = rows.slice(-6);
+    _renderChartTrend(display);
+    const labels = display.map(r => MONTH_NAMES[(r.month || 1) - 1] || r.month);
     _chartMonthly = new Chart(document.getElementById('chart-monthly'), {
       type: 'bar',
       data: {
         labels,
         datasets: [
-          { label: 'Programadas', data: rows.map(r => r.scheduled || 0), backgroundColor: 'rgba(59,158,221,.75)',  borderRadius: 4 },
-          { label: 'Completadas', data: rows.map(r => r.completed || 0), backgroundColor: 'rgba(55,160,91,.75)',   borderRadius: 4 },
-          { label: 'Canceladas',  data: rows.map(r => r.canceled  || 0), backgroundColor: 'rgba(224,92,92,.75)',   borderRadius: 4 },
+          { label: 'Programadas', data: display.map(r => r.scheduled || 0), backgroundColor: 'rgba(59,158,221,.75)',  borderRadius: 4 },
+          { label: 'Completadas', data: display.map(r => r.completed || 0), backgroundColor: 'rgba(55,160,91,.75)',   borderRadius: 4 },
+          { label: 'Canceladas',  data: display.map(r => r.canceled  || 0), backgroundColor: 'rgba(224,92,92,.75)',   borderRadius: 4 },
         ]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'top' } },
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              footer: items => `Total: ${items.reduce((s, i) => s + i.parsed.y, 0)}`
+            }
+          }
+        },
         scales: {
           x: { grid: { display: false } },
           y: { beginAtZero: true, ticks: { precision: 0 } }
@@ -3659,6 +3765,90 @@
         }
       }
     });
+  }
+
+  function _renderSemaforo(count, capacity) {
+    const dot  = document.getElementById('semaforo-dot');
+    const lbl  = document.getElementById('semaforo-lbl');
+    const fill = document.getElementById('kpi-cap-fill');
+    if (!dot) return;
+    if (!capacity) {
+      dot.className = 'semaforo-dot';
+      if (lbl)  lbl.textContent = `${count} agendada${count !== 1 ? 's' : ''}`;
+      if (fill) fill.style.width = '0%';
+      return;
+    }
+    const pct   = Math.min(1, count / capacity);
+    const pctRd = Math.round(pct * 100);
+    const avail = Math.max(0, capacity - count);
+    dot.className = 'semaforo-dot';
+    if (pct < 0.6) {
+      dot.classList.add('verde');
+      if (lbl)  lbl.textContent = `${avail} de ${capacity} disponibles`;
+      if (fill) fill.style.background = '#2e9b56';
+    } else if (pct < 0.85) {
+      dot.classList.add('amarillo');
+      if (lbl)  lbl.textContent = `${count} de ${capacity} (${pctRd}% ocupado)`;
+      if (fill) fill.style.background = '#f59e0b';
+    } else {
+      dot.classList.add('rojo');
+      if (lbl)  lbl.textContent = `${count} de ${capacity} — alta ocupación`;
+      if (fill) fill.style.background = '#dc4a4a';
+    }
+    if (fill) fill.style.width = `${pctRd}%`;
+  }
+
+  function _renderPrimerVistazo(items) {
+    const now        = new Date();
+    const nowMs      = now.getTime();
+    const nextHourMs = nowMs + 60 * 60 * 1000;
+
+    const nextHour = items.filter(a => {
+      const t = a.starts_at ? new Date(a.starts_at).getTime() : 0;
+      return t >= nowMs && t <= nextHourMs;
+    });
+    const pending = items.filter(a => (a.status || '').toLowerCase() === 'scheduled');
+
+    const _fmtItem = a => {
+      const dt   = a.starts_at ? new Date(a.starts_at) : null;
+      const time = dt ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
+      const pat  = a.patient_name || patientName(a);
+      return `<li class="pv-item"><span class="pv-time">${time}</span><span class="pv-patient">${pat}</span></li>`;
+    };
+
+    const nextEl = document.getElementById('next-hour-list');
+    if (nextEl) {
+      nextEl.innerHTML = nextHour.length
+        ? nextHour.slice(0, 6).map(_fmtItem).join('')
+        : '<li class="pv-empty">Sin citas en la próxima hora</li>';
+    }
+    const pendingEl  = document.getElementById('pending-list');
+    const pendingCnt = document.getElementById('pending-count');
+    if (pendingEl) {
+      pendingEl.innerHTML = pending.length
+        ? pending.slice(0, 6).map(_fmtItem).join('')
+        : '<li class="pv-empty">Sin citas pendientes</li>';
+    }
+    if (pendingCnt) pendingCnt.textContent = String(pending.length || 0);
+  }
+
+  function _renderChartTrend(rows) {
+    const el = document.getElementById('chart-monthly-trend');
+    if (!el) return;
+    if (rows.length < 2) { el.innerHTML = ''; return; }
+    const last = rows[rows.length - 1];
+    const prev = rows[rows.length - 2];
+    const lastTotal = (last.scheduled || 0) + (last.completed || 0) + (last.canceled || 0);
+    const prevTotal = (prev.scheduled || 0) + (prev.completed || 0) + (prev.canceled || 0);
+    const diff = lastTotal - prevTotal;
+    const pct  = prevTotal > 0 ? Math.abs(Math.round((diff / prevTotal) * 100)) : 0;
+    const mn   = MONTH_NAMES[(last.month || 1) - 1];
+    const pmn  = MONTH_NAMES[(prev.month || 1) - 1];
+    let cls, arrow, txt;
+    if (diff > 0)      { cls = 'up';   arrow = '↑'; txt = `+${pct}% vs ${pmn}`; }
+    else if (diff < 0) { cls = 'down'; arrow = '↓'; txt = `−${pct}% vs ${pmn}`; }
+    else               { cls = 'flat'; arrow = '→'; txt = `Sin cambio vs ${pmn}`; }
+    el.innerHTML = `<span class="trend-badge ${cls}">${arrow} ${txt}</span><span>${lastTotal} citas en ${mn}</span>`;
   }
 
   // ── Tab switching ─────────────────────────────────────────────────────
