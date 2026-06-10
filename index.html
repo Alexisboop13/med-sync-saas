@@ -87,37 +87,119 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      background: linear-gradient(140deg, var(--blue-light) 0%, var(--gray-50) 55%);
+      padding: 1.5rem;
+      background: linear-gradient(145deg, #0f172a 0%, #1e3a5f 45%, #2d1b69 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    #login-page::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 70% 55% at 50% 40%,
+        rgba(99,102,241,.20) 0%, rgba(59,130,246,.10) 40%, transparent 70%);
     }
     #dashboard-page { display: none; }
     .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
 
-    /* ── Login card ── */
+    /* ── Login card — glassmorphism dark ── */
     .login-card {
-      background: var(--white);
-      border-radius: 20px;
-      padding: 3rem 2.5rem;
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border-radius: 32px;
+      padding: 2.75rem 2.5rem 2.25rem;
       width: 100%;
       max-width: 420px;
-      box-shadow: var(--shadow-md);
-      border: 1px solid var(--gray-200);
+      box-shadow:
+        0 24px 64px rgba(0, 0, 0, .45),
+        0 2px 12px rgba(0, 0, 0, .25),
+        inset 0 1px 0 rgba(255, 255, 255, .12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      position: relative; z-index: 1;
     }
+
+    /* ── Back button ── */
+    .login-back-btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px; padding: .4rem .9rem;
+      color: #94a3b8; font-size: .82rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all .18s;
+      margin-bottom: 1.75rem;
+    }
+    .login-back-btn:hover { background: rgba(255,255,255,.12); color: #e2e8f0; border-color: rgba(255,255,255,.22); }
+
+    /* ── Login logo ── */
     .login-logo {
       text-align: center;
-      margin-bottom: 1.8rem;
+      margin-bottom: 1.75rem;
     }
     .login-logo .icon-wrap {
-      width: 64px;
-      height: 64px;
-      background: var(--blue-light);
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: .8rem;
+      width: 62px; height: 62px;
+      background: linear-gradient(135deg, rgba(59,130,246,.25), rgba(99,102,241,.3));
+      border: 1px solid rgba(99,102,241,.4);
+      border-radius: 18px;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: .85rem;
     }
-    .login-logo h1 { font-size: 1.5rem; color: var(--blue-dark); font-weight: 700; letter-spacing: -.02em; }
-    .login-logo p  { color: var(--gray-600); font-size: .88rem; margin-top: .3rem; }
+    .login-logo h1 { font-size: 1.5rem; color: #f1f5f9; font-weight: 800; letter-spacing: -.03em; }
+    .login-logo p  { color: #64748b; font-size: .88rem; margin-top: .3rem; }
+
+    /* ── Login inputs (dark overrides) ── */
+    .login-card .form-group label { color: #94a3b8; }
+    .login-card input[type="email"],
+    .login-card input[type="password"] {
+      background: rgba(255,255,255,.07) !important;
+      border-color: rgba(255,255,255,.12) !important;
+      color: #f1f5f9 !important;
+    }
+    .login-card input[type="email"]:focus,
+    .login-card input[type="password"]:focus {
+      border-color: rgba(99,102,241,.65) !important;
+      background: rgba(255,255,255,.10) !important;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.18) !important;
+      outline: none !important;
+    }
+    .login-card input::placeholder { color: #475569 !important; }
+
+    /* ── Login submit button ── */
+    .login-card .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+      border: none !important;
+      box-shadow: 0 6px 20px rgba(99,102,241,.40);
+      font-size: .97rem; font-weight: 700;
+    }
+    .login-card .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(99,102,241,.55);
+    }
+
+    /* ── Forgot / signup links ── */
+    .login-forgot-link {
+      background: none; border: none; color: #60a5fa; font-size: .84rem;
+      cursor: pointer; padding: 0; font-family: inherit; transition: color .15s;
+    }
+    .login-forgot-link:hover { color: #93c5fd; text-decoration: underline; }
+    .login-divider {
+      display: flex; align-items: center; gap: .75rem;
+      margin: 1.4rem 0 1.1rem; color: #334155; font-size: .78rem;
+    }
+    .login-divider::before, .login-divider::after {
+      content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.08);
+    }
+    .login-signup-row { text-align: center; font-size: .84rem; color: #64748b; margin-top: 1.1rem; }
+    .login-signup-row button {
+      color: #60a5fa; background: none; border: none;
+      cursor: pointer; font-family: inherit; font-size: inherit; padding: 0;
+      transition: color .15s;
+    }
+    .login-signup-row button:hover { color: #93c5fd; text-decoration: underline; }
+
+    /* ── Error override for dark bg ── */
+    .login-card .alert-error {
+      background: rgba(220,74,74,.14) !important;
+      border-color: rgba(220,74,74,.30) !important;
+      color: #fca5a5 !important;
+    }
 
     /* ── Forms ── */
     .form-group { margin-bottom: 1.25rem; }
@@ -1491,15 +1573,23 @@
 <!-- ═══════════════════════════ LOGIN PAGE ═══════════════════════════ -->
 <div id="login-page">
   <div class="login-card">
+
+    <!-- ← Volver a la landing -->
+    <button class="login-back-btn" onclick="showLanding()" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Página principal
+    </button>
+
+    <!-- Logo -->
     <div class="login-logo">
       <div class="icon-wrap">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b9edd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
           <path d="M9 11.5a3 3 0 0 0 6 0"/>
           <line x1="12" y1="8" x2="12" y2="8.5"/>
         </svg>
       </div>
-      <h1>DentalSync</h1>
+      <h1>Med-Sync</h1>
       <p>Sistema de Gestión Clínica</p>
     </div>
 
@@ -1514,19 +1604,27 @@
         <label for="password">Contraseña</label>
         <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password" />
       </div>
+
       <button type="submit" class="btn btn-primary btn-block" id="login-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
         </svg>
         Iniciar sesión
       </button>
+
       <div style="text-align:center;margin-top:1rem;">
-        <button type="button" onclick="openForgotModal()"
-                style="background:none;border:none;color:var(--blue);font-size:.85rem;cursor:pointer;text-decoration:underline;padding:0;">
+        <button type="button" class="login-forgot-link" onclick="openForgotModal()">
           ¿Olvidaste tu contraseña?
         </button>
       </div>
     </form>
+
+    <div class="login-divider">o</div>
+    <div class="login-signup-row">
+      ¿No tienes cuenta?&nbsp;
+      <button type="button" onclick="showLanding(); setTimeout(scrollToDemoForm, 400)">Solicitar demo gratuita</button>
+    </div>
+
   </div>
 </div>
 
