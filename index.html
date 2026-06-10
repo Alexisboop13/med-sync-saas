@@ -1152,59 +1152,58 @@
       max-width: 1200px; margin-left: auto; margin-right: auto;
     }
 
-    /* ── Demo modal ── */
-    #lp-demo-modal {
-      position: fixed; inset: 0; z-index: 9999;
-      background: rgba(0,0,0,.68);
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-      display: flex; align-items: center; justify-content: center; padding: 1rem;
+    /* ── Inline contact section ── */
+    .lp-contact-grid {
+      display: grid; grid-template-columns: 1fr 1.65fr; gap: 3rem; align-items: start;
     }
-    .lp-demo-card {
-      background: #1e293b; border: 1px solid rgba(255,255,255,.12);
-      border-radius: 24px; padding: 2.25rem; width: 100%; max-width: 440px;
-      box-shadow: 0 24px 80px rgba(0,0,0,.5); position: relative;
+    .lp-contact-info { display: flex; flex-direction: column; gap: 1.6rem; padding-top: .5rem; }
+    .lp-contact-item { display: flex; align-items: flex-start; gap: .85rem; font-size: .93rem; color: #94a3b8; line-height: 1.5; }
+    .lp-contact-item-icon {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(59,130,246,.2), rgba(99,102,241,.2));
+      border: 1px solid rgba(99,102,241,.25); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
     }
-    .lp-demo-close {
-      position: absolute; top: 1rem; right: 1rem;
-      background: rgba(255,255,255,.06); border: none; border-radius: 8px;
-      width: 32px; height: 32px; color: #94a3b8;
-      cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
-      transition: background .15s; font-family: inherit;
+    .lp-contact-item a { color: #60a5fa; text-decoration: none; }
+    .lp-contact-item a:hover { text-decoration: underline; }
+    .lp-contact-form {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09); border-radius: 20px; padding: 1.75rem;
     }
-    .lp-demo-close:hover { background: rgba(255,255,255,.12); color: #e2e8f0; }
-    .lp-demo-title { font-size: 1.25rem; font-weight: 800; color: #f1f5f9; margin-bottom: .35rem; }
-    .lp-demo-sub   { font-size: .88rem; color: #64748b; margin-bottom: 1.5rem; line-height: 1.6; }
-    .lp-demo-field { margin-bottom: 1rem; }
-    .lp-demo-field label {
+    .lp-cf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .lp-cf-field { margin-bottom: .9rem; }
+    .lp-cf-field label {
       display: block; font-size: .78rem; font-weight: 600; color: #94a3b8;
-      margin-bottom: .35rem; letter-spacing: .03em; text-transform: uppercase;
+      margin-bottom: .35rem; text-transform: uppercase; letter-spacing: .03em;
     }
-    .lp-demo-field input,
-    .lp-demo-field textarea {
-      width: 100%; background: rgba(255,255,255,.06);
+    .lp-cf-field input {
+      width: 100%; background: rgba(255,255,255,.07);
       border: 1.5px solid rgba(255,255,255,.1); border-radius: 10px;
       padding: .65rem .9rem; color: #f1f5f9; font-family: inherit; font-size: .9rem;
       outline: none; transition: border-color .15s; box-sizing: border-box;
     }
-    .lp-demo-field input:focus,
-    .lp-demo-field textarea:focus { border-color: rgba(99,102,241,.6); }
-    .lp-demo-field input::placeholder,
-    .lp-demo-field textarea::placeholder { color: #475569; }
-    .lp-demo-field textarea { resize: vertical; min-height: 80px; }
-    .lp-demo-success {
-      background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3);
-      border-radius: 10px; padding: .85rem 1rem; color: #4ade80;
-      font-size: .88rem; margin-bottom: .75rem;
+    .lp-cf-field input:focus { border-color: rgba(99,102,241,.6); }
+    .lp-cf-field input::placeholder { color: #475569; }
+    .lp-cf-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+    .lp-cf-note { font-size: .78rem; color: #475569; line-height: 1.5; }
+
+    /* ── Landing toast ── */
+    #lp-toast {
+      position: fixed; bottom: 1.75rem; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: #1e293b; border: 1px solid rgba(99,102,241,.45);
+      border-radius: 12px; padding: .75rem 1.5rem;
+      color: #f1f5f9; font-size: .9rem; font-weight: 600;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      z-index: 9999; opacity: 0; pointer-events: none;
+      transition: opacity .3s, transform .3s; white-space: nowrap;
     }
-    .lp-demo-submit {
-      width: 100%; padding: .9rem;
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
-      border: none; border-radius: 12px; color: #fff;
-      font-size: .97rem; font-weight: 700; font-family: inherit; cursor: pointer;
-      box-shadow: 0 6px 20px rgba(99,102,241,.4); transition: all .18s; margin-top: .25rem;
+    #lp-toast.lp-toast-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 768px) {
+      .lp-contact-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+      .lp-cf-row { grid-template-columns: 1fr; gap: 0; }
     }
-    .lp-demo-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,.5); }
-    .lp-demo-submit:disabled { opacity: .6; cursor: not-allowed; }
 
     /* ── Scroll animations ── */
     .lp-animate { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s ease; }
@@ -1247,7 +1246,7 @@
       Med-Sync
     </a>
     <div class="lp-nav-actions">
-      <button class="lp-btn-ghost" onclick="openDemoModal()">Solicitar demo</button>
+      <button class="lp-btn-ghost" onclick="scrollToDemoForm()">Solicitar demo</button>
       <button class="lp-btn-primary-sm" onclick="goToLogin()">Iniciar sesión</button>
     </div>
   </nav>
@@ -1269,7 +1268,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           Iniciar sesión
         </button>
-        <button class="lp-btn-hero-ghost" onclick="openDemoModal()">
+        <button class="lp-btn-hero-ghost" onclick="scrollToDemoForm()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           Solicitar demo
         </button>
@@ -1337,7 +1336,7 @@
           <li>1 doctor</li><li>Agenda + citas ilimitadas</li><li>Pacientes ilimitados</li>
           <li>Recordatorios por email</li><li>Auto-booking para pacientes</li>
         </ul>
-        <button class="lp-plan-cta lp-plan-cta-outline" onclick="openDemoModal()">Solicitar demo</button>
+        <button class="lp-plan-cta lp-plan-cta-outline" onclick="scrollToDemoForm()">Solicitar demo</button>
       </div>
       <div class="lp-plan-card featured lp-animate lp-animate-d2">
         <div class="lp-plan-badge">MÁS POPULAR</div>
@@ -1347,7 +1346,7 @@
           <li>Hasta 5 doctores</li><li>Todo del plan Básico</li><li>Facturación y reportes</li>
           <li>Múltiples ubicaciones</li><li>Roles y permisos por usuario</li><li>Soporte prioritario</li>
         </ul>
-        <button class="lp-plan-cta lp-plan-cta-filled" onclick="openDemoModal()">Solicitar demo</button>
+        <button class="lp-plan-cta lp-plan-cta-filled" onclick="scrollToDemoForm()">Solicitar demo</button>
       </div>
       <div class="lp-plan-card lp-animate lp-animate-d3">
         <div class="lp-plan-name">Empresarial</div>
@@ -1356,7 +1355,7 @@
           <li>Doctores ilimitados</li><li>Todo del plan Profesional</li><li>Integración con HIS / EHR</li>
           <li>SLA garantizado 99.9%</li><li>Onboarding personalizado</li><li>Auditoría NOM-024</li>
         </ul>
-        <button class="lp-plan-cta lp-plan-cta-outline" onclick="openDemoModal()">Contactar ventas</button>
+        <button class="lp-plan-cta lp-plan-cta-outline" onclick="scrollToDemoForm()">Contactar ventas</button>
       </div>
     </div>
   </div>
@@ -1401,8 +1400,67 @@
     <h2 class="lp-cta-title">¿Listo para transformar tu clínica?</h2>
     <p class="lp-cta-sub">Solicita una demo gratuita y te la mostramos en vivo en 30 minutos.</p>
     <div class="lp-cta-actions">
-      <button class="lp-btn-hero-primary" onclick="openDemoModal()">Solicitar demo gratis</button>
+      <button class="lp-btn-hero-primary" onclick="scrollToDemoForm()">Solicitar demo gratis</button>
       <button class="lp-btn-hero-ghost"   onclick="goToLogin()">Ya tengo cuenta</button>
+    </div>
+  </div>
+
+  <!-- ── Contact (inline) ── -->
+  <div id="lp-contact" style="background:rgba(0,0,0,.18);padding:1px 0;">
+    <div class="lp-section">
+      <p class="lp-section-label lp-animate">Contacto</p>
+      <h2 class="lp-section-title lp-animate lp-animate-d1">Agenda una demo gratuita</h2>
+      <p class="lp-section-subtitle lp-animate lp-animate-d2">Escríbenos y te mostramos Med-Sync en vivo en 30 minutos, sin compromiso.</p>
+      <div class="lp-contact-grid lp-animate lp-animate-d3">
+
+        <!-- Info lado izquierdo -->
+        <div class="lp-contact-info">
+          <div class="lp-contact-item">
+            <div class="lp-contact-item-icon">📧</div>
+            <div><strong style="color:#e2e8f0;display:block;margin-bottom:.15rem;">Email directo</strong>
+              <a href="mailto:alexisdehesa@gmail.com">alexisdehesa@gmail.com</a>
+            </div>
+          </div>
+          <div class="lp-contact-item">
+            <div class="lp-contact-item-icon">⚡</div>
+            <div><strong style="color:#e2e8f0;display:block;margin-bottom:.15rem;">Respuesta rápida</strong>
+              Contestamos en menos de 24 horas hábiles
+            </div>
+          </div>
+          <div class="lp-contact-item">
+            <div class="lp-contact-item-icon">🎁</div>
+            <div><strong style="color:#e2e8f0;display:block;margin-bottom:.15rem;">Demo sin costo</strong>
+              30 minutos en vivo, configuramos tu clínica en el momento
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulario lado derecho -->
+        <form id="lp-contact-form" class="lp-contact-form" onsubmit="submitContactForm(event)">
+          <div class="lp-cf-row">
+            <div class="lp-cf-field">
+              <label for="cf-name">Tu nombre</label>
+              <input id="cf-name" type="text" placeholder="Dr. Ana García" required autocomplete="name" />
+            </div>
+            <div class="lp-cf-field">
+              <label for="cf-email">Correo electrónico</label>
+              <input id="cf-email" type="email" placeholder="ana@clinica.com" required autocomplete="email" />
+            </div>
+          </div>
+          <div class="lp-cf-field">
+            <label for="cf-clinic">Clínica <span style="color:#475569;font-weight:400;text-transform:none;">(opcional)</span></label>
+            <input id="cf-clinic" type="text" placeholder="Nombre de tu clínica" autocomplete="organization" />
+          </div>
+          <div class="lp-cf-actions">
+            <button type="submit" class="lp-btn-hero-primary" id="cf-submit" style="padding:.8rem 1.6rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Enviar solicitud
+            </button>
+            <span class="lp-cf-note">Se abrirá tu cliente de correo con los datos pre-rellenados.</span>
+          </div>
+        </form>
+
+      </div>
     </div>
   </div>
 
@@ -1418,7 +1476,7 @@
       </div>
       <nav class="lp-footer-links">
         <a href="#" onclick="goToLogin(); return false;">Iniciar sesión</a>
-        <a href="#" onclick="openDemoModal(); return false;">Solicitar demo</a>
+        <a href="#" onclick="scrollToDemoForm(); return false;">Solicitar demo</a>
         <a href="mailto:alexisdehesa@gmail.com">Contacto</a>
       </nav>
     </div>
@@ -1427,36 +1485,8 @@
 
 </div><!-- /landing-page -->
 
-<!-- ── Demo modal ── -->
-<div id="lp-demo-modal" class="hidden">
-  <div class="lp-demo-card" onclick="event.stopPropagation()">
-    <button class="lp-demo-close" onclick="closeDemoModal()" aria-label="Cerrar">&times;</button>
-    <div class="lp-demo-title">Solicitar demo gratuita</div>
-    <p class="lp-demo-sub">Cuéntanos un poco sobre tu clínica y te contactamos en menos de 24 horas.</p>
-    <form id="lp-demo-form" onsubmit="submitDemoForm(event)">
-      <div class="lp-demo-field">
-        <label for="demo-name">Nombre</label>
-        <input id="demo-name" type="text" placeholder="Dr. Ana García" required />
-      </div>
-      <div class="lp-demo-field">
-        <label for="demo-email">Correo electrónico</label>
-        <input id="demo-email" type="email" placeholder="ana@clinica.com" required />
-      </div>
-      <div class="lp-demo-field">
-        <label for="demo-clinic">Clínica</label>
-        <input id="demo-clinic" type="text" placeholder="Nombre de la clínica" />
-      </div>
-      <div class="lp-demo-field">
-        <label for="demo-msg">Mensaje (opcional)</label>
-        <textarea id="demo-msg" placeholder="¿Cuántos doctores tienen? ¿Algo en particular que les interese?" rows="3"></textarea>
-      </div>
-      <div id="demo-success" class="lp-demo-success hidden">
-        ✅ ¡Recibido! Abriendo tu cliente de correo&hellip;
-      </div>
-      <button type="submit" class="lp-demo-submit" id="demo-submit-btn">Enviar solicitud</button>
-    </form>
-  </div>
-</div>
+<!-- ── Landing toast ── -->
+<div id="lp-toast"></div>
 
 <!-- ═══════════════════════════ LOGIN PAGE ═══════════════════════════ -->
 <div id="login-page">
@@ -6157,44 +6187,42 @@
     showLogin();
   }
 
-  function openDemoModal() {
-    const m = document.getElementById('lp-demo-modal');
-    m.classList.remove('hidden');
-    m.addEventListener('click', _demoOverlayClose);
-    document.addEventListener('keydown', _demoEscClose);
+  function scrollToDemoForm() {
+    const section = document.getElementById('lp-contact');
+    if (!section) return;
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => { const f = document.getElementById('cf-name'); if (f) f.focus(); }, 650);
   }
 
-  function closeDemoModal() {
-    const m = document.getElementById('lp-demo-modal');
-    m.classList.add('hidden');
-    m.removeEventListener('click', _demoOverlayClose);
-    document.removeEventListener('keydown', _demoEscClose);
-    document.getElementById('demo-success').classList.add('hidden');
-    document.getElementById('demo-submit-btn').disabled = false;
-    document.getElementById('demo-submit-btn').textContent = 'Enviar solicitud';
-    document.getElementById('lp-demo-form').reset();
-  }
-
-  function _demoOverlayClose(e) { if (e.target === document.getElementById('lp-demo-modal')) closeDemoModal(); }
-  function _demoEscClose(e)     { if (e.key === 'Escape') closeDemoModal(); }
-
-  function submitDemoForm(e) {
+  function submitContactForm(e) {
     e.preventDefault();
-    const name   = document.getElementById('demo-name').value.trim();
-    const email  = document.getElementById('demo-email').value.trim();
-    const clinic = document.getElementById('demo-clinic').value.trim();
-    const msg    = document.getElementById('demo-msg').value.trim();
+    const name   = document.getElementById('cf-name').value.trim();
+    const email  = document.getElementById('cf-email').value.trim();
+    const clinic = document.getElementById('cf-clinic').value.trim();
 
-    document.getElementById('demo-success').classList.remove('hidden');
-    const btn = document.getElementById('demo-submit-btn');
-    btn.disabled = true; btn.textContent = 'Enviado ✓';
+    const btn = document.getElementById('cf-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Enviado';
 
     const subject = encodeURIComponent(`Demo Med-Sync — ${name}${clinic ? ' / ' + clinic : ''}`);
-    const body    = encodeURIComponent(
-      `Nombre: ${name}\nEmail: ${email}\nClínica: ${clinic || 'N/A'}\n\nMensaje:\n${msg || '—'}`
-    );
-    setTimeout(() => { window.location.href = `mailto:alexisdehesa@gmail.com?subject=${subject}&body=${body}`; }, 500);
-    setTimeout(closeDemoModal, 3200);
+    const body    = encodeURIComponent(`Nombre: ${name}\nEmail: ${email}\nClínica: ${clinic || 'N/A'}`);
+
+    showLandingToast('✅ ¡Listo! Abriendo tu cliente de correo…');
+    setTimeout(() => { window.location.href = `mailto:alexisdehesa@gmail.com?subject=${subject}&body=${body}`; }, 700);
+
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar solicitud';
+      document.getElementById('lp-contact-form').reset();
+    }, 4500);
+  }
+
+  function showLandingToast(msg) {
+    const t = document.getElementById('lp-toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('lp-toast-show');
+    setTimeout(() => t.classList.remove('lp-toast-show'), 3500);
   }
 
   function initLandingAnimations() {
