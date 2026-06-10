@@ -75,8 +75,9 @@ app.include_router(webhooks_router, prefix="/api/v1")
 app.include_router(reschedule_requests_router, prefix="/api/v1")
 
 
+@app.get("/", include_in_schema=False)
 @app.get("/app", include_in_schema=False)
-async def admin_frontend():
+async def frontend():
     return FileResponse(_ROOT / "index.html", media_type="text/html")
 
 

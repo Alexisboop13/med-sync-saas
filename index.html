@@ -904,9 +904,559 @@
     }
     .doc-legend-item { display: flex; align-items: center; gap: .3rem; }
     .doc-legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       LANDING PAGE — Glassmorphism dark theme
+    ═══════════════════════════════════════════════════════════════════════ */
+    #landing-page {
+      display: none;
+      min-height: 100vh;
+      background: linear-gradient(145deg, #0f172a 0%, #1e3a5f 40%, #2d1b69 100%);
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      color: #f1f5f9;
+      overflow-x: hidden;
+    }
+
+    /* ── Landing navbar ── */
+    .lp-nav {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .lp-nav-brand {
+      display: flex; align-items: center; gap: .6rem;
+      font-size: 1.15rem; font-weight: 700; color: #fff; text-decoration: none;
+    }
+    .lp-nav-brand svg { color: #60a5fa; }
+    .lp-nav-actions { display: flex; gap: .75rem; align-items: center; }
+    .lp-btn-ghost {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+      border-radius: 10px; padding: .45rem 1.1rem;
+      color: #e2e8f0; font-size: .88rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all .18s;
+    }
+    .lp-btn-ghost:hover {
+      background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.3); transform: translateY(-1px);
+    }
+    .lp-btn-primary-sm {
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border: none; border-radius: 10px; padding: .48rem 1.25rem;
+      color: #fff; font-size: .88rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      box-shadow: 0 4px 14px rgba(99,102,241,.4); transition: all .18s;
+    }
+    .lp-btn-primary-sm:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,102,241,.5); }
+
+    /* ── Hero ── */
+    .lp-hero {
+      min-height: calc(100vh - 65px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 4rem 2rem; position: relative; overflow: hidden;
+    }
+    .lp-hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 30%,
+        rgba(99,102,241,.18) 0%, rgba(59,130,246,.10) 40%, transparent 70%);
+      pointer-events: none;
+    }
+    .lp-hero-content { text-align: center; max-width: 760px; position: relative; z-index: 1; }
+    .lp-hero-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: rgba(99,102,241,.2); border: 1px solid rgba(99,102,241,.4);
+      border-radius: 999px; padding: .3rem .9rem;
+      font-size: .78rem; font-weight: 600; color: #a5b4fc;
+      margin-bottom: 1.5rem; letter-spacing: .04em;
+    }
+    .lp-hero-title {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 800; line-height: 1.12; letter-spacing: -.03em; margin-bottom: 1.25rem;
+      background: linear-gradient(135deg, #fff 30%, #a5b4fc 70%, #60a5fa 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .lp-hero-subtitle {
+      font-size: clamp(1rem, 2vw, 1.18rem); color: #94a3b8; line-height: 1.7;
+      margin-bottom: 2.5rem; max-width: 540px; margin-left: auto; margin-right: auto;
+    }
+    .lp-hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .lp-btn-hero-primary {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border: none; border-radius: 14px; padding: .9rem 2rem;
+      color: #fff; font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      box-shadow: 0 8px 24px rgba(99,102,241,.45); transition: all .2s;
+    }
+    .lp-btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(99,102,241,.55); }
+    .lp-btn-hero-ghost {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.22);
+      border-radius: 14px; padding: .9rem 2rem;
+      color: #e2e8f0; font-size: 1rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all .2s;
+    }
+    .lp-btn-hero-ghost:hover {
+      background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.4); transform: translateY(-3px);
+    }
+    .lp-hero-stats {
+      display: flex; gap: 2.5rem; justify-content: center;
+      margin-top: 3.5rem; padding-top: 3rem;
+      border-top: 1px solid rgba(255,255,255,.08); flex-wrap: wrap;
+    }
+    .lp-stat { text-align: center; }
+    .lp-stat-num {
+      font-size: 2rem; font-weight: 800; letter-spacing: -.04em;
+      background: linear-gradient(135deg, #60a5fa, #a5b4fc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .lp-stat-label { font-size: .78rem; color: #64748b; font-weight: 500; margin-top: .15rem; }
+
+    /* ── Sections ── */
+    .lp-section { padding: 5rem 2rem; max-width: 1200px; margin: 0 auto; }
+    .lp-section-label {
+      text-align: center; font-size: .75rem; font-weight: 700; letter-spacing: .12em;
+      color: #60a5fa; text-transform: uppercase; margin-bottom: .75rem;
+    }
+    .lp-section-title {
+      text-align: center; font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 800; letter-spacing: -.025em; color: #f1f5f9; margin-bottom: .85rem;
+    }
+    .lp-section-subtitle {
+      text-align: center; color: #64748b; font-size: .97rem; line-height: 1.7;
+      max-width: 520px; margin: 0 auto 3.5rem;
+    }
+
+    /* ── Feature cards ── */
+    .lp-features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;
+    }
+    .lp-feature-card {
+      background: rgba(255,255,255,.05);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,.09); border-radius: 20px; padding: 1.75rem;
+      transition: transform .2s, box-shadow .2s, background .2s;
+    }
+    .lp-feature-card:hover {
+      transform: translateY(-4px); background: rgba(255,255,255,.09);
+      box-shadow: 0 12px 40px rgba(0,0,0,.3);
+    }
+    .lp-feature-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, rgba(59,130,246,.2), rgba(99,102,241,.2));
+      border: 1px solid rgba(99,102,241,.3); border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.1rem; font-size: 1.35rem;
+    }
+    .lp-feature-title { font-size: .97rem; font-weight: 700; color: #f1f5f9; margin-bottom: .5rem; }
+    .lp-feature-desc  { font-size: .85rem; color: #64748b; line-height: 1.65; }
+
+    /* ── Pricing ── */
+    .lp-pricing-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; align-items: start;
+    }
+    .lp-plan-card {
+      background: rgba(255,255,255,.05);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,.09); border-radius: 24px; padding: 2rem;
+      position: relative; transition: transform .2s;
+    }
+    .lp-plan-card:hover { transform: translateY(-4px); }
+    .lp-plan-card.featured {
+      background: rgba(99,102,241,.15); border-color: rgba(99,102,241,.5);
+      box-shadow: 0 0 0 1px rgba(99,102,241,.3), 0 20px 60px rgba(99,102,241,.2);
+    }
+    .lp-plan-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border-radius: 999px; padding: .28rem .9rem;
+      font-size: .72rem; font-weight: 700; color: #fff; letter-spacing: .05em; white-space: nowrap;
+    }
+    .lp-plan-name {
+      font-size: .88rem; font-weight: 700; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: .6rem;
+    }
+    .lp-plan-price { display: flex; align-items: baseline; gap: .2rem; margin-bottom: 1.5rem; }
+    .lp-plan-amount { font-size: 2.8rem; font-weight: 800; color: #f1f5f9; letter-spacing: -.04em; }
+    .lp-plan-period { font-size: .88rem; color: #64748b; }
+    .lp-plan-features { list-style: none; display: flex; flex-direction: column; gap: .65rem; margin-bottom: 1.75rem; }
+    .lp-plan-features li { display: flex; align-items: center; gap: .6rem; font-size: .875rem; color: #94a3b8; }
+    .lp-plan-features li::before {
+      content: '✓'; display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; flex-shrink: 0;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border-radius: 50%; color: #fff; font-size: .65rem; font-weight: 900;
+    }
+    .lp-plan-cta {
+      width: 100%; padding: .85rem; border-radius: 12px;
+      font-size: .92rem; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .18s;
+    }
+    .lp-plan-cta-outline {
+      background: transparent; border: 1.5px solid rgba(255,255,255,.2); color: #e2e8f0;
+    }
+    .lp-plan-cta-outline:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.4); }
+    .lp-plan-cta-filled {
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); border: none; color: #fff;
+      box-shadow: 0 6px 20px rgba(99,102,241,.4);
+    }
+    .lp-plan-cta-filled:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,.5); }
+
+    /* ── Testimonials ── */
+    .lp-testimonials-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;
+    }
+    .lp-testimonial-card {
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+      border-radius: 20px; padding: 1.75rem; transition: transform .2s;
+    }
+    .lp-testimonial-card:hover { transform: translateY(-3px); }
+    .lp-testimonial-stars { color: #fbbf24; font-size: .95rem; margin-bottom: .85rem; letter-spacing: .1rem; }
+    .lp-testimonial-text { font-size: .915rem; color: #94a3b8; line-height: 1.75; margin-bottom: 1.25rem; font-style: italic; }
+    .lp-testimonial-author { display: flex; align-items: center; gap: .75rem; }
+    .lp-testimonial-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .92rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .lp-testimonial-name { font-size: .87rem; font-weight: 700; color: #e2e8f0; }
+    .lp-testimonial-role { font-size: .75rem; color: #64748b; margin-top: .1rem; }
+
+    /* ── CTA banner ── */
+    .lp-cta-section {
+      padding: 4rem 2rem; text-align: center;
+      background: linear-gradient(135deg, rgba(59,130,246,.12) 0%, rgba(99,102,241,.15) 100%);
+      border-top: 1px solid rgba(99,102,241,.18); border-bottom: 1px solid rgba(99,102,241,.18);
+    }
+    .lp-cta-title {
+      font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 800;
+      color: #f1f5f9; letter-spacing: -.02em; margin-bottom: .75rem;
+    }
+    .lp-cta-sub { color: #64748b; font-size: .97rem; margin-bottom: 2rem; }
+    .lp-cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Footer ── */
+    .lp-footer { background: rgba(0,0,0,.3); border-top: 1px solid rgba(255,255,255,.06); padding: 2.5rem 2rem 1.5rem; }
+    .lp-footer-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;
+    }
+    .lp-footer-brand { display: flex; align-items: center; gap: .5rem; color: #e2e8f0; font-weight: 700; font-size: .95rem; }
+    .lp-footer-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .lp-footer-links a { color: #64748b; font-size: .84rem; text-decoration: none; transition: color .15s; }
+    .lp-footer-links a:hover { color: #94a3b8; }
+    .lp-footer-copy {
+      text-align: center; color: #334155; font-size: .76rem;
+      margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.05);
+      max-width: 1200px; margin-left: auto; margin-right: auto;
+    }
+
+    /* ── Demo modal ── */
+    #lp-demo-modal {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.68);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .lp-demo-card {
+      background: #1e293b; border: 1px solid rgba(255,255,255,.12);
+      border-radius: 24px; padding: 2.25rem; width: 100%; max-width: 440px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.5); position: relative;
+    }
+    .lp-demo-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: rgba(255,255,255,.06); border: none; border-radius: 8px;
+      width: 32px; height: 32px; color: #94a3b8;
+      cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+      transition: background .15s; font-family: inherit;
+    }
+    .lp-demo-close:hover { background: rgba(255,255,255,.12); color: #e2e8f0; }
+    .lp-demo-title { font-size: 1.25rem; font-weight: 800; color: #f1f5f9; margin-bottom: .35rem; }
+    .lp-demo-sub   { font-size: .88rem; color: #64748b; margin-bottom: 1.5rem; line-height: 1.6; }
+    .lp-demo-field { margin-bottom: 1rem; }
+    .lp-demo-field label {
+      display: block; font-size: .78rem; font-weight: 600; color: #94a3b8;
+      margin-bottom: .35rem; letter-spacing: .03em; text-transform: uppercase;
+    }
+    .lp-demo-field input,
+    .lp-demo-field textarea {
+      width: 100%; background: rgba(255,255,255,.06);
+      border: 1.5px solid rgba(255,255,255,.1); border-radius: 10px;
+      padding: .65rem .9rem; color: #f1f5f9; font-family: inherit; font-size: .9rem;
+      outline: none; transition: border-color .15s; box-sizing: border-box;
+    }
+    .lp-demo-field input:focus,
+    .lp-demo-field textarea:focus { border-color: rgba(99,102,241,.6); }
+    .lp-demo-field input::placeholder,
+    .lp-demo-field textarea::placeholder { color: #475569; }
+    .lp-demo-field textarea { resize: vertical; min-height: 80px; }
+    .lp-demo-success {
+      background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3);
+      border-radius: 10px; padding: .85rem 1rem; color: #4ade80;
+      font-size: .88rem; margin-bottom: .75rem;
+    }
+    .lp-demo-submit {
+      width: 100%; padding: .9rem;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border: none; border-radius: 12px; color: #fff;
+      font-size: .97rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(99,102,241,.4); transition: all .18s; margin-top: .25rem;
+    }
+    .lp-demo-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,.5); }
+    .lp-demo-submit:disabled { opacity: .6; cursor: not-allowed; }
+
+    /* ── Scroll animations ── */
+    .lp-animate { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s ease; }
+    .lp-animate.lp-visible { opacity: 1; transform: translateY(0); }
+    .lp-animate-d1 { transition-delay: .08s; }
+    .lp-animate-d2 { transition-delay: .18s; }
+    .lp-animate-d3 { transition-delay: .28s; }
+    .lp-animate-d4 { transition-delay: .36s; }
+    .lp-animate-d5 { transition-delay: .44s; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .lp-nav { padding: .85rem 1.25rem; }
+      .lp-hero { padding: 3rem 1.25rem; }
+      .lp-hero-stats { gap: 1.5rem; }
+      .lp-section { padding: 3.5rem 1.25rem; }
+      .lp-footer-inner { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    }
+    @media (max-width: 480px) {
+      .lp-btn-ghost { display: none; }
+      .lp-hero-title { font-size: 1.9rem; }
+      .lp-pricing-grid, .lp-testimonials-grid, .lp-features-grid { grid-template-columns: 1fr; }
+      .lp-hero-stats { flex-direction: column; gap: 1.25rem; }
+    }
+
   </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════ LANDING PAGE ══════════════════════════ -->
+<div id="landing-page">
+
+  <!-- ── Nav ── -->
+  <nav class="lp-nav">
+    <a class="lp-nav-brand" href="#">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
+        <path d="M9 11.5a3 3 0 0 0 6 0"/><line x1="12" y1="8" x2="12" y2="8.5"/>
+      </svg>
+      Med-Sync
+    </a>
+    <div class="lp-nav-actions">
+      <button class="lp-btn-ghost" onclick="openDemoModal()">Solicitar demo</button>
+      <button class="lp-btn-primary-sm" onclick="goToLogin()">Iniciar sesión</button>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <section class="lp-hero">
+    <div class="lp-hero-content">
+      <div class="lp-hero-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Gestión dental del siglo XXI
+      </div>
+      <h1 class="lp-hero-title">Agenda inteligente<br>para clínicas dentales</h1>
+      <p class="lp-hero-subtitle">
+        Med-Sync centraliza pacientes, citas, recordatorios y facturación en una plataforma segura.
+        Menos papeles, más tiempo con tus pacientes.
+      </p>
+      <div class="lp-hero-actions">
+        <button class="lp-btn-hero-primary" onclick="goToLogin()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Iniciar sesión
+        </button>
+        <button class="lp-btn-hero-ghost" onclick="openDemoModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Solicitar demo
+        </button>
+      </div>
+      <div class="lp-hero-stats">
+        <div class="lp-stat"><div class="lp-stat-num">3 min</div><div class="lp-stat-label">para agendar una cita</div></div>
+        <div class="lp-stat"><div class="lp-stat-num">100%</div><div class="lp-stat-label">datos cifrados</div></div>
+        <div class="lp-stat"><div class="lp-stat-num">24/7</div><div class="lp-stat-label">auto-booking para pacientes</div></div>
+        <div class="lp-stat"><div class="lp-stat-num">0</div><div class="lp-stat-label">citas duplicadas</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ── -->
+  <div style="background:rgba(0,0,0,.15);padding:1px 0;">
+    <div class="lp-section">
+      <p class="lp-section-label lp-animate">Funcionalidades</p>
+      <h2 class="lp-section-title lp-animate lp-animate-d1">Todo lo que necesita tu clínica</h2>
+      <p class="lp-section-subtitle lp-animate lp-animate-d2">Desde la primera cita hasta el reporte mensual, en un solo lugar.</p>
+      <div class="lp-features-grid">
+        <div class="lp-feature-card lp-animate lp-animate-d1">
+          <div class="lp-feature-icon">📅</div>
+          <div class="lp-feature-title">Agenda Visual</div>
+          <div class="lp-feature-desc">Vistas de semana, día y mes con drag &amp; drop. Detecta conflictos de horario automáticamente.</div>
+        </div>
+        <div class="lp-feature-card lp-animate lp-animate-d2">
+          <div class="lp-feature-icon">👥</div>
+          <div class="lp-feature-title">Gestión de Pacientes</div>
+          <div class="lp-feature-desc">Expediente clínico completo, historial de citas y datos de contacto cifrados con AES-256.</div>
+        </div>
+        <div class="lp-feature-card lp-animate lp-animate-d3">
+          <div class="lp-feature-icon">💳</div>
+          <div class="lp-feature-title">Facturación</div>
+          <div class="lp-feature-desc">Genera facturas, controla pagos y lleva el registro de ingresos por doctor y por período.</div>
+        </div>
+        <div class="lp-feature-card lp-animate lp-animate-d4">
+          <div class="lp-feature-icon">🔔</div>
+          <div class="lp-feature-title">Recordatorios Automáticos</div>
+          <div class="lp-feature-desc">Envía recordatorios de cita por email 48 h antes. Los pacientes confirman con un clic.</div>
+        </div>
+        <div class="lp-feature-card lp-animate lp-animate-d5">
+          <div class="lp-feature-icon">🔒</div>
+          <div class="lp-feature-title">Seguridad de Nivel Médico</div>
+          <div class="lp-feature-desc">PII cifrado, roles por usuario, auditoría NOM-024 y autenticación JWT con refresh tokens.</div>
+        </div>
+        <div class="lp-feature-card lp-animate lp-animate-d5">
+          <div class="lp-feature-icon">📊</div>
+          <div class="lp-feature-title">Reportes y Analíticas</div>
+          <div class="lp-feature-desc">Panel con métricas clave: ocupación, nuevos pacientes, ingresos y tasa de cancelación.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Pricing ── -->
+  <div class="lp-section">
+    <p class="lp-section-label lp-animate">Planes</p>
+    <h2 class="lp-section-title lp-animate lp-animate-d1">Precios transparentes</h2>
+    <p class="lp-section-subtitle lp-animate lp-animate-d2">Sin sorpresas. Sin comisiones por cita. Cancela cuando quieras.</p>
+    <div class="lp-pricing-grid">
+      <div class="lp-plan-card lp-animate lp-animate-d1">
+        <div class="lp-plan-name">Básico</div>
+        <div class="lp-plan-price"><span class="lp-plan-amount">$29</span><span class="lp-plan-period">/mes</span></div>
+        <ul class="lp-plan-features">
+          <li>1 doctor</li><li>Agenda + citas ilimitadas</li><li>Pacientes ilimitados</li>
+          <li>Recordatorios por email</li><li>Auto-booking para pacientes</li>
+        </ul>
+        <button class="lp-plan-cta lp-plan-cta-outline" onclick="openDemoModal()">Solicitar demo</button>
+      </div>
+      <div class="lp-plan-card featured lp-animate lp-animate-d2">
+        <div class="lp-plan-badge">MÁS POPULAR</div>
+        <div class="lp-plan-name">Profesional</div>
+        <div class="lp-plan-price"><span class="lp-plan-amount">$79</span><span class="lp-plan-period">/mes</span></div>
+        <ul class="lp-plan-features">
+          <li>Hasta 5 doctores</li><li>Todo del plan Básico</li><li>Facturación y reportes</li>
+          <li>Múltiples ubicaciones</li><li>Roles y permisos por usuario</li><li>Soporte prioritario</li>
+        </ul>
+        <button class="lp-plan-cta lp-plan-cta-filled" onclick="openDemoModal()">Solicitar demo</button>
+      </div>
+      <div class="lp-plan-card lp-animate lp-animate-d3">
+        <div class="lp-plan-name">Empresarial</div>
+        <div class="lp-plan-price"><span class="lp-plan-amount" style="font-size:1.9rem;">A la medida</span></div>
+        <ul class="lp-plan-features">
+          <li>Doctores ilimitados</li><li>Todo del plan Profesional</li><li>Integración con HIS / EHR</li>
+          <li>SLA garantizado 99.9%</li><li>Onboarding personalizado</li><li>Auditoría NOM-024</li>
+        </ul>
+        <button class="lp-plan-cta lp-plan-cta-outline" onclick="openDemoModal()">Contactar ventas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Testimonials ── -->
+  <div style="background:rgba(0,0,0,.15);padding:1px 0;">
+    <div class="lp-section">
+      <p class="lp-section-label lp-animate">Testimonios</p>
+      <h2 class="lp-section-title lp-animate lp-animate-d1">Lo que dicen nuestros clientes</h2>
+      <p class="lp-section-subtitle lp-animate lp-animate-d2">Clínicas reales que ya trabajan de forma más inteligente.</p>
+      <div class="lp-testimonials-grid">
+        <div class="lp-testimonial-card lp-animate lp-animate-d1">
+          <div class="lp-testimonial-stars">★★★★★</div>
+          <p class="lp-testimonial-text">"Antes perdíamos citas por doble booking. Con Med-Sync eso ya no ocurre. La agenda visual es increíblemente clara y el equipo la adoptó en un día."</p>
+          <div class="lp-testimonial-author">
+            <div class="lp-testimonial-avatar">MR</div>
+            <div><div class="lp-testimonial-name">Dra. María Rodríguez</div><div class="lp-testimonial-role">Directora — Clínica Sonrisa Plena</div></div>
+          </div>
+        </div>
+        <div class="lp-testimonial-card lp-animate lp-animate-d2">
+          <div class="lp-testimonial-stars">★★★★★</div>
+          <p class="lp-testimonial-text">"Los recordatorios automáticos redujeron nuestras inasistencias en un 40 %. Los pacientes confirman su cita directamente desde el correo, sin llamadas."</p>
+          <div class="lp-testimonial-author">
+            <div class="lp-testimonial-avatar">CL</div>
+            <div><div class="lp-testimonial-name">Dr. Carlos López</div><div class="lp-testimonial-role">Ortodoncista — DentPro Guadalajara</div></div>
+          </div>
+        </div>
+        <div class="lp-testimonial-card lp-animate lp-animate-d3">
+          <div class="lp-testimonial-stars">★★★★★</div>
+          <p class="lp-testimonial-text">"La migración fue muy sencilla. El soporte nos ayudó a importar todos los pacientes en menos de una hora. No puedo imaginar volver al papel."</p>
+          <div class="lp-testimonial-author">
+            <div class="lp-testimonial-avatar">AP</div>
+            <div><div class="lp-testimonial-name">Dra. Ana Pérez</div><div class="lp-testimonial-role">Administradora — Centro Dental Familiar</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CTA Banner ── -->
+  <div class="lp-cta-section lp-animate">
+    <h2 class="lp-cta-title">¿Listo para transformar tu clínica?</h2>
+    <p class="lp-cta-sub">Solicita una demo gratuita y te la mostramos en vivo en 30 minutos.</p>
+    <div class="lp-cta-actions">
+      <button class="lp-btn-hero-primary" onclick="openDemoModal()">Solicitar demo gratis</button>
+      <button class="lp-btn-hero-ghost"   onclick="goToLogin()">Ya tengo cuenta</button>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="lp-footer">
+    <div class="lp-footer-inner">
+      <div class="lp-footer-brand">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
+          <path d="M9 11.5a3 3 0 0 0 6 0"/><line x1="12" y1="8" x2="12" y2="8.5"/>
+        </svg>
+        Med-Sync
+      </div>
+      <nav class="lp-footer-links">
+        <a href="#" onclick="goToLogin(); return false;">Iniciar sesión</a>
+        <a href="#" onclick="openDemoModal(); return false;">Solicitar demo</a>
+        <a href="mailto:alexisdehesa@gmail.com">Contacto</a>
+      </nav>
+    </div>
+    <div class="lp-footer-copy">&copy; 2026 Med-Sync &mdash; Gestión Dental Inteligente. Todos los derechos reservados.</div>
+  </footer>
+
+</div><!-- /landing-page -->
+
+<!-- ── Demo modal ── -->
+<div id="lp-demo-modal" class="hidden">
+  <div class="lp-demo-card" onclick="event.stopPropagation()">
+    <button class="lp-demo-close" onclick="closeDemoModal()" aria-label="Cerrar">&times;</button>
+    <div class="lp-demo-title">Solicitar demo gratuita</div>
+    <p class="lp-demo-sub">Cuéntanos un poco sobre tu clínica y te contactamos en menos de 24 horas.</p>
+    <form id="lp-demo-form" onsubmit="submitDemoForm(event)">
+      <div class="lp-demo-field">
+        <label for="demo-name">Nombre</label>
+        <input id="demo-name" type="text" placeholder="Dr. Ana García" required />
+      </div>
+      <div class="lp-demo-field">
+        <label for="demo-email">Correo electrónico</label>
+        <input id="demo-email" type="email" placeholder="ana@clinica.com" required />
+      </div>
+      <div class="lp-demo-field">
+        <label for="demo-clinic">Clínica</label>
+        <input id="demo-clinic" type="text" placeholder="Nombre de la clínica" />
+      </div>
+      <div class="lp-demo-field">
+        <label for="demo-msg">Mensaje (opcional)</label>
+        <textarea id="demo-msg" placeholder="¿Cuántos doctores tienen? ¿Algo en particular que les interese?" rows="3"></textarea>
+      </div>
+      <div id="demo-success" class="lp-demo-success hidden">
+        ✅ ¡Recibido! Abriendo tu cliente de correo&hellip;
+      </div>
+      <button type="submit" class="lp-demo-submit" id="demo-submit-btn">Enviar solicitud</button>
+    </form>
+  </div>
+</div>
 
 <!-- ═══════════════════════════ LOGIN PAGE ═══════════════════════════ -->
 <div id="login-page">
@@ -3045,7 +3595,8 @@
 
   // ── Pages ─────────────────────────────────────────────────────────────
   function showDashboard() {
-    document.getElementById('login-page').style.display    = 'none';
+    document.getElementById('landing-page').style.display   = 'none';
+    document.getElementById('login-page').style.display     = 'none';
     document.getElementById('dashboard-page').style.display = 'block';
     document.getElementById('navbar-email').textContent = email() || '';
     const isOwner = userRole() === 'owner';
@@ -3058,7 +3609,8 @@
   }
 
   function showLogin() {
-    document.getElementById('login-page').style.display    = 'flex';
+    document.getElementById('landing-page').style.display   = 'none';
+    document.getElementById('login-page').style.display     = 'flex';
     document.getElementById('dashboard-page').style.display = 'none';
     document.getElementById('fab-new-patient').classList.remove('visible');
   }
@@ -5592,6 +6144,70 @@
     }
   });
 
+  // ── Landing page ──────────────────────────────────────────────────────
+  function showLanding() {
+    document.getElementById('landing-page').style.display   = 'block';
+    document.getElementById('login-page').style.display     = 'none';
+    document.getElementById('dashboard-page').style.display = 'none';
+    requestAnimationFrame(initLandingAnimations);
+  }
+
+  function goToLogin() {
+    document.getElementById('landing-page').style.display = 'none';
+    showLogin();
+  }
+
+  function openDemoModal() {
+    const m = document.getElementById('lp-demo-modal');
+    m.classList.remove('hidden');
+    m.addEventListener('click', _demoOverlayClose);
+    document.addEventListener('keydown', _demoEscClose);
+  }
+
+  function closeDemoModal() {
+    const m = document.getElementById('lp-demo-modal');
+    m.classList.add('hidden');
+    m.removeEventListener('click', _demoOverlayClose);
+    document.removeEventListener('keydown', _demoEscClose);
+    document.getElementById('demo-success').classList.add('hidden');
+    document.getElementById('demo-submit-btn').disabled = false;
+    document.getElementById('demo-submit-btn').textContent = 'Enviar solicitud';
+    document.getElementById('lp-demo-form').reset();
+  }
+
+  function _demoOverlayClose(e) { if (e.target === document.getElementById('lp-demo-modal')) closeDemoModal(); }
+  function _demoEscClose(e)     { if (e.key === 'Escape') closeDemoModal(); }
+
+  function submitDemoForm(e) {
+    e.preventDefault();
+    const name   = document.getElementById('demo-name').value.trim();
+    const email  = document.getElementById('demo-email').value.trim();
+    const clinic = document.getElementById('demo-clinic').value.trim();
+    const msg    = document.getElementById('demo-msg').value.trim();
+
+    document.getElementById('demo-success').classList.remove('hidden');
+    const btn = document.getElementById('demo-submit-btn');
+    btn.disabled = true; btn.textContent = 'Enviado ✓';
+
+    const subject = encodeURIComponent(`Demo Med-Sync — ${name}${clinic ? ' / ' + clinic : ''}`);
+    const body    = encodeURIComponent(
+      `Nombre: ${name}\nEmail: ${email}\nClínica: ${clinic || 'N/A'}\n\nMensaje:\n${msg || '—'}`
+    );
+    setTimeout(() => { window.location.href = `mailto:alexisdehesa@gmail.com?subject=${subject}&body=${body}`; }, 500);
+    setTimeout(closeDemoModal, 3200);
+  }
+
+  function initLandingAnimations() {
+    const els = document.querySelectorAll('#landing-page .lp-animate');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(el => el.classList.add('lp-visible')); return;
+    }
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('lp-visible'); obs.unobserve(en.target); } });
+    }, { threshold: 0.10 });
+    els.forEach(el => obs.observe(el));
+  }
+
   // ── Init ──────────────────────────────────────────────────────────────
   (function init() {
     const today = new Date().toISOString().split('T')[0];
@@ -5617,7 +6233,7 @@
       if (userRole() === 'owner') { loadDoctors(); loadUsers(); }
       loadLocations();
     } else {
-      showLogin();
+      showLanding();
     }
   })();
 
