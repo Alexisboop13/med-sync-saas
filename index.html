@@ -3598,8 +3598,11 @@
       const items = Array.isArray(data) ? data : (data.items || []);
       const total = data.total ?? items.length;
 
-      document.getElementById('kpi-today').textContent = total;
-      _renderSemaforo(total, _dailyCapacity);
+      // Owners get the accurate unfiltered count from owner-dashboard in loadDashboard()
+      if (userRole() !== 'owner') {
+        document.getElementById('kpi-today').textContent = total;
+        _renderSemaforo(total, _dailyCapacity);
+      }
       _renderPrimerVistazo(items);
 
       if (!items.length) {
@@ -3647,6 +3650,10 @@
         if (ownerRes.ok) {
           const ownerData = await ownerRes.json();
           _dailyCapacity = (ownerData.total_doctors || 0) * 8;
+          // Use unfiltered count from owner-dashboard — not affected by filter bar
+          const todayCount = ownerData.total_appointments_today ?? 0;
+          document.getElementById('kpi-today').textContent = todayCount;
+          _renderSemaforo(todayCount, _dailyCapacity);
         }
       } catch (_) {}
     }
