@@ -3919,7 +3919,7 @@
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const qs = new URLSearchParams({ fecha: todayStr, limit: '200' });
+    const qs = new URLSearchParams({ fecha: todayStr, limit: '100' });
     try {
       const res = await fetch(`${API}/api/v1/appointments?${qs}`, { headers: authHeaders() });
       if (res.status === 401) { logout(); return; }
