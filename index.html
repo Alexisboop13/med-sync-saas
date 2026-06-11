@@ -1863,11 +1863,17 @@
 
     <!-- ── Tab navigation ── -->
     <nav class="tab-nav">
-      <button class="tab-btn active" data-tab="tab-dashboard" onclick="switchTab('tab-dashboard')">
+      <button class="tab-btn active" data-tab="tab-inicio" onclick="switchTab('tab-inicio')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Inicio
+      </button>
+      <button class="tab-btn" data-tab="tab-estadisticas" id="tab-btn-estadisticas" onclick="switchTab('tab-estadisticas')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
-        Dashboard
+        Estadísticas
       </button>
       <button class="tab-btn" data-tab="tab-pacientes" onclick="switchTab('tab-pacientes')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1920,27 +1926,8 @@
       </button>
     </nav>
 
-    <!-- ═══ TAB: DASHBOARD ═══ -->
-    <div id="tab-dashboard" class="tab-panel active">
-
-      <!-- Sub-tab navigation -->
-      <nav class="sub-tab-nav">
-        <button class="sub-tab-btn active" data-subtab="subtab-inicio" onclick="switchSubTab('subtab-inicio')">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><polyline points="9 22 9 12 15 12 15 22"/>
-          </svg>
-          Inicio
-        </button>
-        <button class="sub-tab-btn" data-subtab="subtab-estadisticas" onclick="switchSubTab('subtab-estadisticas')">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-          </svg>
-          Estadísticas
-        </button>
-      </nav>
-
-      <!-- ─── SUB-TAB: INICIO ─── -->
-      <div id="subtab-inicio" class="sub-tab-panel active">
+    <!-- ═══ TAB: INICIO ═══ -->
+    <div id="tab-inicio" class="tab-panel active">
 
         <!-- Semáforo / filter chips -->
         <div class="sf-row">
@@ -1995,10 +1982,10 @@
           <div style="text-align:center;padding:2.5rem;color:var(--gray-400);font-size:.88rem;">Cargando citas de hoy…</div>
         </div>
 
-      </div><!-- /subtab-inicio -->
+    </div><!-- /tab-inicio -->
 
-      <!-- ─── SUB-TAB: ESTADÍSTICAS ─── -->
-      <div id="subtab-estadisticas" class="sub-tab-panel">
+    <!-- ═══ TAB: ESTADÍSTICAS ═══ -->
+    <div id="tab-estadisticas" class="tab-panel">
 
         <!-- KPI Cards -->
         <div class="kpi-grid">
@@ -2165,9 +2152,7 @@
         </div>
 
         <div id="dashboard-error" class="alert alert-error" style="margin-top:1rem;"></div>
-      </div><!-- /subtab-estadisticas -->
-
-    </div><!-- /tab-dashboard -->
+    </div><!-- /tab-estadisticas -->
 
     <!-- ═══ TAB: PACIENTES ═══ -->
     <div id="tab-pacientes" class="tab-panel">
@@ -3888,18 +3873,7 @@
     });
   }
 
-  // ── Sub-tab switching ────────────────────────────────────────────────
-  function switchSubTab(subId) {
-    document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(subId).classList.add('active');
-    const btn = document.querySelector(`.sub-tab-btn[data-subtab="${subId}"]`);
-    if (btn) btn.classList.add('active');
-    if (subId === 'subtab-estadisticas') loadDashboard();
-    if (subId === 'subtab-inicio')       _loadInicioAppts();
-  }
-
-  // ── INICIO sub-tab ───────────────────────────────────────────────────
+  // ── INICIO tab ───────────────────────────────────────────────────────
   async function _loadInicioAppts() {
     const todayFmt = new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const lbl = document.getElementById('inicio-date-label');
@@ -4106,7 +4080,7 @@
   }
 
   function _refreshInicioIfActive() {
-    const p = document.getElementById('subtab-inicio');
+    const p = document.getElementById('tab-inicio');
     if (p && p.classList.contains('active')) _loadInicioAppts();
   }
 
@@ -4217,8 +4191,11 @@
     if (tabId === 'tab-citas') {
       setTimeout(initCalendar, 80);
     }
-    if (tabId === 'tab-dashboard') {
+    if (tabId === 'tab-inicio') {
       _loadInicioAppts();
+    }
+    if (tabId === 'tab-estadisticas') {
+      loadDashboard();
     }
     if (tabId === 'tab-expedientes') {
       _populateExpPatientSelect();
@@ -4266,7 +4243,7 @@
     document.getElementById('tab-btn-ubicaciones').style.display   = showAdmin ? '' : 'none';
     document.getElementById('tab-btn-planes').style.display        = isOwner   ? '' : 'none';
     document.getElementById('tab-btn-configuracion').style.display = isOwner   ? '' : 'none';
-    switchTab('tab-dashboard');
+    switchTab('tab-inicio');
   }
 
   function showLogin() {
@@ -4326,7 +4303,7 @@
       localStorage.setItem('user_role', payload.role || '');
       localStorage.setItem('clinic_id', payload.clinic_id || '');
 
-      showDashboard();  // calls switchTab('tab-dashboard') → loadDashboard()
+      showDashboard();
       loadPatients();
       loadDoctorSelects().then(() => loadAppointments());
       if (payload.role === 'owner') { loadDoctors(); loadUsers(); loadClinicSettings(); loadBillingStatus(); }
@@ -6889,7 +6866,7 @@
       const payload = jwtPayload(token());
       if (!localStorage.getItem('user_role')) localStorage.setItem('user_role', payload.role || '');
       if (!localStorage.getItem('clinic_id')) localStorage.setItem('clinic_id', payload.clinic_id || '');
-      showDashboard();  // calls switchTab('tab-dashboard') → loadDashboard()
+      showDashboard();
       loadPatients();
       loadDoctorSelects().then(() => loadAppointments());
       if (userRole() === 'owner') { loadDoctors(); loadUsers(); }
