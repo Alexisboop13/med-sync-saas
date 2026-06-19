@@ -1027,6 +1027,14 @@
       cursor: pointer; font-weight: 600; transition: all .15s; font-family: inherit;
     }
     .notif-btn:hover { background: var(--blue); color: #fff; }
+    /* Urgency color variants for upcoming appointments */
+    .notif-item--green  { background: #d4edda; border-left: 3px solid #5cb85c; }
+    .notif-item--yellow { background: #fff3cd; border-left: 3px solid #f0ad4e; }
+    .notif-item--orange { background: #ffe5d0; border-left: 3px solid #fd7e14; }
+    .notif-item--red    { background: #f8d7da; border-left: 3px solid #dc3545; }
+    .notif-item--red .notif-time    { color: #721c24; }
+    .notif-item--orange .notif-time { color: #7d3f00; }
+    .iac-note-icon { font-size: .78rem; cursor: default; opacity: .65; margin-left: .25rem; }
     /* ── Inicio appointment list ── */
     .inicio-list { display: flex; flex-direction: column; gap: .48rem; }
     .iac {
@@ -3158,6 +3166,33 @@
   </div>
 </div>
 
+<!-- ═══ MODAL: Nota rápida pre-cita ═══ -->
+<div id="quick-note-modal" class="modal-overlay" style="display:none;" onclick="closeQuickNoteOverlay(event)">
+  <div class="modal-card" style="max-width:480px;">
+    <div class="modal-header">
+      <div>
+        <h3>Notas para la cita</h3>
+        <p style="font-size:.8rem;color:var(--gray-600);margin:.15rem 0 0;">Nota interna — no visible al paciente</p>
+      </div>
+      <button class="modal-close" onclick="_closeQuickNoteModal()" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="qn-appt-info" style="font-size:.84rem;color:var(--gray-600);background:var(--gray-50);border-radius:8px;padding:.55rem .75rem;margin-bottom:1rem;line-height:1.6;"></div>
+      <div class="form-group">
+        <label for="qn-note-text">Nota rápida</label>
+        <textarea id="qn-note-text" rows="5" placeholder="Motivo de consulta, indicaciones previas, alergias a recordar…"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button class="btn btn-outline" onclick="_openFullDetail()">Ver detalles completos</button>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn btn-outline" onclick="_closeQuickNoteModal()">Cancelar</button>
+        <button class="btn btn-primary" id="qn-save-btn" onclick="_saveQuickNote()">Guardar nota</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ MODAL: Confirm Cancel Appointment ═══ -->
 <div id="confirm-cancel-modal" class="modal-overlay" style="display:none;" onclick="closeConfirmCancelOverlay(event)">
   <div class="modal-card" style="max-width:420px;">
@@ -3427,8 +3462,10 @@
   let _chartStatus     = null;
   let _chartDoctors    = null;
   let _dailyCapacity   = 0;    // total_doctors × 8 slots — updated on load (owner only)
-  let _inicioAllItems  = [];   // today's appointments cache for INICIO sub-tab
+  let _inicioAllItems     = [];   // today's appointments cache for INICIO sub-tab
   let _inicioActiveFilter = 'all'; // current semáforo filter
+  let _notifRefreshTimer  = null;  // 30-second timer to refresh urgency colors
+  let _quickNoteApptId    = null;  // appointment id for the quick-note modal
 
   const MONTH_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
@@ -3958,25 +3995,26 @@
     }
 
     const rows = filtered.map(a => {
-      const dt      = a.starts_at ? new Date(a.starts_at) : null;
-      const timeStr = dt ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
-      const pat     = a.patient_name || patientName(a);
-      const doc     = a.doctor_name  || doctorName(a);
-      const s       = (a.status || '').toLowerCase();
+      const dt       = a.starts_at ? new Date(a.starts_at) : null;
+      const timeStr  = dt ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
+      const pat      = a.patient_name || patientName(a);
+      const doc      = a.doctor_name  || doctorName(a);
+      const s        = (a.status || '').toLowerCase();
       const terminal = ['completed', ...CANCELED_STATUSES].includes(s);
-      const id      = String(a.id);
+      const id       = String(a.id);
+      const noteIcon = a.notes ? '<span class="iac-note-icon" title="Tiene nota interna">📝</span>' : '';
 
       const actBtns = terminal
-        ? `<button class="btn-iac btn-iac-note"    onclick="_inicioNote('${id}')">Ver / Nota</button>`
+        ? `<button class="btn-iac btn-iac-note"    onclick="_openQuickNoteModal('${id}')">Ver / Nota</button>`
         : `<button class="btn-iac btn-iac-complete" onclick="_inicioComplete('${id}')">✓ Completar</button>
            <button class="btn-iac btn-iac-noshow"   onclick="_inicioNoShow('${id}')">No-show</button>
            <button class="btn-iac btn-iac-cancel"   onclick="_inicioCancel('${id}')">Cancelar</button>
-           <button class="btn-iac btn-iac-note"     onclick="_inicioNote('${id}')">Nota</button>`;
+           <button class="btn-iac btn-iac-note"     onclick="_openQuickNoteModal('${id}')">Nota</button>`;
 
       return `<div class="iac${terminal ? ' is-terminal' : ''}">
         <div class="iac-time">${timeStr}</div>
         <div class="iac-info">
-          <div class="iac-patient">${pat}</div>
+          <div class="iac-patient">${pat}${noteIcon}</div>
           <div class="iac-doctor">${doc}</div>
         </div>
         <div class="iac-status">${statusBadge(s)}</div>
@@ -3987,16 +4025,26 @@
     listEl.innerHTML = `<div class="inicio-list">${rows}</div>`;
   }
 
+  function getAppointmentColor(minutesUntil) {
+    if (minutesUntil < 0)  return null;
+    if (minutesUntil < 5)  return 'notif-item--red';
+    if (minutesUntil < 15) return 'notif-item--orange';
+    if (minutesUntil < 30) return 'notif-item--yellow';
+    return 'notif-item--green';
+  }
+
   function _renderNotifSection(items) {
     const now        = new Date();
     const nowMs      = now.getTime();
     const nextHourMs = nowMs + 60 * 60 * 1000;
 
-    const upcoming = items.filter(a => {
-      if ((a.status || '').toLowerCase() !== 'scheduled') return false;
-      const t = a.starts_at ? new Date(a.starts_at).getTime() : 0;
-      return t >= nowMs && t <= nextHourMs;
-    });
+    const upcoming = items
+      .filter(a => {
+        if ((a.status || '').toLowerCase() !== 'scheduled') return false;
+        const t = a.starts_at ? new Date(a.starts_at).getTime() : 0;
+        return t >= nowMs && t <= nextHourMs;
+      })
+      .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
     const section = document.getElementById('notif-section');
     const listEl  = document.getElementById('notif-list');
@@ -4005,14 +4053,16 @@
 
     section.style.display = '';
     listEl.innerHTML = upcoming.map(a => {
-      const dt   = a.starts_at ? new Date(a.starts_at) : null;
-      const time = dt ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
-      const pat  = a.patient_name || patientName(a);
-      const doc  = a.doctor_name  || doctorName(a);
-      return `<div class="notif-item">
+      const dt      = a.starts_at ? new Date(a.starts_at) : null;
+      const time    = dt ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
+      const pat     = a.patient_name || patientName(a);
+      const doc     = a.doctor_name  || doctorName(a);
+      const minUntil = dt ? Math.round((dt.getTime() - nowMs) / 60000) : 999;
+      const colorClass = getAppointmentColor(minUntil) || '';
+      return `<div class="notif-item ${colorClass}">
         <span class="notif-time">${time}</span>
         <span class="notif-text">Paciente <strong>${pat}</strong> con ${doc}</span>
-        <button class="notif-btn" onclick="_inicioNote('${a.id}')">Ver detalles</button>
+        <button class="notif-btn" onclick="_openQuickNoteModal('${a.id}')">Nota / Ver</button>
       </div>`;
     }).join('');
   }
@@ -4023,6 +4073,68 @@
     const start = a.starts_at ? new Date(a.starts_at) : null;
     const end   = a.ends_at   ? new Date(a.ends_at)   : null;
     openApptDetailModal({ id: String(a.id), extendedProps: a, start, end });
+  }
+
+  function _openQuickNoteModal(id) {
+    const a = _inicioAllItems.find(x => String(x.id) === String(id));
+    if (!a) return;
+    _quickNoteApptId = String(id);
+    const dt      = a.starts_at ? new Date(a.starts_at) : null;
+    const timeStr = dt ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
+    const pat     = a.patient_name || patientName(a);
+    const doc     = a.doctor_name  || doctorName(a);
+    const infoEl  = document.getElementById('qn-appt-info');
+    if (infoEl) infoEl.innerHTML = `<strong>${pat}</strong><br><span style="color:var(--gray-500);">${doc} · ${timeStr}</span>`;
+    const ta = document.getElementById('qn-note-text');
+    if (ta) ta.value = a.notes || '';
+    const modal = document.getElementById('quick-note-modal');
+    if (modal) {
+      modal.style.display = '';
+      document.addEventListener('keydown', _closeQnOnEsc);
+      if (ta) ta.focus();
+    }
+  }
+
+  function _closeQuickNoteModal() {
+    const modal = document.getElementById('quick-note-modal');
+    if (modal) modal.style.display = 'none';
+    document.removeEventListener('keydown', _closeQnOnEsc);
+  }
+
+  function _closeQnOnEsc(e) { if (e.key === 'Escape') _closeQuickNoteModal(); }
+
+  function closeQuickNoteOverlay(event) {
+    if (event.target === document.getElementById('quick-note-modal')) _closeQuickNoteModal();
+  }
+
+  function _openFullDetail() {
+    const id = _quickNoteApptId;
+    _closeQuickNoteModal();
+    if (id) _inicioNote(id);
+  }
+
+  async function _saveQuickNote() {
+    const id   = _quickNoteApptId;
+    const text = (document.getElementById('qn-note-text')?.value || '').trim();
+    if (!id) return;
+    if (!text) { showToast('Escribe una nota antes de guardar.', 'info'); return; }
+    const btn = document.getElementById('qn-save-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+    try {
+      const res = await fetch(`${API}/api/v1/appointments/${id}/notes`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ content: text }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || `Error ${res.status}`); }
+      showToast('Nota guardada.', 'success');
+      _closeQuickNoteModal();
+      _loadInicioAppts();
+    } catch (err) {
+      showToast(`Error al guardar: ${err.message}`, 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Guardar nota'; }
+    }
   }
 
   async function _inicioComplete(id) {
@@ -4200,6 +4312,12 @@
     }
     if (tabId === 'tab-inicio') {
       _loadInicioAppts();
+      if (_notifRefreshTimer) clearInterval(_notifRefreshTimer);
+      _notifRefreshTimer = setInterval(() => {
+        if (_inicioAllItems.length) _renderNotifSection(_inicioAllItems);
+      }, 30000);
+    } else {
+      if (_notifRefreshTimer) { clearInterval(_notifRefreshTimer); _notifRefreshTimer = null; }
     }
     if (tabId === 'tab-estadisticas') {
       loadDashboard();

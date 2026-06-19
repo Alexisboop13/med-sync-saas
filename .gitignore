@@ -10,3 +10,7 @@ uploads/
 *.log
 *.ics
 citas.ics
+__pycache__/
+*.sql
+*.sqlcd
+*.pyc
