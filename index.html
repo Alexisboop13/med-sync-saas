@@ -3448,7 +3448,7 @@
   function patientName(a) {
     if (a.patient_name) return a.patient_name;
     const cached = _patientMap[a.patient_id];
-    return cached ? pLabel(cached) : `Pac. #${String(a.patient_id || '').slice(0, 8)}`;
+    return cached ? (cached.full_name_enc || cached.full_name || cached.name || `Pac. #${String(a.patient_id || '').slice(0, 8)}`) : `Pac. #${String(a.patient_id || '').slice(0, 8)}`;
   }
 
   function doctorName(a) {
