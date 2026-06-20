@@ -1,0 +1,7 @@
+\.env\.example
+\.env\.prod\.example
+CHANGE_ME
+COMPLETAR
+scripts/generate_secrets\.py
+\.gitignore
+config\.py
