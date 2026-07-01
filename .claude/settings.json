@@ -1,0 +1,10 @@
+{
+  "auth": {
+    "email": "demo@test.com",
+    "password": "Demo1234!"
+  },
+  "autoLogin": true,
+  "commands": {
+    "login": "echo 'Login automático desactivado'"
+  }
+}

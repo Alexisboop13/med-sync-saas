@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "med-sync"
+version = "0.1.0"
+description = "Med-Sync backend"
+requires-python = ">=3.11"
+# Las dependencias de runtime siguen viviendo en requirements.txt
+# (Dockerfile / Procfile hacen `pip install -r requirements.txt`).
+# Este archivo solo existe para exponer los entry points de app/cli/.
+dependencies = []
+
+[project.scripts]
+medsync-agent = "app.cli.agent:cli"
+
+[tool.setuptools.packages.find]
+include = ["app*"]

@@ -1289,7 +1289,7 @@ async def create_appointment_note(
     note = AppointmentNote(
         clinic_id=ctx.clinic_id,
         appointment_id=appointment_id,
-        content=body.content.strip(),
+        content_enc=body.content.strip(),
         created_by_id=current_user.id,
     )
     ctx.db.add(note)

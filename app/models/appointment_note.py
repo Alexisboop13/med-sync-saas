@@ -3,10 +3,11 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import ForeignKey, Index, Text
+from sqlalchemy import ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.db.types import EncryptedString
 from app.models.base import TenantBase
 
 if TYPE_CHECKING:
@@ -30,8 +31,8 @@ class AppointmentNote(TenantBase):
         index=True,
     )
 
-    content: Mapped[str] = mapped_column(
-        Text,
+    content_enc: Mapped[str] = mapped_column(
+        EncryptedString,
         nullable=False,
     )
 

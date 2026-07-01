@@ -199,13 +199,13 @@ class AppointmentNoteResponse(BaseModel):
     id: uuid.UUID
     appointment_id: uuid.UUID
     clinic_id: uuid.UUID
-    content: str
+    content: str = Field(..., alias="content_enc")
     created_by_id: Optional[uuid.UUID] = None
     author_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class ProposeRescheduleBody(BaseModel):

@@ -210,9 +210,24 @@ async def run_all_tasks(db: AsyncSession) -> AgentRunResult:
     )
 
 
-async def get_agent_status(db: AsyncSession) -> dict:
-    """Datos para el dashboard del agente (próximas acciones + actividad reciente)."""
+async def get_agent_status(db: AsyncSession, clinic_id: uuid.UUID | None = None) -> dict:
+    """
+    Datos para el dashboard del agente (próximas acciones + actividad reciente).
+
+    `clinic_id`: si se provee, acota el resultado a esa clínica (uso normal —
+    dashboard por-tenant y CLI). Sin `clinic_id` es una vista global entre
+    clínicas — solo para uso administrativo interno, nunca detrás de un
+    endpoint autenticado por JWT de clínica.
+    """
     now = datetime.now(timezone.utc)
+
+    upcoming_filters = [
+        Appointment.status == AppointmentStatus.SCHEDULED,
+        Appointment.starts_at >= now,
+        Appointment.starts_at <= now + timedelta(hours=3),
+    ]
+    if clinic_id is not None:
+        upcoming_filters.append(Appointment.clinic_id == clinic_id)
 
     # Citas en las próximas 3 horas (para mostrar en dashboard)
     upcoming_result = await db.execute(
@@ -221,11 +236,7 @@ async def get_agent_status(db: AsyncSession) -> dict:
             selectinload(Appointment.patient),
             selectinload(Appointment.doctor).selectinload(Doctor.user),
         )
-        .where(
-            Appointment.status == AppointmentStatus.SCHEDULED,
-            Appointment.starts_at >= now,
-            Appointment.starts_at <= now + timedelta(hours=3),
-        )
+        .where(*upcoming_filters)
         .order_by(Appointment.starts_at)
         .limit(20)
     )
@@ -253,12 +264,16 @@ async def get_agent_status(db: AsyncSession) -> dict:
         })
 
     # Notificaciones recientes (últimas 24h)
+    recent_filters = [
+        Notification.notification_type == NotificationType.APPOINTMENT_REMINDER,
+        Notification.created_at >= now - timedelta(hours=24),
+    ]
+    if clinic_id is not None:
+        recent_filters.append(Notification.clinic_id == clinic_id)
+
     recent_result = await db.execute(
         select(Notification)
-        .where(
-            Notification.notification_type == NotificationType.APPOINTMENT_REMINDER,
-            Notification.created_at >= now - timedelta(hours=24),
-        )
+        .where(*recent_filters)
         .order_by(Notification.created_at.desc())
         .limit(50)
     )

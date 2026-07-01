@@ -1,0 +1,2 @@
+[console_scripts]
+medsync-agent = app.cli.agent:cli

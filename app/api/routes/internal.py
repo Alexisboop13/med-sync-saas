@@ -76,5 +76,5 @@ async def agent_status(
     """
     from app.agent.scheduler import get_agent_status  # noqa: PLC0415
 
-    data = await get_agent_status(ctx.db)
+    data = await get_agent_status(ctx.db, clinic_id=ctx.clinic_id)
     return data
