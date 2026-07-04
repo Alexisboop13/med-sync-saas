@@ -1,0 +1,13 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+# FORZAR DATABASE_URL
+ENV DATABASE_URL=postgresql://postgres:awcprTvTVmyZCaRcQOqlMTSfwhTYVgkx@autorack.proxy.rlwy.net:27517/railway
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
