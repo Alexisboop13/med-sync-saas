@@ -55,7 +55,8 @@ class Settings(BaseSettings):
     DEBUG:       bool = False
 
     # ── Database ──────────────────────────────────────────────────────────────
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:awcprTvTVmyZCaRcQOqlMTSfwhTYVgSS@postgres.railway.internal:5432/railway")    DB_POOL_SIZE:    int = 5
+    DATABASE_URL: str = ""
+    DB_POOL_SIZE:    int = 5
     DB_MAX_OVERFLOW: int = 5
 
     # ── JWT ───────────────────────────────────────────────────────────────────
@@ -134,10 +135,14 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL")
     @classmethod
     def force_asyncpg_driver(cls, v: str) -> str:
-        # Railway (y otros PaaS) inyectan DATABASE_URL sin el driver async.
+        if not v:
+            raise ValueError(
+                "DATABASE_URL no está definida en el entorno. "
+                "Revisa las variables del servicio en Railway."
+            )
         if v.startswith("postgres://"):
             return v.replace("postgres://", "postgresql+asyncpg://", 1)
-        if v.startswith("postgresql://"):
+        if v.startswith("postgresql://") and "+asyncpg" not in v:
             return v.replace("postgresql://", "postgresql+asyncpg://", 1)
         return v
 

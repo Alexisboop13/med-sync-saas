@@ -83,6 +83,7 @@ async def frontend():
 
 @app.on_event("startup")
 async def startup_event():
+    print(f"🔎 Conectando a DB host: {settings.DATABASE_URL.split('@')[-1]}")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     print("✅ Tablas creadas/verificadas en startup")
