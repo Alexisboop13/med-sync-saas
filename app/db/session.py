@@ -1,15 +1,14 @@
 import os
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from app.core.config import settings
 
-# FORZAR DATABASE_URL desde variable de entorno
-DATABASE_URL = os.getenv("DATABASE_URL", settings.DATABASE_URL)
+# FORZAR DATABASE_URL DIRECTAMENTE
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:awcprTvTVmyZCaRcQOqlMTSfwhTYVgSS@postgres.railway.internal:5432/railway")
 
 engine = create_async_engine(
     DATABASE_URL,
-    pool_size=settings.DB_POOL_SIZE,
-    max_overflow=settings.DB_MAX_OVERFLOW,
-    echo=settings.DEBUG,
+    pool_size=5,
+    max_overflow=5,
+    echo=False,
 )
 
 AsyncSessionLocal = async_sessionmaker(
