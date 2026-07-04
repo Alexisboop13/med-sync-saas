@@ -55,7 +55,8 @@ class Settings(BaseSettings):
     DEBUG:       bool = False
 
     # ── Database ──────────────────────────────────────────────────────────────
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:awcprTvTVmyZCaRcQOqlMTSfwhTYVgkx@autorack.proxy.rlwy.net:27517/railway")    DB_POOL_SIZE:    int = 5
+    DATABASE_URL:    str = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost:5432/medsync_db")
+    DB_POOL_SIZE:    int = 5
     DB_MAX_OVERFLOW: int = 5
 
     # ── JWT ───────────────────────────────────────────────────────────────────
