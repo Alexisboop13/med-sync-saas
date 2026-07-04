@@ -1,8 +1,10 @@
 import os
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-# FORZAR DATABASE_URL DIRECTAMENTE
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:awcprTvTVmyZCaRcQOqlMTSfwhTYVgSS@postgres.railway.internal:5432/railway")
+# IGNORAR COMPLETAMENTE config.py
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    DATABASE_URL = "postgresql://postgres:awcprTvTVmyZCaRcQOqlMTSfwhTYVgkx@postgres.railway.internal:5432/railway"
 
 engine = create_async_engine(
     DATABASE_URL,
@@ -16,6 +18,7 @@ AsyncSessionLocal = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
 )
+
 
 async def get_db():
     async with AsyncSessionLocal() as session:
