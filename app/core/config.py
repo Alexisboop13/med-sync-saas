@@ -55,7 +55,8 @@ class Settings(BaseSettings):
     DEBUG:       bool = False
 
     # ── Database ──────────────────────────────────────────────────────────────
-    DATABASE_URL:    str = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost:5432/medsync_db")    DB_POOL_SIZE:    int = 5
+    DATABASE_URL:    str = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost:5432/medsync_db")
+    DB_POOL_SIZE:    int = 5
     DB_MAX_OVERFLOW: int = 5
 
     # ── JWT ───────────────────────────────────────────────────────────────────
@@ -131,6 +132,16 @@ class Settings(BaseSettings):
     AGENT_SECRET_KEY: str = ""
 
     # ── Validators ────────────────────────────────────────────────────────────
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def force_asyncpg_driver(cls, v: str) -> str:
+        # Railway (y otros PaaS) inyectan DATABASE_URL sin el driver async.
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        if v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
     @field_validator("ENCRYPTION_KEYS")
     @classmethod
     def encryption_keys_not_empty_in_prod(cls, v: str, info) -> str:
