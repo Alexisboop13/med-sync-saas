@@ -3555,6 +3555,44 @@
     return match ? match[1] : str;
   }
 
+  // ── Avatar de iniciales con color determinístico ─────────────────────
+  // Usado en todos lados donde se muestra un doctor (lista, modal, select
+  // de citas) mientras el montaje de /uploads no sirva fotos reales.
+  // Mismo nombre → mismo color siempre (hash simple sobre una paleta fija).
+
+  const _AVATAR_PALETTE = [
+    '#2c7da0', '#7c3aed', '#c2410c', '#0d9488',
+    '#be185d', '#4d7c0f', '#b45309', '#4338ca',
+    '#0f766e', '#9d174d',
+  ];
+  const _AVATAR_NEUTRAL = '#6b7280';
+
+  function _avatarInitials(name) {
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    const first = parts[0][0] || '';
+    const last  = parts.length > 1 ? parts[parts.length - 1][0] : (parts[0][1] || '');
+    return (first + last).toUpperCase();
+  }
+
+  function _avatarColor(name) {
+    const str = (name || '').trim().toLowerCase();
+    if (!str) return _AVATAR_NEUTRAL;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) | 0;
+    return _AVATAR_PALETTE[Math.abs(hash) % _AVATAR_PALETTE.length];
+  }
+
+  function _initialsAvatar(name, size) {
+    size = size || 36;
+    const initials = _avatarInitials(name);
+    const color    = _avatarColor(name);
+    const fontSize = Math.round(size * 0.4);
+    return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};` +
+      `color:#fff;display:flex;align-items:center;justify-content:center;` +
+      `font-weight:700;font-size:${fontSize}px;flex-shrink:0;line-height:1;">${initials}</div>`;
+  }
+
   // ── Patient / doctor in-memory caches ────────────────────────────────
   let _patientMap   = {};  // id → patient object
   let _doctorMap    = {};  // id → doctor object
@@ -5195,13 +5233,7 @@
       }
 
       tbody.innerHTML = list.map(d => {
-        const initials = d.full_name
-          ? d.full_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
-          : 'DR';
-        const photoSrc = d.avatar_s3_key ? `/${d.avatar_s3_key}` : null;
-        const avatar = photoSrc
-          ? `<img src="${photoSrc}" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;display:block;">`
-          : `<span class="badge badge-blue">${initials}</span>`;
+        const avatar = _initialsAvatar(d.full_name, 36);
         const estado = d.is_accepting_patients
           ? `<span class="badge badge-green">Activo</span>`
           : `<span class="badge badge-red">Inactivo</span>`;
@@ -5469,8 +5501,6 @@
     }
   })();
 
-  const _DOC_PHOTO_SVG = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b9edd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
-
   function previewDoctorPhoto(input) {
     if (!input.files[0]) return;
     const reader = new FileReader();
@@ -5599,16 +5629,16 @@
       document.getElementById('doc-email').value     = d.email     || '';
       document.getElementById('doc-phone').value     = d.phone     || '';
       document.getElementById('doc-bio').value       = d.bio       || '';
-      document.getElementById('doc-photo-preview').innerHTML = d.avatar_s3_key
-        ? `<img src="/${d.avatar_s3_key}" style="width:100%;height:100%;object-fit:cover;">`
-        : _DOC_PHOTO_SVG;
+      // Los uploads reales aún no se sirven (/uploads sin montar) — el
+      // avatar de iniciales con color es el fallback permanente.
+      document.getElementById('doc-photo-preview').innerHTML = _initialsAvatar(d.full_name, 80);
       document.getElementById('doc-photo').value = '';
       if (d.date_of_birth_enc) _setDocDobFromIso(d.date_of_birth_enc);
       else _docResetDob();
     } else {
       document.getElementById('doctor-form').reset();
       document.getElementById('doc-title').value = 'Dr.';
-      document.getElementById('doc-photo-preview').innerHTML = _DOC_PHOTO_SVG;
+      document.getElementById('doc-photo-preview').innerHTML = _initialsAvatar('', 80);
       _docResetDob();
     }
 
@@ -5765,7 +5795,7 @@
 
       showAlert('doc-success', `Doctor "${docName}" ${isEdit ? 'actualizado' : 'agregado'} exitosamente.`, 'success');
       document.getElementById('doctor-form').reset();
-      document.getElementById('doc-photo-preview').innerHTML = _DOC_PHOTO_SVG;
+      document.getElementById('doc-photo-preview').innerHTML = _initialsAvatar('', 80);
       _docResetDob();
       _docFormSnapshot = _docFormSnapshotStr();
       await loadDoctors();
@@ -6777,28 +6807,13 @@
     if (start) _setEndFromStart(start);
   }
 
-  // Avatar del doctor seleccionado (foto, iniciales, o ícono por default)
-  const _CAL_DOC_ICON_SVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-
-  function _calDoctorInitials(name) {
-    if (!name) return '';
-    const parts = name.trim().split(/\s+/);
-    const first = parts[0]?.[0] || '';
-    const last  = parts.length > 1 ? parts[parts.length - 1][0] : '';
-    return (first + last).toUpperCase();
-  }
-
+  // Avatar del doctor seleccionado — iniciales con color determinístico
+  // (los uploads reales aún no se sirven; ver _initialsAvatar).
   function _updateCalDoctorPhoto() {
     const doctorId = document.getElementById('cal-doctor-select').value;
     const box = document.getElementById('cal-doctor-photo');
     const doc = doctorId ? _doctorMap[doctorId] : null;
-    if (!doc) {
-      box.innerHTML = _CAL_DOC_ICON_SVG;
-    } else if (doc.avatar_s3_key) {
-      box.innerHTML = `<img src="/${doc.avatar_s3_key}" style="width:100%;height:100%;object-fit:cover;" alt="Foto de ${doc.full_name || 'doctor'}">`;
-    } else {
-      box.innerHTML = _calDoctorInitials(doc.full_name) || _CAL_DOC_ICON_SVG;
-    }
+    box.innerHTML = _initialsAvatar(doc ? doc.full_name : '', 34);
   }
 
   // Muestra chips de horarios libres/ocupados para el doctor en la fecha seleccionada
