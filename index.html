@@ -36,7 +36,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Navbar ── */
+    /* ── Navbar (slim topbar: solo usuario/logout, la marca vive en el sidebar) ── */
     .navbar {
       background: var(--white);
       border-bottom: 1px solid var(--gray-200);
@@ -44,23 +44,12 @@
       height: 62px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       position: sticky;
       top: 0;
       z-index: 100;
       box-shadow: 0 1px 6px rgba(0,0,0,.06);
     }
-    .navbar-brand {
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--blue-dark);
-      text-decoration: none;
-      letter-spacing: -.01em;
-    }
-    .navbar-brand svg { color: var(--blue); }
     .navbar-user {
       display: flex;
       align-items: center;
@@ -81,6 +70,36 @@
     }
     .btn-logout:hover { background: var(--gray-100); color: var(--red); border-color: var(--red); }
 
+    /* ── Sidebar (navegación vertical) ── */
+    .dashboard-shell { display: flex; align-items: stretch; min-height: 100vh; }
+    .sidebar {
+      width: 232px;
+      flex-shrink: 0;
+      background: var(--white);
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      text-decoration: none;
+      letter-spacing: -.01em;
+      padding: 1.3rem 1.4rem;
+      flex-shrink: 0;
+    }
+    .sidebar-brand svg { color: var(--blue); flex-shrink: 0; }
+    .dashboard-main { flex: 1; min-width: 0; }
+
     /* ── Page wrappers ── */
     #login-page {
       display: flex;
@@ -98,7 +117,7 @@
         rgba(99,102,241,.20) 0%, rgba(59,130,246,.10) 40%, transparent 70%);
     }
     #dashboard-page { display: none; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .container { padding: 2rem 2.25rem; }
 
     /* ── Login card — glassmorphism dark ── */
     .login-card {
@@ -300,21 +319,21 @@
     }
     .qp-domain-btn:hover, .qp-domain-btn:focus { background: var(--blue-light); border-color: var(--blue); outline: none; }
 
-    /* ── Tab navigation ── */
+    /* ── Tab navigation (sidebar vertical) ── */
     .tab-nav {
       display: flex;
-      gap: 0;
-      margin-bottom: 1.5rem;
-      border-bottom: 2px solid var(--gray-200);
-      overflow-x: auto;
+      flex-direction: column;
+      gap: .2rem;
+      padding: .5rem .9rem 1.5rem;
+      flex: 1;
+      overflow-y: auto;
     }
     .tab-btn {
       background: none;
       border: none;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-      padding: .78rem 1.4rem;
-      font-size: .875rem;
+      border-radius: 10px;
+      padding: .7rem 1rem;
+      font-size: .92rem;
       font-weight: 600;
       font-family: inherit;
       color: var(--gray-600);
@@ -323,12 +342,26 @@
       transition: color var(--transition), background var(--transition);
       display: flex;
       align-items: center;
-      gap: .4rem;
+      gap: .75rem;
+      width: 100%;
+      text-align: left;
     }
+    .tab-btn svg { flex-shrink: 0; }
     .tab-btn:hover { color: var(--blue); background: var(--blue-light); }
-    .tab-btn.active { color: var(--blue-dark); border-bottom-color: var(--blue); }
+    .tab-btn.active { background: var(--blue); color: #fff; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
+
+    /* ── Sidebar responsive: colapsa a rail de íconos (mismo breakpoint que
+       el resto del sitio usa para mobile — sin drawer/hamburguesa nuevos) ── */
+    @media (max-width: 768px) {
+      .sidebar { width: 68px; }
+      .sidebar-brand { justify-content: center; padding: 1.3rem .5rem; }
+      .sidebar-brand-text, .tab-label { display: none; }
+      .tab-btn { justify-content: center; padding: .7rem .5rem; gap: 0; }
+      .navbar { padding: 0 1rem; }
+      .container { padding: 1.25rem 1rem; }
+    }
 
     /* ── Dashboard grid ── */
     .dash-grid {
@@ -2030,88 +2063,94 @@
 
 <!-- ═══════════════════════════ DASHBOARD PAGE ═══════════════════════ -->
 <div id="dashboard-page">
-  <!-- Navbar -->
-  <nav class="navbar">
-    <a class="navbar-brand" href="#">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
-        <path d="M9 11.5a3 3 0 0 0 6 0"/>
-      </svg>
-      DentalSync
-    </a>
-    <div class="navbar-user">
-      <span id="navbar-email"></span>
-      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
-    </div>
-  </nav>
+  <div class="dashboard-shell">
+    <!-- Sidebar: marca + navegación vertical -->
+    <aside class="sidebar">
+      <a class="sidebar-brand" href="#">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
+          <path d="M9 11.5a3 3 0 0 0 6 0"/>
+        </svg>
+        <span class="sidebar-brand-text">DentalSync</span>
+      </a>
 
-  <!-- Main content -->
-  <div class="container">
-    <p class="section-title">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-      </svg>
-      Panel de control
-    </p>
+      <!-- ── Tab navigation ── -->
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="tab-inicio" onclick="switchTab('tab-inicio')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <span class="tab-label">Inicio</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-estadisticas" id="tab-btn-estadisticas" onclick="switchTab('tab-estadisticas')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          <span class="tab-label">Estadísticas</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-pacientes" onclick="switchTab('tab-pacientes')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          </svg>
+          <span class="tab-label">Pacientes</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-citas" onclick="switchTab('tab-citas')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span class="tab-label">Citas</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-doctores" id="tab-btn-doctores" onclick="switchTab('tab-doctores')" style="display:none;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            <line x1="12" y1="11" x2="12" y2="15"/><line x1="10" y1="13" x2="14" y2="13"/>
+          </svg>
+          <span class="tab-label">Doctores</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-expedientes" onclick="switchTab('tab-expedientes')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span class="tab-label">Expedientes</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-ubicaciones" id="tab-btn-ubicaciones" onclick="switchTab('tab-ubicaciones')" style="display:none;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span class="tab-label">Ubicaciones</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-planes" id="tab-btn-planes" onclick="switchTab('tab-planes')" style="display:none;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          <span class="tab-label">Planes</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-configuracion" id="tab-btn-configuracion" onclick="switchTab('tab-configuracion')" style="display:none;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span class="tab-label">Configuración</span>
+        </button>
+      </nav>
+    </aside>
 
-    <!-- ── Tab navigation ── -->
-    <nav class="tab-nav">
-      <button class="tab-btn active" data-tab="tab-inicio" onclick="switchTab('tab-inicio')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-        Inicio
-      </button>
-      <button class="tab-btn" data-tab="tab-estadisticas" id="tab-btn-estadisticas" onclick="switchTab('tab-estadisticas')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-        </svg>
-        Estadísticas
-      </button>
-      <button class="tab-btn" data-tab="tab-pacientes" onclick="switchTab('tab-pacientes')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-        </svg>
-        Pacientes
-      </button>
-      <button class="tab-btn" data-tab="tab-citas" onclick="switchTab('tab-citas')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-        Citas
-      </button>
-      <button class="tab-btn" data-tab="tab-doctores" id="tab-btn-doctores" onclick="switchTab('tab-doctores')" style="display:none;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          <line x1="12" y1="11" x2="12" y2="15"/><line x1="10" y1="13" x2="14" y2="13"/>
-        </svg>
-        Doctores
-      </button>
-      <button class="tab-btn" data-tab="tab-expedientes" onclick="switchTab('tab-expedientes')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-        </svg>
-        Expedientes
-      </button>
-      <button class="tab-btn" data-tab="tab-ubicaciones" id="tab-btn-ubicaciones" onclick="switchTab('tab-ubicaciones')" style="display:none;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-        </svg>
-        Ubicaciones
-      </button>
-      <button class="tab-btn" data-tab="tab-planes" id="tab-btn-planes" onclick="switchTab('tab-planes')" style="display:none;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-        </svg>
-        Planes
-      </button>
-      <button class="tab-btn" data-tab="tab-configuracion" id="tab-btn-configuracion" onclick="switchTab('tab-configuracion')" style="display:none;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </svg>
-        Configuración
-      </button>
-    </nav>
+    <div class="dashboard-main">
+      <!-- Navbar (topbar delgada: solo usuario/logout) -->
+      <nav class="navbar">
+        <div class="navbar-user">
+          <span id="navbar-email"></span>
+          <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+        </div>
+      </nav>
+
+      <!-- Main content -->
+      <div class="container">
+        <p class="section-title">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          Panel de control
+        </p>
 
     <!-- ═══ TAB: INICIO ═══ -->
     <div id="tab-inicio" class="tab-panel active">
@@ -2776,7 +2815,9 @@
       </div>
     </div><!-- /tab-configuracion -->
 
-  </div><!-- /container -->
+      </div><!-- /container -->
+    </div><!-- /dashboard-main -->
+  </div><!-- /dashboard-shell -->
 </div><!-- /dashboard-page -->
 
 <!-- ═══ FAB ═══ -->
