@@ -12,6 +12,7 @@ from alembic import context
 from logging.config import fileConfig
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit, parse_qs, urlencode
 
 # Asegurar que encuentra la carpeta 'app'
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -32,6 +33,24 @@ target_metadata = Base.metadata
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+
+def _to_sync_url(async_url: str) -> str:
+    """Convierte una DATABASE_URL de asyncpg a una URL síncrona para Alembic.
+
+    asyncpg acepta el parámetro de query `ssl=`, pero el driver síncrono
+    (psycopg2) requiere `sslmode=` — si no se traduce, psycopg2 falla con
+    'invalid dsn: invalid connection option "ssl"' en cualquier URL que
+    incluya `?ssl=...` (p. ej. Neon).
+    """
+    url = async_url.replace("postgresql+asyncpg://", "postgresql://")
+    parts = urlsplit(url)
+    query = parse_qs(parts.query)
+    if "ssl" in query:
+        ssl_value = query.pop("ssl")[0].lower()
+        query["sslmode"] = ["disable" if ssl_value in ("false", "disable", "0") else "require"]
+    new_query = urlencode(query, doseq=True)
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, new_query, parts.fragment))
 
 
 def run_migrations_offline():
@@ -55,9 +74,7 @@ def run_migrations_online():
     # Si no hay URL en alembic.ini, usar DATABASE_URL síncrona
     if not url:
         from app.core.config import settings
-        # Convertir asyncpg:// a postgresql://
-        url = settings.DATABASE_URL.replace(
-            "postgresql+asyncpg://", "postgresql://")
+        url = _to_sync_url(settings.DATABASE_URL)
 
     connectable = create_engine(url, pool_pre_ping=True)
 

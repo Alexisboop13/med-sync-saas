@@ -1,7 +1,7 @@
 """add date_of_birth_enc to doctors
 
 Revision ID: 146d2c8a5074
-Revises: w3x4y5z6a7b8
+Revises: u1v2w3x4y5z6
 Create Date: 2026-07-25 22:12:43.844464
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "146d2c8a5074"
-down_revision: Union[str, Sequence[str], None] = "w3x4y5z6a7b8"
+down_revision: Union[str, Sequence[str], None] = "u1v2w3x4y5z6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
