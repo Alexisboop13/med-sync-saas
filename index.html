@@ -2863,6 +2863,14 @@
       </div>
       <form id="quick-patient-form" onsubmit="submitQuickPatient(event)" novalidate>
         <input type="hidden" id="qp-editing-id" value="" />
+        <input type="hidden" id="qp-code-original" value="" />
+
+        <div class="form-group" id="qp-code-group" style="display:none;">
+          <label for="qp-code">Código de expediente</label>
+          <input type="text" id="qp-code" placeholder="Ej. AB12" autocomplete="off"
+            maxlength="20" style="text-transform:uppercase;" />
+          <small style="color:#6b7280;">Solo el owner puede editar este identificador. Debe coincidir con el expediente físico si la clínica ya lo usa en papel.</small>
+        </div>
 
         <div class="form-group">
           <label for="qp-phone">Celular <span style="color:var(--red)">*</span></label>
@@ -5220,6 +5228,15 @@
     document.getElementById('qp-email').value = patient.email_enc || '';
     if (patient.date_of_birth_enc) _setQpDobFromIso(patient.date_of_birth_enc);
 
+    const codeGroup = document.getElementById('qp-code-group');
+    if (userRole() === 'owner') {
+      codeGroup.style.display = '';
+      document.getElementById('qp-code').value = patient.medical_record_code || '';
+      document.getElementById('qp-code-original').value = patient.medical_record_code || '';
+    } else {
+      codeGroup.style.display = 'none';
+    }
+
     setTimeout(() => document.getElementById('qp-name').focus(), 60);
   }
 
@@ -7195,6 +7212,7 @@
     hideAlert('qp-success');
     document.getElementById('quick-patient-form').reset();
     _qpResetState();
+    document.getElementById('qp-code-group').style.display = 'none';
     document.getElementById('quick-patient-modal').style.display = 'flex';
     setTimeout(() => document.getElementById('qp-phone').focus(), 60);
   }
@@ -7406,11 +7424,33 @@
       return;
     }
 
+    let newCode = null;
+    const codeGroupVisible = document.getElementById('qp-code-group').style.display !== 'none';
+    if (editingId && codeGroupVisible) {
+      const codeVal = document.getElementById('qp-code').value.trim().toUpperCase();
+      const originalCode = document.getElementById('qp-code-original').value;
+      if (!codeVal) {
+        showAlert('qp-error', 'El código de expediente no puede estar vacío.');
+        document.getElementById('qp-code').focus();
+        return;
+      }
+      if (codeVal !== originalCode) {
+        if (!confirm('¿Seguro que quieres cambiar el identificador de expediente de este paciente?')) {
+          return;
+        }
+        if (!confirm(`Vas a cambiar el identificador de "${originalCode || '(sin código)'}" a "${codeVal}". ¿Confirmas el cambio?`)) {
+          return;
+        }
+        newCode = codeVal;
+      }
+    }
+
     setLoading('qp-submit-btn', true);
 
     const payload = { full_name: name, phone };
     if (email_val) payload.email = email_val;
     if (_qpDobIso) payload.date_of_birth = _qpDobIso;
+    if (newCode) payload.medical_record_code = newCode;
 
     try {
       const url = editingId ? `${API}/api/v1/patients/${editingId}` : `${API}/api/v1/patients`;

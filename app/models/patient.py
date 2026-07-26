@@ -168,9 +168,14 @@ class Patient(TenantBase):
 
     # ── Medical record code (plaintext, unique per clinic) ───────────────────
     medical_record_code: Mapped[str] = mapped_column(
-        String(4),
+        String(20),
         nullable=False,
-        comment="4-char unique code per clinic: 2 consonants + 2 digits (no vowels, no 0/1).",
+        comment=(
+            "Unique code per clinic. Auto-generated codes are 4 chars "
+            "(2 consonants + 2 digits, no vowels, no 0/1); owners may also set "
+            "a manual alphanumeric code up to 20 chars to match a pre-existing "
+            "physical medical record."
+        ),
     )
 
     # ── Trigram search text (plaintext, non-PII index) ───────────────────────

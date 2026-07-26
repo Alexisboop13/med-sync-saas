@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime
 from typing import Any, List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+_MEDICAL_RECORD_CODE_RE = re.compile(r"^[A-Z0-9]{1,20}$")
 
 
 class PatientCreate(BaseModel):
@@ -40,6 +43,22 @@ class PatientUpdate(BaseModel):
     notes: Optional[str] = None
     emergency_contact_name: Optional[str] = None
     emergency_contact_phone: Optional[str] = None
+    medical_record_code: Optional[str] = None
+
+    @field_validator("medical_record_code")
+    @classmethod
+    def code_format(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.strip().upper()
+        if not v:
+            raise ValueError("medical_record_code no puede estar vacío.")
+        if not _MEDICAL_RECORD_CODE_RE.match(v):
+            raise ValueError(
+                "medical_record_code debe ser alfanumérico, sin espacios ni "
+                "símbolos, de máximo 20 caracteres."
+            )
+        return v
 
 
 class PatientResponse(BaseModel):

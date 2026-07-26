@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from sqlalchemy import func, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
 from app.api.deps import AnyStaff, CurrentUser, DoctorOrAbove, OwnerOnly, Role, TenantContext
@@ -486,6 +487,29 @@ async def update_patient(
             status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found.")
 
     updates = body.model_dump(exclude_unset=True)
+
+    if "medical_record_code" in updates:
+        if current_user.role != Role.OWNER:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Solo el owner puede editar el identificador de expediente.",
+            )
+        new_code = updates["medical_record_code"]
+        if new_code != patient.medical_record_code:
+            existing = (await ctx.db.execute(
+                select(Patient.id).where(
+                    Patient.clinic_id == ctx.clinic_id,
+                    Patient.medical_record_code == new_code,
+                    Patient.id != patient_id,
+                )
+            )).scalar_one_or_none()
+            if existing is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Ese identificador de expediente ya está en uso por otro paciente.",
+                )
+            patient.medical_record_code = new_code
+
     for field, enc_field in _ENC_FIELD_MAP.items():
         if field in updates:
             setattr(patient, enc_field, updates[field])
@@ -530,7 +554,14 @@ async def update_patient(
         ip=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
     )
-    await ctx.db.commit()
+    try:
+        await ctx.db.commit()
+    except IntegrityError:
+        await ctx.db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ese identificador de expediente ya está en uso por otro paciente.",
+        )
     await ctx.db.refresh(patient)
     return patient
 
