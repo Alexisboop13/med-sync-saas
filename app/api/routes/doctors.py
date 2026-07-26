@@ -29,6 +29,10 @@ _DAY_ABBR = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 _MAX_PHOTO_BYTES = 5 * 1024 * 1024  # 5 MB
 
+_ENC_FIELD_MAP = {
+    "date_of_birth": "date_of_birth_enc",
+}
+
 router = APIRouter(prefix="/doctors", tags=["Doctors"])
 
 
@@ -100,6 +104,7 @@ async def create_doctor(
         specialty=body.specialty,
         bio=body.bio,
         avatar_s3_key=body.avatar_s3_key,
+        date_of_birth_enc=body.date_of_birth,
         working_hours=body.working_hours or {},
         appointment_duration_minutes=body.appointment_duration_minutes,
         is_accepting_patients=body.is_accepting_patients,
@@ -292,7 +297,7 @@ async def update_doctor(
 
     updates = body.model_dump(exclude_unset=True)
     for field, value in updates.items():
-        setattr(doctor, field, value)
+        setattr(doctor, _ENC_FIELD_MAP.get(field, field), value)
 
     await ctx.db.commit()
     await ctx.db.refresh(doctor)

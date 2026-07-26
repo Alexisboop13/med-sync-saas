@@ -42,6 +42,7 @@ from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.db.types import NullableEncryptedString
 from app.models.base import TenantBase
 
 if TYPE_CHECKING:
@@ -91,6 +92,12 @@ class Doctor(TenantBase):
         String(500),
         nullable=True,
         comment="S3 key for profile photo, served via presigned URL.",
+    )
+
+    date_of_birth_enc: Mapped[Optional[str]] = mapped_column(
+        NullableEncryptedString,
+        nullable=True,
+        comment="Encrypted ISO-8601 date string: '1990-04-15'.",
     )
 
     # ── Schedule ──────────────────────────────────────────────────────────────

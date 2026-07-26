@@ -87,6 +87,7 @@ class DoctorCreate(BaseModel):
     specialty: str = Field(default="General Practice", max_length=120)
     bio: Optional[str] = Field(None, max_length=1000)
     avatar_s3_key: Optional[str] = Field(None, max_length=500)
+    date_of_birth: Optional[str] = None
     working_hours: Optional[Dict[str, List[Dict[str, str]]]] = Field(default_factory=dict)
     appointment_duration_minutes: int = Field(default=30, ge=5, le=480)
     is_accepting_patients: bool = True
@@ -109,6 +110,7 @@ class DoctorUpdate(BaseModel):
     specialty: Optional[str] = Field(None, max_length=120)
     bio: Optional[str] = Field(None, max_length=1000)
     avatar_s3_key: Optional[str] = Field(None, max_length=500)
+    date_of_birth: Optional[str] = None
     working_hours: Optional[Dict[str, List[Dict[str, str]]]] = None
     appointment_duration_minutes: Optional[int] = Field(None, ge=5, le=480)
     is_accepting_patients: Optional[bool] = None
@@ -139,13 +141,14 @@ class DoctorResponse(BaseModel):
     specialty: str
     bio: Optional[str]
     avatar_s3_key: Optional[str]
+    date_of_birth: Optional[str] = Field(None, alias="date_of_birth_enc")
     working_hours: Dict[str, Any]
     appointment_duration_minutes: int
     is_accepting_patients: bool
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class WorkingHoursUpdateRequest(BaseModel):
