@@ -3,8 +3,9 @@ from __future__ import annotations
 import random
 import re
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from sqlalchemy import func, select, update
@@ -77,6 +78,14 @@ def _build_search_text(full_name: str, email: str | None, phone: str | None) -> 
     return " ".join(filter(None, [full_name, email, phone])).lower()
 
 
+def _split_full_name(full_name: str) -> Tuple[str, Optional[str]]:
+    """Simple heuristic: last word is the surname, everything before it is the given name."""
+    parts = full_name.strip().split()
+    if len(parts) <= 1:
+        return full_name.strip(), None
+    return " ".join(parts[:-1]), parts[-1]
+
+
 @router.post("", response_model=PatientResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("100/minute")
 async def create_patient(
@@ -85,11 +94,14 @@ async def create_patient(
     ctx: TenantContext,
     current_user: DoctorOrAbove,
 ):
+    first_name, last_name = _split_full_name(body.full_name)
     patient = Patient(
         clinic_id=ctx.clinic_id,
         medical_record_code=await _generate_patient_code(ctx.db, ctx.clinic_id),
         full_name_enc=body.full_name,
         full_name_search_hash=make_search_hash(body.full_name.lower().strip()),
+        first_name_enc=first_name,
+        last_name_enc=last_name,
         phone_enc=body.phone,
         phone_search_hash=make_search_hash(
             _digits(body.phone)) if body.phone else None,
@@ -201,6 +213,64 @@ async def get_patient_by_code(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found.")
     return patient
+
+
+@router.get("/by-phone/{phone}", response_model=PatientResponse)
+@limiter.limit("100/minute")
+async def get_patient_by_phone(
+    request: Request,
+    phone: str,
+    ctx: TenantContext,
+    _: AnyStaff,
+):
+    """Duplicate-check lookup used by the quick patient intake form."""
+    digits = _digits(phone)
+    if len(digits) < 7:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Número de teléfono inválido.",
+        )
+    result = await ctx.db.execute(
+        select(Patient).where(
+            Patient.clinic_id == ctx.clinic_id,
+            Patient.phone_search_hash == make_search_hash(digits),
+            Patient.is_active.is_(True),
+        )
+    )
+    patient = result.scalar_one_or_none()
+    if patient is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found.")
+    return patient
+
+
+@router.get("/birthdays/today", response_model=List[PatientResponse])
+@limiter.limit("100/minute")
+async def get_birthdays_today(
+    request: Request,
+    ctx: TenantContext,
+    _: AnyStaff,
+):
+    result = await ctx.db.execute(
+        select(Patient).where(
+            Patient.clinic_id == ctx.clinic_id,
+            Patient.is_active.is_(True),
+        )
+    )
+    patients = result.scalars().all()
+
+    today = datetime.now(timezone.utc).date()
+    matches = []
+    for patient in patients:
+        if not patient.date_of_birth_enc:
+            continue
+        try:
+            dob = datetime.strptime(patient.date_of_birth_enc, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if dob.month == today.month and dob.day == today.day:
+            matches.append(patient)
+    return matches
 
 
 @router.get("/search", response_model=List[PatientResponse])
@@ -423,6 +493,8 @@ async def update_patient(
     if "full_name" in updates:
         patient.full_name_search_hash = make_search_hash(
             updates["full_name"].lower().strip())
+        patient.first_name_enc, patient.last_name_enc = _split_full_name(
+            updates["full_name"])
     if "phone" in updates:
         patient.phone_search_hash = (
             make_search_hash(

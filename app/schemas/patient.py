@@ -47,6 +47,8 @@ class PatientResponse(BaseModel):
     clinic_id: uuid.UUID
     medical_record_code: str
     full_name: str = Field(alias="full_name_enc")
+    first_name: Optional[str] = Field(None, alias="first_name_enc")
+    last_name: Optional[str] = Field(None, alias="last_name_enc")
     phone: Optional[str] = Field(None, alias="phone_enc")
     email: Optional[str] = Field(None, alias="email_enc")
     date_of_birth: Optional[str] = Field(None, alias="date_of_birth_enc")

@@ -78,6 +78,19 @@ class Patient(TenantBase):
         ),
     )
 
+    # ── Name split (encrypted, derived from full_name via simple heuristic) ──
+    first_name_enc: Mapped[Optional[str]] = mapped_column(
+        NullableEncryptedString,
+        nullable=True,
+        comment="Encrypted. Derived from full_name: everything before the last word.",
+    )
+
+    last_name_enc: Mapped[Optional[str]] = mapped_column(
+        NullableEncryptedString,
+        nullable=True,
+        comment="Encrypted. Derived from full_name: the last word.",
+    )
+
     # ── Contact (encrypted) ───────────────────────────────────────────────────
     phone_enc: Mapped[Optional[str]] = mapped_column(
         NullableEncryptedString,
