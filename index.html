@@ -1242,6 +1242,14 @@
     .iac-note-icon { font-size: .78rem; cursor: default; opacity: .65; margin-left: .25rem; }
     /* ── Inicio appointment list ── */
     .inicio-list { display: flex; flex-direction: column; gap: .48rem; }
+    .inicio-day-group + .inicio-day-group { margin-top: 1.1rem; }
+    .inicio-day-header {
+      font-size: .78rem; font-weight: 700; color: var(--gray-600);
+      padding: .2rem 0 .4rem; margin-bottom: .2rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .inicio-day-group:first-child .inicio-day-header { margin-top: 0; }
+    .inicio-day-items { display: flex; flex-direction: column; gap: .48rem; }
     .iac {
       display: flex; align-items: center; gap: .72rem;
       background: var(--white); border: 1px solid var(--gray-200);
@@ -1253,8 +1261,7 @@
     .iac.is-terminal  { opacity: .72; background: var(--gray-50); }
     .iac.is-overdue   { background: #fee2e2; border-color: #fca5a5; }
     .iac.is-urgent-15 { background: #ffedd5; border-color: #fdba74; }
-    .iac.is-urgent-30 { background: #fef9c3; border-color: #fde047; }
-    .iac.is-tomorrow  { background: #eff6ff; border-color: #bfdbfe; }
+    .iac.is-urgent-60 { background: #fef9c3; border-color: #fde047; }
     .iac-badge {
       display: inline-flex; align-items: center; gap: .18rem;
       font-size: .63rem; font-weight: 700; padding: .1rem .35rem;
@@ -1263,7 +1270,6 @@
     .iac-badge--now      { background: #fee2e2; color: #991b1b; }
     .iac-badge--soon     { background: #ffedd5; color: #7c2d12; }
     .iac-badge--overdue  { background: #fecaca; color: #7f1d1d; }
-    .iac-badge--tomorrow { background: #dbeafe; color: #1e40af; }
     .iac-time {
       min-width: 58px; font-weight: 700; font-size: .79rem;
       color: var(--blue-dark); text-align: center; line-height: 1.25; flex-shrink: 0;
@@ -1271,6 +1277,10 @@
     .iac-info { flex: 1; min-width: 0; }
     .iac-patient { font-weight: 700; color: var(--gray-800); font-size: .87rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .iac-doctor  { font-size: .75rem; color: var(--gray-600); margin-top: .08rem; }
+    /* Los fondos pastel de urgencia son claros en cualquier tema: forzar texto oscuro para contraste */
+    .iac.is-overdue .iac-patient, .iac.is-overdue .iac-doctor,
+    .iac.is-urgent-15 .iac-patient, .iac.is-urgent-15 .iac-doctor,
+    .iac.is-urgent-60 .iac-patient, .iac.is-urgent-60 .iac-doctor { color: #1f2937; }
     .iac-status  { flex-shrink: 0; }
     .iac-actions { display: flex; gap: .28rem; flex-shrink: 0; }
     .btn-iac {
@@ -4477,6 +4487,19 @@
   }
 
   // ── INICIO tab ───────────────────────────────────────────────────────
+  function _localDayKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function _dayHeaderLabel(dt, todayKey, tomorrowKey) {
+    const key     = _localDayKey(dt);
+    const dayName = dt.toLocaleDateString('es-MX', { weekday: 'long' });
+    const dateStr = dt.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' });
+    if (key === todayKey)    return `Hoy — ${dayName} ${dateStr}`;
+    if (key === tomorrowKey) return `Mañana — ${dayName} ${dateStr}`;
+    return `${dayName.charAt(0).toUpperCase()}${dayName.slice(1)} ${dateStr}`;
+  }
+
   async function _loadInicioAppts() {
     const now = new Date();
     const todayFmt = now.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -4496,9 +4519,10 @@
       } catch (_) {}
     }
 
-    const todayStr    = now.toISOString().split('T')[0];
-    const tomorrowStr = (() => { const d = new Date(now); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })();
-    const qs = new URLSearchParams({ start_date: todayStr, end_date: tomorrowStr, limit: '100' });
+    const todayStr = _localDayKey(now);
+    const rangeEnd = new Date(now); rangeEnd.setDate(rangeEnd.getDate() + 6);
+    const rangeEndStr = _localDayKey(rangeEnd);
+    const qs = new URLSearchParams({ start_date: todayStr, end_date: rangeEndStr, limit: '100' });
     try {
       const res = await fetch(`${API}/api/v1/appointments?${qs}`, { headers: authHeaders() });
       if (res.status === 401) { logout(); return; }
@@ -4514,20 +4538,15 @@
   }
 
   function _updateSfCounts(items) {
-    const now         = new Date();
-    const todayStr    = now.toISOString().split('T')[0];
-    const tomorrowStr = (() => { const d = new Date(now); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })();
-    const cutoff      = new Date(now.getTime() - 60 * 60 * 1000); // 1 h atrás
+    const now    = new Date();
+    const cutoff = new Date(now.getTime() - 60 * 60 * 1000); // 1 h atrás
 
     let pending = 0, completed = 0, canceled = 0;
     items.forEach(a => {
       const s = (a.status || '').toLowerCase();
       if (s === 'scheduled') {
         const dt = a.starts_at ? new Date(a.starts_at) : null;
-        if (dt) {
-          const dayStr = dt.toISOString().split('T')[0];
-          if ((dayStr === todayStr && dt >= cutoff) || dayStr === tomorrowStr) pending++;
-        }
+        if (dt && dt >= cutoff) pending++;
       } else if (s === 'completed') completed++;
       else canceled++;
     });
@@ -4552,8 +4571,8 @@
     if (!listEl) return;
     const CANCELED_STATUSES = ['canceled', 'canceled_by_patient', 'no_show'];
     const now         = new Date();
-    const todayStr    = now.toISOString().split('T')[0];
-    const tomorrowStr = (() => { const d = new Date(now); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })();
+    const todayStr    = _localDayKey(now);
+    const tomorrowStr = (() => { const d = new Date(now); d.setDate(d.getDate() + 1); return _localDayKey(d); })();
     const cutoff      = new Date(now.getTime() - 60 * 60 * 1000); // 1 h atrás
 
     let filtered = _inicioActiveFilter === 'all'
@@ -4564,11 +4583,7 @@
           if (_inicioActiveFilter === 'scheduled') {
             if (s !== 'scheduled') return false;
             const dt = a.starts_at ? new Date(a.starts_at) : null;
-            if (!dt) return false;
-            const dayStr = dt.toISOString().split('T')[0];
-            if (dayStr === todayStr) return dt >= cutoff;
-            if (dayStr === tomorrowStr) return true;
-            return false;
+            return !!dt && dt >= cutoff;
           }
           return s === _inicioActiveFilter;
         });
@@ -4585,77 +4600,84 @@
       return;
     }
 
-    // Índice de la primera y segunda cita scheduled activa (para badges)
-    let firstScheduledIdx = -1, secondScheduledIdx = -1;
-    filtered.forEach((a, i) => {
-      if ((a.status || '').toLowerCase() === 'scheduled' && firstScheduledIdx === -1) firstScheduledIdx = i;
-      else if ((a.status || '').toLowerCase() === 'scheduled' && secondScheduledIdx === -1) secondScheduledIdx = i;
+    // Agrupar por día natural (local), preservando el orden por hora dentro de cada grupo
+    const groups = [];
+    const groupByKey = new Map();
+    filtered.forEach(a => {
+      const dt  = a.starts_at ? new Date(a.starts_at) : null;
+      const key = dt ? _localDayKey(dt) : '__sin-fecha__';
+      let group = groupByKey.get(key);
+      if (!group) {
+        group = { dt, items: [] };
+        groupByKey.set(key, group);
+        groups.push(group);
+      }
+      group.items.push(a);
     });
 
-    const rows = filtered.map((a, idx) => {
-      const dt      = a.starts_at ? new Date(a.starts_at) : null;
-      const s       = (a.status || '').toLowerCase();
-      const terminal = ['completed', ...CANCELED_STATUSES].includes(s);
-      const id      = String(a.id);
-
-      // Calcular urgencia
-      const minsUntil = dt ? (dt.getTime() - now.getTime()) / 60000 : null;
-      const dayStr    = dt ? dt.toISOString().split('T')[0] : '';
-      const isTomorrow = dayStr === tomorrowStr;
-      const isOverdue  = s === 'scheduled' && minsUntil !== null && minsUntil < 0;
-      const isUrgent15 = s === 'scheduled' && minsUntil !== null && minsUntil >= 0 && minsUntil < 15;
-      const isUrgent30 = s === 'scheduled' && minsUntil !== null && minsUntil >= 15 && minsUntil < 30;
-
-      let urgencyClass = '';
-      if (!terminal) {
-        if (isOverdue)  urgencyClass = ' is-overdue';
-        else if (isUrgent15) urgencyClass = ' is-urgent-15';
-        else if (isUrgent30) urgencyClass = ' is-urgent-30';
-        else if (isTomorrow) urgencyClass = ' is-tomorrow';
-      }
-
-      // Badge de urgencia
-      let badge = '';
-      if (!terminal && idx === firstScheduledIdx) {
-        if (isOverdue)       badge = '<span class="iac-badge iac-badge--overdue">⚠ Atrasada</span>';
-        else if (isUrgent15) badge = '<span class="iac-badge iac-badge--now">🔴 Próxima ahora</span>';
-        else                 badge = '<span class="iac-badge iac-badge--now">🔴 Próxima</span>';
-      } else if (!terminal && idx === secondScheduledIdx && !isTomorrow) {
-        badge = '<span class="iac-badge iac-badge--soon">🟠 Próxima</span>';
-      } else if (!terminal && isTomorrow) {
-        badge = '<span class="iac-badge iac-badge--tomorrow">Mañana</span>';
-      }
-
-      // Hora: si es mañana, mostrar también el día
-      let timeStr = '—';
-      if (dt) {
-        const localTime = dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
-        timeStr = isTomorrow ? `Mañ.<br>${localTime}` : localTime;
-      }
-
-      const noteIcon = a.notes ? '<span class="iac-note-icon" title="Tiene nota interna">📝</span>' : '';
-      const pat = a.patient_name || patientName(a);
-      const doc = a.doctor_name  || doctorName(a);
-
-      const actBtns = terminal
-        ? `<button class="btn-iac btn-iac-note"    onclick="_openQuickNoteModal('${id}')">Ver / Nota</button>`
-        : `<button class="btn-iac btn-iac-complete" onclick="_inicioComplete('${id}')">✓ Completar</button>
-           <button class="btn-iac btn-iac-noshow"   onclick="_inicioNoShow('${id}')">No-show</button>
-           <button class="btn-iac btn-iac-cancel"   onclick="_inicioCancel('${id}')">Cancelar</button>
-           <button class="btn-iac btn-iac-note"     onclick="_openQuickNoteModal('${id}')">Nota</button>`;
-
-      return `<div class="iac${terminal ? ' is-terminal' : ''}${urgencyClass}">
-        <div class="iac-time">${timeStr}</div>
-        <div class="iac-info">
-          <div class="iac-patient">${badge}${pat}${noteIcon}</div>
-          <div class="iac-doctor">${doc}</div>
-        </div>
-        <div class="iac-status">${statusBadge(s)}</div>
-        <div class="iac-actions">${actBtns}</div>
+    const html = groups.map(group => {
+      const headerLabel = group.dt ? _dayHeaderLabel(group.dt, todayStr, tomorrowStr) : 'Sin fecha';
+      const rows = group.items.map(a => _renderInicioRow(a, now, todayStr, CANCELED_STATUSES)).join('');
+      return `<div class="inicio-day-group">
+        <div class="inicio-day-header">${headerLabel}</div>
+        <div class="inicio-day-items">${rows}</div>
       </div>`;
     }).join('');
 
-    listEl.innerHTML = `<div class="inicio-list">${rows}</div>`;
+    listEl.innerHTML = `<div class="inicio-list">${html}</div>`;
+  }
+
+  function _renderInicioRow(a, now, todayStr, CANCELED_STATUSES) {
+    const dt       = a.starts_at ? new Date(a.starts_at) : null;
+    const s        = (a.status || '').toLowerCase();
+    const terminal = ['completed', ...CANCELED_STATUSES].includes(s);
+    const id       = String(a.id);
+
+    // Urgencia basada únicamente en minutos reales hasta la cita (nunca en su posición en la lista)
+    const minsUntil = dt ? (dt.getTime() - now.getTime()) / 60000 : null;
+    const isToday    = dt ? _localDayKey(dt) === todayStr : false;
+    const isOverdue  = s === 'scheduled' && minsUntil !== null && minsUntil < 0;
+    const isUrgent15 = s === 'scheduled' && minsUntil !== null && isToday && minsUntil >= 0 && minsUntil < 15;
+    const isUrgent60 = s === 'scheduled' && minsUntil !== null && isToday && minsUntil >= 15 && minsUntil < 60;
+
+    let urgencyClass = '';
+    if (!terminal) {
+      if (isOverdue)       urgencyClass = ' is-overdue';
+      else if (isUrgent15) urgencyClass = ' is-urgent-15';
+      else if (isUrgent60) urgencyClass = ' is-urgent-60';
+    }
+
+    let badge = '';
+    if (!terminal && s === 'scheduled') {
+      if (isOverdue)       badge = '<span class="iac-badge iac-badge--overdue">⚠ Atrasada</span>';
+      else if (isUrgent15) badge = `<span class="iac-badge iac-badge--now">🔴 En ${Math.round(minsUntil)} min</span>`;
+      else if (isUrgent60) badge = `<span class="iac-badge iac-badge--soon">🟠 En ${Math.round(minsUntil)} min</span>`;
+    }
+
+    const timeStr = dt
+      ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true })
+      : '—';
+
+    const noteIcon = a.notes ? '<span class="iac-note-icon" title="Tiene nota interna">📝</span>' : '';
+    const pat = a.patient_name || patientName(a);
+    const doc = a.doctor_name  || doctorName(a);
+
+    const actBtns = terminal
+      ? `<button class="btn-iac btn-iac-note"    onclick="_openQuickNoteModal('${id}')">Ver / Nota</button>`
+      : `<button class="btn-iac btn-iac-complete" onclick="_inicioComplete('${id}')">✓ Completar</button>
+         <button class="btn-iac btn-iac-noshow"   onclick="_inicioNoShow('${id}')">No-show</button>
+         <button class="btn-iac btn-iac-cancel"   onclick="_inicioCancel('${id}')">Cancelar</button>
+         <button class="btn-iac btn-iac-note"     onclick="_openQuickNoteModal('${id}')">Nota</button>`;
+
+    return `<div class="iac${terminal ? ' is-terminal' : ''}${urgencyClass}">
+      <div class="iac-time">${timeStr}</div>
+      <div class="iac-info">
+        <div class="iac-patient">${badge}${pat}${noteIcon}</div>
+        <div class="iac-doctor">${doc}</div>
+      </div>
+      <div class="iac-status">${statusBadge(s)}</div>
+      <div class="iac-actions">${actBtns}</div>
+    </div>`;
   }
 
   function getAppointmentColor(minutesUntil) {
