@@ -22,6 +22,9 @@
       --red:        #e5696e;
       --green:      #3fb96a;
       --orange:     #f5a623;
+      --wine:       #7a2036;
+      --amber:      #e0c454;
+      --teal:       #5fc9c0;
       --white:      #141414;
       --radius:     12px;
       --shadow:     0 2px 16px rgba(0,0,0,.45), 0 1px 4px rgba(0,0,0,.3);
@@ -1241,7 +1244,7 @@
     .notif-item--orange .notif-time { color: #7d3f00; }
     .iac-note-icon { font-size: .78rem; cursor: default; opacity: .65; margin-left: .25rem; }
     /* ── Inicio appointment list ── */
-    .inicio-list { display: flex; flex-direction: column; gap: .48rem; }
+    .inicio-list { display: flex; flex-direction: column; gap: .4rem; }
     .inicio-day-group + .inicio-day-group { margin-top: 1.1rem; }
     .inicio-day-header {
       font-size: .78rem; font-weight: 700; color: var(--gray-600);
@@ -1249,53 +1252,72 @@
       border-bottom: 1px solid var(--gray-200);
     }
     .inicio-day-group:first-child .inicio-day-header { margin-top: 0; }
-    .inicio-day-items { display: flex; flex-direction: column; gap: .48rem; }
+    .inicio-day-items { display: flex; flex-direction: column; gap: .4rem; }
     .iac {
-      display: flex; align-items: center; gap: .72rem;
+      display: flex; align-items: center; gap: .6rem;
       background: var(--white); border: 1px solid var(--gray-200);
-      border-radius: var(--radius); padding: .68rem 1rem;
+      border-radius: var(--radius); padding: .5rem .85rem;
       box-shadow: 0 1px 5px rgba(44,125,160,.06);
       transition: box-shadow .15s, border-color .15s;
     }
     .iac:hover { border-color: rgba(44,125,160,.28); box-shadow: 0 3px 12px rgba(44,125,160,.1); }
-    .iac.is-terminal  { opacity: .72; background: var(--gray-50); }
-    .iac.is-overdue   { background: #fee2e2; border-color: #fca5a5; }
-    .iac.is-urgent-15 { background: #ffedd5; border-color: #fdba74; }
-    .iac.is-urgent-60 { background: #fef9c3; border-color: #fde047; }
+    .iac.is-terminal      { opacity: .72; background: var(--gray-50); }
+    /* Escala gradual de urgencia (tema oscuro): tinte del color base a baja opacidad + borde marcado */
+    .iac.is-overdue       { background: rgba(122,32,54,.30);   border-color: rgba(122,32,54,.7); }
+    .iac.is-urgent-red    { background: rgba(229,105,110,.14); border-color: rgba(229,105,110,.42); }
+    .iac.is-urgent-orange { background: rgba(245,166,35,.13);  border-color: rgba(245,166,35,.4); }
+    .iac.is-urgent-amber  { background: rgba(224,196,84,.13);  border-color: rgba(224,196,84,.38); }
+    .iac.is-urgent-teal   { background: rgba(95,201,192,.12);  border-color: rgba(95,201,192,.34); }
     .iac-badge {
       display: inline-flex; align-items: center; gap: .18rem;
       font-size: .63rem; font-weight: 700; padding: .1rem .35rem;
       border-radius: 999px; vertical-align: middle; margin-right: .25rem;
     }
-    .iac-badge--now      { background: #fee2e2; color: #991b1b; }
-    .iac-badge--soon     { background: #ffedd5; color: #7c2d12; }
-    .iac-badge--overdue  { background: #fecaca; color: #7f1d1d; }
+    .iac-badge--overdue { background: rgba(122,32,54,.38);   color: #ff9db0; }
+    .iac-badge--red     { background: rgba(229,105,110,.24); color: #ff9195; }
+    .iac-badge--orange  { background: rgba(245,166,35,.22);  color: #ffbf66; }
+    .iac-badge--amber   { background: rgba(224,196,84,.22);  color: #f0dd8f; }
+    .iac-badge--teal    { background: rgba(95,201,192,.22);  color: #92e0d8; }
     .iac-time {
-      min-width: 58px; font-weight: 700; font-size: .79rem;
-      color: var(--blue-dark); text-align: center; line-height: 1.25; flex-shrink: 0;
+      min-width: 50px; font-weight: 700; font-size: .76rem;
+      color: var(--blue-dark); text-align: center; line-height: 1.2; flex-shrink: 0;
     }
     .iac-info { flex: 1; min-width: 0; }
-    .iac-patient { font-weight: 700; color: var(--gray-800); font-size: .87rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .iac-doctor  { font-size: .75rem; color: var(--gray-600); margin-top: .08rem; }
-    /* Los fondos pastel de urgencia son claros en cualquier tema: forzar texto oscuro para contraste */
-    .iac.is-overdue .iac-patient, .iac.is-overdue .iac-doctor,
-    .iac.is-urgent-15 .iac-patient, .iac.is-urgent-15 .iac-doctor,
-    .iac.is-urgent-60 .iac-patient, .iac.is-urgent-60 .iac-doctor { color: #1f2937; }
+    .iac-patient { font-weight: 700; color: var(--gray-800); font-size: .84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .iac-doctor  { font-size: .72rem; color: var(--gray-600); margin-top: .04rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .iac-status  { flex-shrink: 0; }
-    .iac-actions { display: flex; gap: .28rem; flex-shrink: 0; }
+    .iac-actions { display: flex; align-items: center; gap: .28rem; flex-shrink: 0; }
     .btn-iac {
-      font-size: .71rem; font-weight: 600; padding: .26rem .56rem;
+      font-size: .71rem; font-weight: 600; padding: .24rem .52rem;
       border-radius: 7px; border: none; cursor: pointer;
       transition: all .15s ease; white-space: nowrap; font-family: inherit;
     }
     .btn-iac-complete { background: #d1fae5; color: #065f46; }
     .btn-iac-complete:hover { background: #2e9b56; color: #fff; }
-    .btn-iac-noshow   { background: #fef3c7; color: #92400e; }
-    .btn-iac-noshow:hover   { background: #f59e0b; color: #fff; }
     .btn-iac-cancel   { background: #fee2e2; color: #991b1b; }
     .btn-iac-cancel:hover   { background: #dc4a4a; color: #fff; }
     .btn-iac-note     { background: var(--gray-100); color: var(--gray-600); }
     .btn-iac-note:hover     { background: var(--gray-200); color: var(--gray-800); }
+    /* ── Menú "..." (No-show / Nota) ── */
+    .iac-more { position: relative; }
+    .btn-iac-more {
+      background: var(--gray-100); color: var(--gray-600);
+      padding: .24rem .46rem; line-height: 1; font-size: .85rem;
+    }
+    .btn-iac-more:hover { background: var(--gray-200); color: var(--gray-800); }
+    .iac-more-menu {
+      display: none; flex-direction: column;
+      position: absolute; top: calc(100% + .3rem); right: 0;
+      min-width: 116px; background: var(--white); border: 1px solid var(--gray-200);
+      border-radius: 9px; box-shadow: var(--shadow-md); padding: .3rem; z-index: 20;
+    }
+    .iac-more-menu.open { display: flex; }
+    .iac-more-menu button {
+      background: none; border: none; text-align: left; color: var(--gray-800);
+      font-size: .78rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      padding: .38rem .5rem; border-radius: 6px; transition: background .12s;
+    }
+    .iac-more-menu button:hover { background: var(--gray-100); }
     @media (max-width: 640px) {
       .iac { flex-wrap: wrap; }
       .iac-actions { width: 100%; justify-content: flex-end; }
@@ -4627,6 +4649,13 @@
     listEl.innerHTML = `<div class="inicio-list">${html}</div>`;
   }
 
+  // Formatea minutos como horas redondeadas a la media hora más cercana, ej. "1 h", "1.5 h"
+  function _formatHoursUntil(mins) {
+    const rounded = Math.round((mins / 60) * 2) / 2;
+    const label = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+    return `${label} h`;
+  }
+
   function _renderInicioRow(a, now, todayStr, CANCELED_STATUSES) {
     const dt       = a.starts_at ? new Date(a.starts_at) : null;
     const s        = (a.status || '').toLowerCase();
@@ -4634,24 +4663,31 @@
     const id       = String(a.id);
 
     // Urgencia basada únicamente en minutos reales hasta la cita (nunca en su posición en la lista)
-    const minsUntil = dt ? (dt.getTime() - now.getTime()) / 60000 : null;
-    const isToday    = dt ? _localDayKey(dt) === todayStr : false;
-    const isOverdue  = s === 'scheduled' && minsUntil !== null && minsUntil < 0;
-    const isUrgent15 = s === 'scheduled' && minsUntil !== null && isToday && minsUntil >= 0 && minsUntil < 15;
-    const isUrgent60 = s === 'scheduled' && minsUntil !== null && isToday && minsUntil >= 15 && minsUntil < 60;
+    // Escala gradual: atrasada > 0-15 (rojo) > 15-30 (naranja) > 30-60 (ámbar) > 60-120 (verde-azulado) > sin chip
+    const minsUntil   = dt ? (dt.getTime() - now.getTime()) / 60000 : null;
+    const isToday     = dt ? _localDayKey(dt) === todayStr : false;
+    const isOverdue   = s === 'scheduled' && minsUntil !== null && minsUntil < 0;
+    const isUrgentRed    = s === 'scheduled' && minsUntil !== null && isToday && minsUntil >= 0   && minsUntil < 15;
+    const isUrgentOrange = s === 'scheduled' && minsUntil !== null && isToday && minsUntil >= 15  && minsUntil < 30;
+    const isUrgentAmber  = s === 'scheduled' && minsUntil !== null && isToday && minsUntil >= 30  && minsUntil < 60;
+    const isUrgentTeal   = s === 'scheduled' && minsUntil !== null && isToday && minsUntil >= 60  && minsUntil < 120;
 
     let urgencyClass = '';
     if (!terminal) {
-      if (isOverdue)       urgencyClass = ' is-overdue';
-      else if (isUrgent15) urgencyClass = ' is-urgent-15';
-      else if (isUrgent60) urgencyClass = ' is-urgent-60';
+      if (isOverdue)            urgencyClass = ' is-overdue';
+      else if (isUrgentRed)     urgencyClass = ' is-urgent-red';
+      else if (isUrgentOrange)  urgencyClass = ' is-urgent-orange';
+      else if (isUrgentAmber)   urgencyClass = ' is-urgent-amber';
+      else if (isUrgentTeal)    urgencyClass = ' is-urgent-teal';
     }
 
     let badge = '';
     if (!terminal && s === 'scheduled') {
-      if (isOverdue)       badge = '<span class="iac-badge iac-badge--overdue">⚠ Atrasada</span>';
-      else if (isUrgent15) badge = `<span class="iac-badge iac-badge--now">🔴 En ${Math.round(minsUntil)} min</span>`;
-      else if (isUrgent60) badge = `<span class="iac-badge iac-badge--soon">🟠 En ${Math.round(minsUntil)} min</span>`;
+      if (isOverdue)            badge = '<span class="iac-badge iac-badge--overdue">⚠ Atrasada</span>';
+      else if (isUrgentRed)     badge = `<span class="iac-badge iac-badge--red">🔴 En ${Math.round(minsUntil)} min</span>`;
+      else if (isUrgentOrange)  badge = `<span class="iac-badge iac-badge--orange">🟠 En ${Math.round(minsUntil)} min</span>`;
+      else if (isUrgentAmber)   badge = `<span class="iac-badge iac-badge--amber">🟡 En ${Math.round(minsUntil)} min</span>`;
+      else if (isUrgentTeal)    badge = `<span class="iac-badge iac-badge--teal">En ${_formatHoursUntil(minsUntil)}</span>`;
     }
 
     const timeStr = dt
@@ -4661,16 +4697,24 @@
     const noteIcon = a.notes ? '<span class="iac-note-icon" title="Tiene nota interna">📝</span>' : '';
     const pat = a.patient_name || patientName(a);
     const doc = a.doctor_name  || doctorName(a);
+    const doctorObj  = a.doctor_id ? _doctorMap[a.doctor_id] : null;
+    const avatarHtml = _initialsAvatar(doctorObj ? doctorObj.full_name : '', 32);
 
     const actBtns = terminal
-      ? `<button class="btn-iac btn-iac-note"    onclick="_openQuickNoteModal('${id}')">Ver / Nota</button>`
+      ? `<button class="btn-iac btn-iac-note" onclick="_openQuickNoteModal('${id}')">Ver / Nota</button>`
       : `<button class="btn-iac btn-iac-complete" onclick="_inicioComplete('${id}')">✓ Completar</button>
-         <button class="btn-iac btn-iac-noshow"   onclick="_inicioNoShow('${id}')">No-show</button>
          <button class="btn-iac btn-iac-cancel"   onclick="_inicioCancel('${id}')">Cancelar</button>
-         <button class="btn-iac btn-iac-note"     onclick="_openQuickNoteModal('${id}')">Nota</button>`;
+         <div class="iac-more">
+           <button class="btn-iac btn-iac-more" onclick="_toggleIacMenu(event, '${id}')" aria-label="Más acciones" aria-haspopup="true">⋯</button>
+           <div class="iac-more-menu" id="iac-menu-${id}">
+             <button onclick="_closeAllIacMenus(); _inicioNoShow('${id}')">No-show</button>
+             <button onclick="_closeAllIacMenus(); _openQuickNoteModal('${id}')">Nota</button>
+           </div>
+         </div>`;
 
     return `<div class="iac${terminal ? ' is-terminal' : ''}${urgencyClass}">
       <div class="iac-time">${timeStr}</div>
+      ${avatarHtml}
       <div class="iac-info">
         <div class="iac-patient">${badge}${pat}${noteIcon}</div>
         <div class="iac-doctor">${doc}</div>
@@ -4679,6 +4723,23 @@
       <div class="iac-actions">${actBtns}</div>
     </div>`;
   }
+
+  // ── Menú "..." de la tarjeta de Inicio (No-show / Nota) ────────────────
+  function _closeAllIacMenus() {
+    document.querySelectorAll('.iac-more-menu.open').forEach(m => m.classList.remove('open'));
+  }
+
+  function _toggleIacMenu(evt, id) {
+    evt.stopPropagation();
+    const menu = document.getElementById(`iac-menu-${id}`);
+    if (!menu) return;
+    const wasOpen = menu.classList.contains('open');
+    _closeAllIacMenus();
+    if (!wasOpen) menu.classList.add('open');
+  }
+
+  document.addEventListener('click', _closeAllIacMenus);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') _closeAllIacMenus(); });
 
   function getAppointmentColor(minutesUntil) {
     if (minutesUntil < 0)  return null;
