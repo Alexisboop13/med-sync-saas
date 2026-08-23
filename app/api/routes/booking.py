@@ -47,10 +47,11 @@ from app.models.doctor import Doctor
 from app.models.email_verification import EmailVerification
 from app.models.patient import Patient
 from app.schemas.appointment import SlotItem, SlotsResponse
+from app.services.scheduling import DAY_ABBR as _DAY_ABBR
+from app.services.scheduling import validate_working_hours as _validate_working_hours
 
 router = APIRouter(tags=["Public Booking"])
 
-_DAY_ABBR = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 _CONSONANTS = "BCDFGHJKLMNPQRSTVWXYZ"
 _SAFE_DIGITS = "23456789"
 
@@ -500,50 +501,4 @@ async def create_public_booking(
         appointment_id=appointment.id,
         message="Cita agendada exitosamente. Revisa tu correo para confirmar.",
         magic_link_url=magic_link_url,
-    )
-
-
-# ── Working-hours validator ────────────────────────────────────────────────────
-
-def _validate_working_hours(doctor: Doctor, starts_at: datetime, ends_at: datetime) -> None:
-    """Raise 422 if the requested slot falls outside the doctor's working_hours."""
-    working_hours = doctor.working_hours or {}
-    day_key = _DAY_ABBR[starts_at.weekday()]
-    schedule = working_hours.get(day_key, [])
-
-    if not schedule:
-        day_names = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-        raise HTTPException(
-            status_code=422,
-            detail=(
-                f"El doctor no atiende los {day_names[starts_at.weekday()]}. "
-                "Por favor selecciona otro día."
-            ),
-        )
-
-    slot_start_minutes = starts_at.hour * 60 + starts_at.minute
-    slot_end_minutes = ends_at.hour * 60 + ends_at.minute
-
-    for block in schedule:
-        try:
-            bsh, bsm = map(int, block["start"].split(":"))
-            beh, bem = map(int, block["end"].split(":"))
-            block_start = bsh * 60 + bsm
-            block_end = beh * 60 + bem
-            if block_start <= slot_start_minutes and slot_end_minutes <= block_end:
-                return
-        except (KeyError, ValueError):
-            continue
-
-    schedule_str = ", ".join(
-        f"{b.get('start', '?')}–{b.get('end', '?')}"
-        for b in schedule
-        if isinstance(b, dict)
-    )
-    raise HTTPException(
-        status_code=422,
-        detail=(
-            f"El horario solicitado está fuera del horario del doctor. "
-            f"Horario disponible ese día: {schedule_str}."
-        ),
     )
