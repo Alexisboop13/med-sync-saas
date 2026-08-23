@@ -3586,7 +3586,7 @@
     const icons = { success: '✓', error: '✗', info: 'ℹ', warn: '⚠' };
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<span style="font-size:1rem;flex-shrink:0;">${icons[type] || 'ℹ'}</span><span>${msg}</span>`;
+    toast.innerHTML = `<span style="font-size:1rem;flex-shrink:0;">${icons[type] || 'ℹ'}</span><span>${_escHtml(msg)}</span>`;
     container.appendChild(toast);
     setTimeout(() => {
       toast.classList.add('toast-out');
@@ -3619,7 +3619,7 @@
     legend.innerHTML = entries.map(([id, color]) => {
       const doc = _doctorMap[id];
       const name = doc ? (doc.title ? `${doc.title} ${doc.full_name}` : `Dr. ${doc.full_name}`) : `#${id.slice(0,6)}`;
-      return `<span class="doc-legend-item"><span class="doc-legend-dot" style="background:${color}"></span>${name}</span>`;
+      return `<span class="doc-legend-item"><span class="doc-legend-dot" style="background:${color}"></span>${_escHtml(name)}</span>`;
     }).join('');
   }
 
@@ -3832,8 +3832,8 @@
       return `<tr onclick="_openSearchResult(this)" data-appt="${raw}">
         <td>${dateStr}</td>
         <td>${timeStr}</td>
-        <td style="font-weight:600;">${pat}</td>
-        <td>${doc}</td>
+        <td style="font-weight:600;">${_escHtml(pat)}</td>
+        <td>${_escHtml(doc)}</td>
         <td>${badge}</td>
       </tr>`;
     }).join('');
@@ -3923,8 +3923,8 @@
         return `<li class="today-item">
           <span class="today-time">${time}</span>
           <span class="today-info">
-            <div class="today-patient">${patient}</div>
-            ${doctor ? `<div class="today-doctor">${doctor}</div>` : ''}
+            <div class="today-patient">${_escHtml(patient)}</div>
+            ${doctor ? `<div class="today-doctor">${_escHtml(doctor)}</div>` : ''}
           </span>
           <span class="badge ${_STATUS_BADGE[s] || 'badge-gray'}">${_STATUS_LABEL[s] || a.status || '—'}</span>
           ${actBtns}
@@ -4383,8 +4383,8 @@
       return `<div class="sf-result-row" onclick="_openSearchResult(this)" data-appt="${raw}">
         <span class="sf-result-date">${dateStr}</span>
         <span class="sf-result-time">${timeStr}</span>
-        <span class="sf-result-patient">${pat}</span>
-        <span class="sf-result-doctor">${doc}</span>
+        <span class="sf-result-patient">${_escHtml(pat)}</span>
+        <span class="sf-result-doctor">${_escHtml(doc)}</span>
         ${badge}
       </div>`;
     }).join('');
@@ -4444,12 +4444,16 @@
         const code  = p.medical_record_code || '';
         const phone = p.phone || p.phone_enc || '';
         const id    = String(p.id);
-        const safeName  = name.replace(/'/g, "\\'");
-        const safeCode  = code.replace(/'/g, "\\'");
+        // Doble escape: primero para el string de JS dentro del onclick,
+        // luego _escHtml para el atributo HTML que lo envuelve.
+        const jsName    = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const jsCode    = code.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const safeName  = _escHtml(jsName);
+        const safeCode  = _escHtml(jsCode);
         return `<div class="sfb-sug-item" onclick="selectPatientSuggestion('${id}','${safeName}','${safeCode}')">
-          ${code ? `<span class="sfb-sug-code">${code}</span>` : ''}
-          <span class="sfb-sug-name">${name}</span>
-          ${phone ? `<span class="sfb-sug-phone">${phone}</span>` : ''}
+          ${code ? `<span class="sfb-sug-code">${_escHtml(code)}</span>` : ''}
+          <span class="sfb-sug-name">${_escHtml(name)}</span>
+          ${phone ? `<span class="sfb-sug-phone">${_escHtml(phone)}</span>` : ''}
         </div>`;
       }).join('');
       sug.style.display = 'block';
@@ -4716,8 +4720,8 @@
       <div class="iac-time">${timeStr}</div>
       ${avatarHtml}
       <div class="iac-info">
-        <div class="iac-patient">${badge}${pat}${noteIcon}</div>
-        <div class="iac-doctor">${doc}</div>
+        <div class="iac-patient">${badge}${_escHtml(pat)}${noteIcon}</div>
+        <div class="iac-doctor">${_escHtml(doc)}</div>
       </div>
       <div class="iac-status">${statusBadge(s)}</div>
       <div class="iac-actions">${actBtns}</div>
@@ -4777,7 +4781,7 @@
       const colorClass = getAppointmentColor(minUntil) || '';
       return `<div class="notif-item ${colorClass}">
         <span class="notif-time">${time}</span>
-        <span class="notif-text">Paciente <strong>${pat}</strong> con ${doc}</span>
+        <span class="notif-text">Paciente <strong>${_escHtml(pat)}</strong> con ${_escHtml(doc)}</span>
         <button class="notif-btn" onclick="_openQuickNoteModal('${a.id}')">Nota / Ver</button>
       </div>`;
     }).join('');
@@ -4800,7 +4804,7 @@
     const pat     = a.patient_name || patientName(a);
     const doc     = a.doctor_name  || doctorName(a);
     const infoEl  = document.getElementById('qn-appt-info');
-    if (infoEl) infoEl.innerHTML = `<strong>${pat}</strong><br><span style="color:var(--gray-500);">${doc} · ${timeStr}</span>`;
+    if (infoEl) infoEl.innerHTML = `<strong>${_escHtml(pat)}</strong><br><span style="color:var(--gray-500);">${_escHtml(doc)} · ${timeStr}</span>`;
     const ta = document.getElementById('qn-note-text');
     if (ta) ta.value = a.notes || '';
     const modal = document.getElementById('quick-note-modal');
@@ -4965,7 +4969,7 @@
       const dt   = a.starts_at ? new Date(a.starts_at) : null;
       const time = dt ? dt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
       const pat  = a.patient_name || patientName(a);
-      return `<li class="pv-item"><span class="pv-time">${time}</span><span class="pv-patient">${pat}</span></li>`;
+      return `<li class="pv-item"><span class="pv-time">${time}</span><span class="pv-patient">${_escHtml(pat)}</span></li>`;
     };
 
     const nextEl = document.getElementById('next-hour-list');
@@ -5181,7 +5185,7 @@
 
       // Populate patient selects (cal-patient-select always exists; others may not)
       const emptyOpt = '<option value="">— Seleccionar paciente —</option>';
-      const opts = list.map(p => `<option value="${p.id}">${pSelectLabel(p)}</option>`).join('');
+      const opts = list.map(p => `<option value="${p.id}">${_escHtml(pSelectLabel(p))}</option>`).join('');
       if (sel1) sel1.innerHTML = emptyOpt + opts;
       if (sel2) sel2.innerHTML = emptyOpt + opts;
 
@@ -5206,10 +5210,10 @@
             ? `<span style="display:inline-block;margin-left:6px;padding:1px 6px;border-radius:9999px;font-size:11px;font-weight:600;background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;" title="1 inasistencia">1 no-show</span>`
             : '';
         return `<tr style="cursor:pointer;" onclick="openEditPatientModal('${p.id}')" title="Editar paciente">
-          <td><span class="badge badge-blue">${code}</span></td>
-          <td>${name}${noShowBadge}</td>
-          <td>${phone}</td>
-          <td>${email}</td>
+          <td><span class="badge badge-blue">${_escHtml(code)}</span></td>
+          <td>${_escHtml(name)}${noShowBadge}</td>
+          <td>${_escHtml(phone)}</td>
+          <td>${_escHtml(email)}</td>
           <td><button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); openPatientExpedientes('${p.id}')">Expedientes</button></td>
         </tr>`;
       }).join('');
@@ -5263,12 +5267,12 @@
         const cached = _patientMap[a.patient_id];
         const code   = cached ? (cached.medical_record_code || '—') : '—';
         return `<tr>
-          <td><span class="badge badge-blue">${code}</span></td>
-          <td>${pat}</td>
-          <td>${doc}</td>
+          <td><span class="badge badge-blue">${_escHtml(code)}</span></td>
+          <td>${_escHtml(pat)}</td>
+          <td>${_escHtml(doc)}</td>
           <td>${dateStr}</td>
           <td>${timeStr}</td>
-          <td>${a.reason || a.notes || a.description || '—'}</td>
+          <td>${_escHtml(a.reason || a.notes || a.description || '—')}</td>
           <td>${statusBadge(a.status)}</td>
         </tr>`;
       }).join('');
@@ -5336,7 +5340,7 @@
         _doctorColorMap[d.id] = DOCTOR_COLORS[i % DOCTOR_COLORS.length];
       });
       const emptyOpt = '<option value="">— Seleccionar doctor —</option>';
-      const opts = list.map(d => `<option value="${d.id}">${dLabel(d)}</option>`).join('');
+      const opts = list.map(d => `<option value="${d.id}">${_escHtml(dLabel(d))}</option>`).join('');
       const ds = document.getElementById('doctor-select');
       if (ds) ds.innerHTML = emptyOpt + opts;
       document.getElementById('cal-doctor-select').innerHTML = emptyOpt + opts;
@@ -5375,13 +5379,14 @@
 
       tbody.innerHTML = list.map(d => {
         const avatar = _initialsAvatar(d.full_name, 36);
+        const nameLabel = d.full_name ? `${d.title || 'Dr.'} ${d.full_name}` : '—';
         const estado = d.is_accepting_patients
           ? `<span class="badge badge-green">Activo</span>`
           : `<span class="badge badge-red">Inactivo</span>`;
         return `<tr>
           <td style="width:52px;text-align:center;">${avatar}</td>
-          <td>${d.full_name ? `${d.title || 'Dr.'} ${d.full_name}` : '—'}</td>
-          <td>${d.specialty || '—'}</td>
+          <td>${_escHtml(nameLabel)}</td>
+          <td>${_escHtml(d.specialty || '—')}</td>
           <td>${estado}</td>
           <td><button class="btn btn-outline btn-sm" onclick="openDoctorModal('${d.id}')">Editar</button></td>
         </tr>`;
@@ -6088,7 +6093,7 @@
           ? arg.event.start.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
           : '';
         const loc = !isMonth && a.location_id && _locationMap[a.location_id]
-          ? `<span class="ev-loc">&#128205; ${_locationMap[a.location_id].name || ''}</span>`
+          ? `<span class="ev-loc">&#128205; ${_escHtml(_locationMap[a.location_id].name || '')}</span>`
           : '';
         return {
           html: `<div class="fc-cal-event">
@@ -6430,9 +6435,9 @@
         <td style="width:32px;text-align:center;color:var(--gray-400);cursor:grab;">&#8285;</td>
         <td>${dateStr}</td>
         <td>${timeStr}</td>
-        <td>${patientName(a)}</td>
-        <td>${doctorName(a)}</td>
-        <td>${loc}</td>
+        <td>${_escHtml(patientName(a))}</td>
+        <td>${_escHtml(doctorName(a))}</td>
+        <td>${_escHtml(loc)}</td>
         <td><span class="badge" style="background:${stColor};color:#fff;padding:.2rem .55rem;border-radius:20px;font-size:.75rem;">${_statusLabel(a.status)}</span></td>
       </tr>`;
     }).join('') || '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--gray-400);">Sin citas para este período.</td></tr>';
@@ -6493,6 +6498,18 @@
 
   function _escHtml(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Solo permite URLs http(s) absolutas antes de insertarlas en un href.
+  // _escHtml no basta aquí: un esquema como "javascript:alert(1)" no tiene
+  // caracteres de HTML que escapar, así que se valida el esquema aparte.
+  function _safeExternalUrl(url) {
+    if (!url) return null;
+    try {
+      const u = new URL(String(url).trim());
+      if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+    } catch (_) {}
+    return null;
   }
 
   async function _loadApptNotes(apptId) {
@@ -7108,14 +7125,14 @@
   function _populateExpPatientSelect() {
     const patients = Object.values(_patientMap);
     const emptyOpt = '<option value="">— Seleccionar paciente —</option>';
-    const opts = patients.map(p => `<option value="${p.id}">${pSelectLabel(p)}</option>`).join('');
+    const opts = patients.map(p => `<option value="${p.id}">${_escHtml(pSelectLabel(p))}</option>`).join('');
     ['exp-patient-select', 'exp-patient'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = emptyOpt + opts;
     });
     const doctors = Object.values(_doctorMap);
     const emptyDoc = '<option value="">— Seleccionar doctor —</option>';
-    const docOpts  = doctors.map(d => `<option value="${d.id}">${dLabel(d)}</option>`).join('');
+    const docOpts  = doctors.map(d => `<option value="${d.id}">${_escHtml(dLabel(d))}</option>`).join('');
     const expDoc = document.getElementById('exp-doctor');
     if (expDoc) expDoc.innerHTML = emptyDoc + docOpts;
   }
@@ -7165,10 +7182,13 @@
         if (isAssistant) {
           return `<tr>
             <td style="white-space:nowrap;">${fecha}</td>
-            <td>${doctor}</td>
+            <td>${_escHtml(doctor)}</td>
           </tr>`;
         }
-        const notas  = r.observations ? (r.observations.length > 80 ? r.observations.slice(0, 80) + '…' : r.observations) : '<span style="color:#9ca3af;">Sin notas</span>';
+        const notasText = r.observations
+          ? (r.observations.length > 80 ? r.observations.slice(0, 80) + '…' : r.observations)
+          : '';
+        const notas = notasText ? _escHtml(notasText) : '<span style="color:#9ca3af;">Sin notas</span>';
         const pdfBtn = r.s3_pdf_key
           ? `<button class="btn btn-outline btn-sm" onclick="viewExpedientePdf('${r.id}')">
                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -7178,7 +7198,7 @@
         return `<tr>
           <td style="white-space:nowrap;">${fecha}</td>
           <td>${notas}</td>
-          <td>${doctor}</td>
+          <td>${_escHtml(doctor)}</td>
           <td>${pdfBtn}</td>
         </tr>`;
       }).join('');
@@ -7603,12 +7623,16 @@
       tbody.innerHTML = list.map(l => {
         const rooms    = l.rooms || {};
         const nRooms   = Object.keys(rooms).length;
-        const mapsLink = l.google_maps_url
-          ? `<a href="${l.google_maps_url}" target="_blank" rel="noopener" style="color:var(--blue);">Ver mapa</a>`
+        // google_maps_url: valida esquema http(s) antes de usarlo como href —
+        // _escHtml no detiene un "javascript:" porque no tiene nada que escapar.
+        const safeMapsUrl = _safeExternalUrl(l.google_maps_url);
+        const mapsLink = safeMapsUrl
+          ? `<a href="${_escHtml(safeMapsUrl)}" target="_blank" rel="noopener" style="color:var(--blue);">Ver mapa</a>`
           : '<span style="color:#9ca3af;">—</span>';
+        const jsName = (l.name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         return `<tr>
-          <td><strong>${l.name}</strong></td>
-          <td style="font-size:.85rem;color:#6b7280;">${l.address}</td>
+          <td><strong>${_escHtml(l.name)}</strong></td>
+          <td style="font-size:.85rem;color:#6b7280;">${_escHtml(l.address)}</td>
           <td>${mapsLink}</td>
           <td>
             <button class="btn btn-outline btn-sm" onclick="openRoomsModal('${l.id}')">
@@ -7617,7 +7641,7 @@
           </td>
           <td style="white-space:nowrap;">
             <button class="btn btn-outline btn-sm" onclick="openLocModal('${l.id}')" style="margin-right:.25rem;">Editar</button>
-            <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteLocation('${l.id}','${l.name.replace(/'/g,"\\'")}')">Eliminar</button>
+            <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteLocation('${l.id}','${_escHtml(jsName)}')">Eliminar</button>
           </td>
         </tr>`;
       }).join('');
@@ -7717,7 +7741,7 @@
     div.style.cssText = 'border:1px solid #e5e7eb;border-radius:8px;padding:.75rem;margin-bottom:.65rem;';
     div.innerHTML = `
       <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
-        <input type="text" value="${roomName}" placeholder="Nombre del consultorio"
+        <input type="text" value="${_escHtml(roomName)}" placeholder="Nombre del consultorio"
           style="flex:1;padding:.35rem .6rem;border:1px solid #d1d5db;border-radius:6px;font-size:.9rem;" />
         <button type="button" onclick="this.closest('.room-block').remove()"
           style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:.25rem .5rem;cursor:pointer;font-size:.85rem;">✕</button>
@@ -7737,9 +7761,9 @@
     row.className = 'unit-row';
     row.style.cssText = 'display:flex;gap:.4rem;align-items:center;margin-bottom:.35rem;';
     row.innerHTML = `
-      <input type="text" value="${unitName}" placeholder="Nombre de unidad"
+      <input type="text" value="${_escHtml(unitName)}" placeholder="Nombre de unidad"
         style="flex:1;padding:.3rem .5rem;border:1px solid #d1d5db;border-radius:5px;font-size:.85rem;" />
-      <input type="color" value="${color}"
+      <input type="color" value="${_escHtml(color)}"
         style="width:32px;height:28px;padding:2px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;" />
       <button type="button" onclick="this.closest('.unit-row').remove()"
         style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1rem;line-height:1;">✕</button>`;
@@ -7810,7 +7834,7 @@
     if (!locs.length) { grp.style.display = 'none'; return; }
     grp.style.display = '';
     sel.innerHTML = '<option value="">— Sin ubicación —</option>' +
-      locs.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+      locs.map(l => `<option value="${l.id}">${_escHtml(l.name)}</option>`).join('');
     document.getElementById('cal-room-row').style.display = 'none';
   }
 
@@ -7825,7 +7849,7 @@
     const rooms = Object.keys(loc?.rooms || {});
     if (!rooms.length) { roomRow.style.display = 'none'; return; }
     roomSel.innerHTML = '<option value="">— Seleccionar —</option>' +
-      rooms.map(r => `<option value="${r}">${r}</option>`).join('');
+      rooms.map(r => `<option value="${_escHtml(r)}">${_escHtml(r)}</option>`).join('');
     unitSel.innerHTML = '<option value="">— Seleccionar —</option>';
     roomRow.style.display = '';
   }
@@ -7840,7 +7864,7 @@
     const units    = roomData.units  || [];
     const colors   = roomData.colors || {};
     unitSel.innerHTML = '<option value="">— Seleccionar —</option>' +
-      units.map(u => `<option value="${u}" data-color="${colors[u] || ''}">${u}</option>`).join('');
+      units.map(u => `<option value="${_escHtml(u)}" data-color="${_escHtml(colors[u] || '')}">${_escHtml(u)}</option>`).join('');
   }
 
   function onCalUnitChange() {
