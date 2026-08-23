@@ -28,6 +28,8 @@ from app.models.medical_record import MedicalRecord
 from app.models.patient import Patient
 from app.models.user import Role
 from app.models.appointment_note import AppointmentNote
+from app.services.scheduling import DAY_ABBR as _DAY_ABBR
+from app.services.scheduling import validate_working_hours as _validate_working_hours
 from app.schemas.appointment import (
     AgendaResponse,
     AppointmentCreate,
@@ -138,6 +140,7 @@ async def create_appointment(
     if doctor is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found.")
 
+    _validate_working_hours(doctor, body.starts_at, body.ends_at)
     await _assert_no_overlap(ctx, body.doctor_id, body.starts_at, body.ends_at)
 
     appointment = Appointment(
@@ -717,9 +720,6 @@ def _public_response(appt: Appointment, tz_name: str = "America/Mexico_City") ->
     )
 
 
-_DAY_ABBR = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-
-
 @router.get("/public/slots", response_model=SlotsResponse)
 @limiter.limit("100/minute")
 async def get_public_slots(
@@ -1188,6 +1188,16 @@ async def update_appointment(
     new_ends = updates.get("ends_at", appointment.ends_at)
 
     if "starts_at" in updates or "ends_at" in updates:
+        doctor_result = await ctx.db.execute(
+            select(Doctor).where(
+                Doctor.clinic_id == ctx.clinic_id,
+                Doctor.id == appointment.doctor_id,
+            )
+        )
+        doctor = doctor_result.scalar_one_or_none()
+        if doctor is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found.")
+        _validate_working_hours(doctor, new_starts, new_ends)
         await _assert_no_overlap(ctx, appointment.doctor_id, new_starts, new_ends, exclude_id=appointment_id)
 
     for field, value in updates.items():
