@@ -690,17 +690,30 @@
     .fc-daygrid-event {
       border-radius: 10px !important; font-size: .79rem;
       box-shadow: 0 2px 8px rgba(0,0,0,.14);
-      transition: transform .13s, box-shadow .13s;
+      transition: filter .13s, box-shadow .13s;
     }
     .fc-timegrid-event {
       border-radius: 10px !important; font-size: .79rem;
       box-shadow: 0 3px 10px rgba(0,0,0,.16);
-      transition: transform .13s, box-shadow .13s;
+      transition: filter .13s, box-shadow .13s;
     }
+    /* Hover = solo color/opacidad. Nada de transform/scale: con
+       slotEventOverlap:false hay muchas citas angostas una junto a otra,
+       y cualquier cambio de tamaño en hover se sentía como que las filas
+       "brincaban" al pasar el mouse entre columnas. */
     .fc .fc-event:hover {
-      transform: translateY(-1px) scale(1.012);
-      box-shadow: 0 6px 18px rgba(0,0,0,.22) !important;
+      filter: brightness(1.16);
+      box-shadow: 0 4px 14px rgba(0,0,0,.28) !important;
     }
+
+    /* BUG FIX: FullCalendar arma cada fila de timeGrid como un único <tr>
+       que envuelve los 7 <td> de los días de la semana (el <tr> abarca la
+       columna de sábado y todas las demás a la vez). La regla genérica
+       `tbody tr:hover` (pensada para las tablas de datos como Pacientes/
+       Doctores) también matcheaba ese <tr> al pasar el mouse sobre CUALQUIER
+       cita, pintando toda la cuadrícula de azul y dando la sensación de que
+       las filas se movían. Anular el hover heredado dentro de `.fc`. */
+    .fc tbody tr:hover { background: transparent; }
 
     /* ── Toolbar title ── */
     .fc .fc-toolbar-title { font-size: 1rem; font-weight: 700; color: var(--blue-dark); }
@@ -727,8 +740,11 @@
     .fc .fc-daygrid-day-number {
       font-size: .8rem; color: var(--gray-600); text-decoration: none; padding: .4rem .5rem;
     }
+    /* Hover = solo un tinte de fondo. Sin border-radius: la celda no tiene
+       esquinas redondeadas en reposo, así que agregarlas solo en :hover
+       hacía que la forma "saltara" al entrar/salir el mouse. */
     .fc .fc-daygrid-day:hover .fc-daygrid-day-frame {
-      background: rgba(255, 255, 255, .04); border-radius: 10px; transition: background .18s;
+      background: rgba(255, 255, 255, .04); transition: background .18s;
     }
 
     /* ── Today — sutil, gris neutro (el color vive en los eventos) ── */
