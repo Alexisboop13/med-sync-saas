@@ -355,6 +355,16 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
+    /* ── Sidebar footer: Configuración, separada del resto (no se usa a diario) ── */
+    .sidebar-footer {
+      flex-shrink: 0;
+      padding: .6rem .9rem 1rem;
+      border-top: 1px solid var(--gray-200);
+    }
+    .sidebar-footer .tab-btn { color: var(--gray-400); }
+    .sidebar-footer .tab-btn:hover { color: var(--blue); background: var(--blue-light); }
+    .sidebar-footer .tab-btn.active { background: var(--blue); color: #fff; }
+
     /* ── Sidebar responsive: colapsa a rail de íconos (mismo breakpoint que
        el resto del sitio usa para mobile — sin drawer/hamburguesa nuevos) ── */
     @media (max-width: 768px) {
@@ -1243,6 +1253,42 @@
     .notif-item--red .notif-time    { color: #721c24; }
     .notif-item--orange .notif-time { color: #7d3f00; }
     .iac-note-icon { font-size: .78rem; cursor: default; opacity: .65; margin-left: .25rem; }
+    /* ── Inicio: saludo + botón nueva cita ── */
+    .inicio-greeting-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+    .inicio-greeting {
+      font-size: 1.5rem; font-weight: 800; color: var(--gray-800); letter-spacing: -.02em;
+    }
+    .inicio-greeting-date {
+      font-size: .875rem; color: var(--gray-600); margin-top: .2rem;
+    }
+    /* ── Inicio: tarjetas de métricas ── */
+    .inicio-metrics-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;
+    }
+    @media (max-width: 720px) { .inicio-metrics-grid { grid-template-columns: 1fr; } }
+    .inicio-metric-card {
+      background: var(--white); border: 1px solid var(--gray-200); border-radius: 16px;
+      box-shadow: var(--shadow); padding: 1.1rem 1.4rem;
+    }
+    .inicio-metric-label {
+      font-size: .73rem; font-weight: 700; color: var(--gray-600);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: .5rem;
+    }
+    .inicio-metric-value {
+      font-size: 2.1rem; font-weight: 800; color: var(--gray-800);
+      letter-spacing: -.03em; line-height: 1.05;
+    }
+    /* ── Inicio: estado vacío (sin citas hoy) ── */
+    .inicio-empty-state {
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      padding: 3rem 1.5rem; color: var(--gray-600);
+    }
+    .inicio-empty-state svg { color: var(--gray-400); margin-bottom: 1rem; }
+    .inicio-empty-title { font-size: 1rem; font-weight: 700; color: var(--gray-800); margin-bottom: .4rem; }
+    .inicio-empty-desc { font-size: .85rem; color: var(--gray-600); max-width: 340px; margin-bottom: 1.25rem; }
     /* ── Inicio appointment list ── */
     .inicio-list { display: flex; flex-direction: column; gap: .4rem; }
     .inicio-day-group + .inicio-day-group { margin-top: 1.1rem; }
@@ -2114,23 +2160,17 @@
           </svg>
           <span class="tab-label">Inicio</span>
         </button>
-        <button class="tab-btn" data-tab="tab-estadisticas" id="tab-btn-estadisticas" onclick="switchTab('tab-estadisticas')">
+        <button class="tab-btn" data-tab="tab-citas" onclick="switchTab('tab-citas')">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
           </svg>
-          <span class="tab-label">Estadísticas</span>
+          <span class="tab-label">Agenda</span>
         </button>
         <button class="tab-btn" data-tab="tab-pacientes" onclick="switchTab('tab-pacientes')">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
           </svg>
           <span class="tab-label">Pacientes</span>
-        </button>
-        <button class="tab-btn" data-tab="tab-citas" onclick="switchTab('tab-citas')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-          <span class="tab-label">Citas</span>
         </button>
         <button class="tab-btn" data-tab="tab-doctores" id="tab-btn-doctores" onclick="switchTab('tab-doctores')" style="display:none;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2145,25 +2185,17 @@
           </svg>
           <span class="tab-label">Expedientes</span>
         </button>
-        <button class="tab-btn" data-tab="tab-ubicaciones" id="tab-btn-ubicaciones" onclick="switchTab('tab-ubicaciones')" style="display:none;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-          </svg>
-          <span class="tab-label">Ubicaciones</span>
-        </button>
-        <button class="tab-btn" data-tab="tab-planes" id="tab-btn-planes" onclick="switchTab('tab-planes')" style="display:none;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-          </svg>
-          <span class="tab-label">Planes</span>
-        </button>
+      </nav>
+
+      <!-- Configuración: separada, hasta abajo — no es de uso diario -->
+      <div class="sidebar-footer">
         <button class="tab-btn" data-tab="tab-configuracion" id="tab-btn-configuracion" onclick="switchTab('tab-configuracion')" style="display:none;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
           <span class="tab-label">Configuración</span>
         </button>
-      </nav>
+      </div>
     </aside>
 
     <div class="dashboard-main">
@@ -2177,7 +2209,7 @@
 
       <!-- Main content -->
       <div class="container">
-        <p class="section-title">
+        <p class="section-title" id="page-kicker">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
           </svg>
@@ -2186,6 +2218,36 @@
 
     <!-- ═══ TAB: INICIO ═══ -->
     <div id="tab-inicio" class="tab-panel active">
+
+        <!-- Saludo + botón de nueva cita -->
+        <div class="inicio-greeting-row">
+          <div>
+            <h1 class="inicio-greeting" id="inicio-greeting-text">Buen día</h1>
+            <p class="inicio-greeting-date" id="inicio-greeting-date"></p>
+          </div>
+          <button class="btn btn-primary" onclick="openCalCreateModal(null)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nueva cita
+          </button>
+        </div>
+
+        <!-- Métricas del día -->
+        <div class="inicio-metrics-grid">
+          <div class="inicio-metric-card">
+            <div class="inicio-metric-label">Citas hoy</div>
+            <div class="inicio-metric-value" id="inicio-kpi-today">—</div>
+          </div>
+          <div class="inicio-metric-card">
+            <div class="inicio-metric-label">Pacientes activos</div>
+            <div class="inicio-metric-value" id="inicio-kpi-patients">—</div>
+          </div>
+          <div class="inicio-metric-card">
+            <div class="inicio-metric-label">Próxima cita</div>
+            <div class="inicio-metric-value" id="inicio-kpi-next">—</div>
+          </div>
+        </div>
 
         <!-- Semáforo / filter chips -->
         <div class="sf-row">
@@ -2242,191 +2304,7 @@
 
     </div><!-- /tab-inicio -->
 
-    <!-- ═══ TAB: ESTADÍSTICAS ═══ -->
-    <div id="tab-estadisticas" class="tab-panel">
-
-      <!-- ── Barra de filtros unificada ── -->
-      <div class="card stats-filter-bar">
-        <!-- Fila 1: Fechas + Doctor -->
-        <div class="stats-filter-row">
-          <div class="sfb-group">
-            <label class="sfb-label">Desde</label>
-            <input type="date" id="filter-start-date" class="sfb-input" />
-          </div>
-          <div class="sfb-group">
-            <label class="sfb-label">Hasta</label>
-            <input type="date" id="filter-end-date" class="sfb-input" />
-          </div>
-          <div class="sfb-group">
-            <label class="sfb-label">Doctor</label>
-            <select id="filter-doctor" class="sfb-input" style="min-width:160px;">
-              <option value="">Todos los doctores</option>
-            </select>
-          </div>
-        </div>
-        <!-- Fila 2: Paciente + Estado + Botones -->
-        <div class="stats-filter-row">
-          <div class="sfb-group sfb-patient-wrap">
-            <label class="sfb-label">Paciente</label>
-            <div class="sfb-autocomplete">
-              <input type="text" id="filter-patient-q" class="sfb-input"
-                placeholder="Buscar por nombre o código…" autocomplete="off"
-                oninput="_statsPatientInput(this)" />
-              <input type="hidden" id="filter-patient-id" />
-              <div class="sfb-suggestions" id="patient-suggestions" style="display:none;"></div>
-            </div>
-          </div>
-          <div class="sfb-group">
-            <label class="sfb-label">Estado</label>
-            <select id="filter-status" class="sfb-input" style="min-width:155px;">
-              <option value="">Todos los estados</option>
-              <option value="scheduled">Programada</option>
-              <option value="completed">Completada</option>
-              <option value="canceled">Cancelada</option>
-              <option value="canceled_by_patient">Canc. por paciente</option>
-              <option value="no_show">No asistió</option>
-            </select>
-          </div>
-          <div class="sfb-actions">
-            <button class="btn btn-primary btn-sm" onclick="applyDashboardFilters()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              Aplicar filtros
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="resetDashboardFilters()">Limpiar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── KPI Cards ── -->
-      <div class="kpi-grid">
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:#eff6ff;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b9edd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          </div>
-          <div class="kpi-value" id="kpi-today">—</div>
-          <div class="kpi-label">Citas hoy</div>
-          <div class="semaforo-wrap">
-            <div class="semaforo-dot" id="semaforo-dot"></div>
-            <span class="semaforo-lbl" id="semaforo-lbl">—</span>
-          </div>
-          <div class="kpi-cap-bar"><div class="kpi-cap-fill" id="kpi-cap-fill"></div></div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:#d1fae5;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-          </div>
-          <div class="kpi-value" id="kpi-patients">—</div>
-          <div class="kpi-label">Completadas hoy</div>
-          <div class="kpi-sub" id="kpi-completed-sub"></div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:#fef3c7;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-          </div>
-          <div class="kpi-value" id="kpi-month">—</div>
-          <div class="kpi-label">Citas este mes</div>
-          <div class="kpi-trend flat" id="kpi-month-trend"></div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:#fee2e2;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e05c5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>
-            </svg>
-          </div>
-          <div class="kpi-value" id="kpi-cancel-rate">—</div>
-          <div class="kpi-label">Tasa cancelación</div>
-          <div class="kpi-sub" id="kpi-cancel-sub"></div>
-        </div>
-
-      </div><!-- /kpi-grid -->
-
-      <!-- ── Gráficas: 2 columnas ── -->
-      <div class="stats-charts-grid">
-
-        <!-- Estado de citas (doughnut) -->
-        <div class="card">
-          <div class="card-header">
-            <h2>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/>
-              </svg>
-              Estado de citas
-            </h2>
-            <span style="font-size:.75rem;color:var(--gray-400);" id="stat-status-period">Este mes</span>
-          </div>
-          <div class="card-body">
-            <div class="chart-canvas-wrap"><canvas id="chart-status"></canvas></div>
-          </div>
-        </div>
-
-        <!-- Tendencia diaria (line chart) -->
-        <div class="card">
-          <div class="card-header">
-            <h2>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-              Tendencia diaria
-            </h2>
-            <div class="chart-trend-row" id="chart-monthly-trend" style="margin:0;padding:0;"></div>
-          </div>
-          <div class="card-body">
-            <div class="chart-canvas-wrap" style="height:230px;"><canvas id="chart-daily-trend"></canvas></div>
-          </div>
-        </div>
-
-      </div><!-- /stats-charts-grid -->
-
-      <!-- ── Citas filtradas ── -->
-      <div class="card card-full" id="search-results-card" style="margin-bottom:1rem;">
-        <div class="card-header">
-          <h2>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            Citas filtradas
-            <span class="sr-count" id="sr-count-label"></span>
-          </h2>
-          <div style="display:flex;gap:.5rem;align-items:center;">
-            <div class="sr-pagination-btns" id="sr-pagination-top" style="display:none;">
-              <button class="btn btn-outline btn-sm" id="sr-prev" onclick="searchResultsPage(-1)">&#8592;</button>
-              <span id="sr-range-label" style="font-size:.8rem;color:var(--gray-600);padding:0 .3rem;"></span>
-              <button class="btn btn-outline btn-sm" id="sr-next" onclick="searchResultsPage(1)">&#8594;</button>
-            </div>
-          </div>
-        </div>
-        <div id="sr-body-wrap">
-          <div id="sr-body-list" style="min-height:80px;">
-            <div style="text-align:center;padding:2.5rem;color:var(--gray-400);font-size:.875rem;">
-              Aplica los filtros para ver citas.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Hidden: legacy IDs needed by JS (today-list KPI logic + canvas reuse) -->
-      <div style="display:none;" aria-hidden="true">
-        <ul id="today-list"></ul>
-        <span id="today-date-label"></span>
-        <canvas id="chart-monthly"></canvas>
-        <canvas id="chart-doctors"></canvas>
-        <tbody id="sr-body"></tbody>
-        <div id="sr-pagination"></div>
-      </div>
-
-      <div id="dashboard-error" class="alert alert-error" style="margin-top:.5rem;"></div>
-    </div><!-- /tab-estadisticas -->
-
+    
     <!-- ═══ TAB: PACIENTES ═══ -->
     <div id="tab-pacientes" class="tab-panel">
       <div class="card">
@@ -2671,8 +2549,240 @@
       </div>
     </div><!-- /tab-expedientes -->
 
-    <!-- ═══ TAB: UBICACIONES ═══ -->
-    <div id="tab-ubicaciones" class="tab-panel">
+    
+    
+    <!-- ═══ TAB: CONFIGURACIÓN ═══ -->
+    <div id="tab-configuracion" class="tab-panel">
+
+      <div class="sub-tab-nav">
+        <button class="sub-tab-btn active" data-subtab="subtab-general" onclick="switchSubTab('subtab-general')">General</button>
+        <button class="sub-tab-btn" data-subtab="subtab-estadisticas" onclick="switchSubTab('subtab-estadisticas')">Estadísticas</button>
+        <button class="sub-tab-btn" data-subtab="subtab-ubicaciones" onclick="switchSubTab('subtab-ubicaciones')">Ubicaciones</button>
+        <button class="sub-tab-btn" data-subtab="subtab-planes" onclick="switchSubTab('subtab-planes')">Planes</button>
+      </div>
+
+      <div id="subtab-general" class="sub-tab-panel active">
+      <div class="card" style="max-width:560px;">
+        <div class="card-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Configuración de la clínica
+          </h2>
+        </div>
+        <div style="padding:1.5rem;">
+          <div id="cfg-error"   class="alert alert-error"   style="margin-bottom:1rem;"></div>
+          <div id="cfg-success" class="alert alert-success" style="margin-bottom:1rem;"></div>
+          <form id="cfg-notify-form" onsubmit="saveClinicSettings(event)" novalidate>
+            <div class="form-group" style="margin-bottom:1.25rem;">
+              <label for="cfg-notify-email" style="display:block;font-size:.875rem;font-weight:600;margin-bottom:.4rem;color:var(--gray-800);">
+                Email de notificaciones de reagendado
+              </label>
+              <p style="font-size:.8rem;color:var(--gray-600);margin-bottom:.6rem;">
+                Cuando un paciente solicita reagendar, la notificación se envía a este email. Si se deja vacío, se usa el email del dueño de la cuenta.
+              </p>
+              <input
+                id="cfg-notify-email"
+                type="email"
+                placeholder="notificaciones@tuclinica.com"
+                autocomplete="off"
+                style="width:100%;"
+              />
+            </div>
+            <button id="cfg-save-btn" type="submit" class="btn btn-primary">
+              Guardar cambios
+            </button>
+          </form>
+        </div>
+      </div>
+    
+    </div><!-- /subtab-general -->
+
+          <div id="subtab-estadisticas" class="sub-tab-panel">
+
+      <!-- ── Barra de filtros unificada ── -->
+      <div class="card stats-filter-bar">
+        <!-- Fila 1: Fechas + Doctor -->
+        <div class="stats-filter-row">
+          <div class="sfb-group">
+            <label class="sfb-label">Desde</label>
+            <input type="date" id="filter-start-date" class="sfb-input" />
+          </div>
+          <div class="sfb-group">
+            <label class="sfb-label">Hasta</label>
+            <input type="date" id="filter-end-date" class="sfb-input" />
+          </div>
+          <div class="sfb-group">
+            <label class="sfb-label">Doctor</label>
+            <select id="filter-doctor" class="sfb-input" style="min-width:160px;">
+              <option value="">Todos los doctores</option>
+            </select>
+          </div>
+        </div>
+        <!-- Fila 2: Paciente + Estado + Botones -->
+        <div class="stats-filter-row">
+          <div class="sfb-group sfb-patient-wrap">
+            <label class="sfb-label">Paciente</label>
+            <div class="sfb-autocomplete">
+              <input type="text" id="filter-patient-q" class="sfb-input"
+                placeholder="Buscar por nombre o código…" autocomplete="off"
+                oninput="_statsPatientInput(this)" />
+              <input type="hidden" id="filter-patient-id" />
+              <div class="sfb-suggestions" id="patient-suggestions" style="display:none;"></div>
+            </div>
+          </div>
+          <div class="sfb-group">
+            <label class="sfb-label">Estado</label>
+            <select id="filter-status" class="sfb-input" style="min-width:155px;">
+              <option value="">Todos los estados</option>
+              <option value="scheduled">Programada</option>
+              <option value="completed">Completada</option>
+              <option value="canceled">Cancelada</option>
+              <option value="canceled_by_patient">Canc. por paciente</option>
+              <option value="no_show">No asistió</option>
+            </select>
+          </div>
+          <div class="sfb-actions">
+            <button class="btn btn-primary btn-sm" onclick="applyDashboardFilters()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Aplicar filtros
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="resetDashboardFilters()">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── KPI Cards ── -->
+      <div class="kpi-grid">
+
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#eff6ff;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b9edd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div class="kpi-value" id="kpi-today">—</div>
+          <div class="kpi-label">Citas hoy</div>
+          <div class="semaforo-wrap">
+            <div class="semaforo-dot" id="semaforo-dot"></div>
+            <span class="semaforo-lbl" id="semaforo-lbl">—</span>
+          </div>
+          <div class="kpi-cap-bar"><div class="kpi-cap-fill" id="kpi-cap-fill"></div></div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#d1fae5;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+          <div class="kpi-value" id="kpi-patients">—</div>
+          <div class="kpi-label">Completadas hoy</div>
+          <div class="kpi-sub" id="kpi-completed-sub"></div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#fef3c7;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="kpi-value" id="kpi-month">—</div>
+          <div class="kpi-label">Citas este mes</div>
+          <div class="kpi-trend flat" id="kpi-month-trend"></div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:#fee2e2;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e05c5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>
+            </svg>
+          </div>
+          <div class="kpi-value" id="kpi-cancel-rate">—</div>
+          <div class="kpi-label">Tasa cancelación</div>
+          <div class="kpi-sub" id="kpi-cancel-sub"></div>
+        </div>
+
+      </div><!-- /kpi-grid -->
+
+      <!-- ── Gráficas: 2 columnas ── -->
+      <div class="stats-charts-grid">
+
+        <!-- Estado de citas (doughnut) -->
+        <div class="card">
+          <div class="card-header">
+            <h2>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/>
+              </svg>
+              Estado de citas
+            </h2>
+            <span style="font-size:.75rem;color:var(--gray-400);" id="stat-status-period">Este mes</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-canvas-wrap"><canvas id="chart-status"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Tendencia diaria (line chart) -->
+        <div class="card">
+          <div class="card-header">
+            <h2>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              Tendencia diaria
+            </h2>
+            <div class="chart-trend-row" id="chart-monthly-trend" style="margin:0;padding:0;"></div>
+          </div>
+          <div class="card-body">
+            <div class="chart-canvas-wrap" style="height:230px;"><canvas id="chart-daily-trend"></canvas></div>
+          </div>
+        </div>
+
+      </div><!-- /stats-charts-grid -->
+
+      <!-- ── Citas filtradas ── -->
+      <div class="card card-full" id="search-results-card" style="margin-bottom:1rem;">
+        <div class="card-header">
+          <h2>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Citas filtradas
+            <span class="sr-count" id="sr-count-label"></span>
+          </h2>
+          <div style="display:flex;gap:.5rem;align-items:center;">
+            <div class="sr-pagination-btns" id="sr-pagination-top" style="display:none;">
+              <button class="btn btn-outline btn-sm" id="sr-prev" onclick="searchResultsPage(-1)">&#8592;</button>
+              <span id="sr-range-label" style="font-size:.8rem;color:var(--gray-600);padding:0 .3rem;"></span>
+              <button class="btn btn-outline btn-sm" id="sr-next" onclick="searchResultsPage(1)">&#8594;</button>
+            </div>
+          </div>
+        </div>
+        <div id="sr-body-wrap">
+          <div id="sr-body-list" style="min-height:80px;">
+            <div style="text-align:center;padding:2.5rem;color:var(--gray-400);font-size:.875rem;">
+              Aplica los filtros para ver citas.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hidden: legacy IDs needed by JS (today-list KPI logic + canvas reuse) -->
+      <div style="display:none;" aria-hidden="true">
+        <ul id="today-list"></ul>
+        <span id="today-date-label"></span>
+        <canvas id="chart-monthly"></canvas>
+        <canvas id="chart-doctors"></canvas>
+        <tbody id="sr-body"></tbody>
+        <div id="sr-pagination"></div>
+      </div>
+
+      <div id="dashboard-error" class="alert alert-error" style="margin-top:.5rem;"></div>
+    </div><!-- /subtab-estadisticas -->
+          <div id="subtab-ubicaciones" class="sub-tab-panel">
       <div class="card">
         <div class="card-header">
           <h2>
@@ -2706,10 +2816,8 @@
           </table>
         </div>
       </div>
-    </div><!-- /tab-ubicaciones -->
-
-    <!-- ═══ TAB: PLANES ═══ -->
-    <div id="tab-planes" class="tab-panel">
+    </div><!-- /subtab-ubicaciones -->
+          <div id="subtab-planes" class="sub-tab-panel">
 
       <!-- Status banner (past_due / canceled) -->
       <div id="billing-alert" class="alert" style="margin-bottom:1.25rem;"></div>
@@ -2807,44 +2915,8 @@
           </div>
         </div>
       </div>
-    </div><!-- /tab-planes -->
+    </div><!-- /subtab-planes -->
 
-    <!-- ═══ TAB: CONFIGURACIÓN ═══ -->
-    <div id="tab-configuracion" class="tab-panel">
-      <div class="card" style="max-width:560px;">
-        <div class="card-header">
-          <h2>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-            Configuración de la clínica
-          </h2>
-        </div>
-        <div style="padding:1.5rem;">
-          <div id="cfg-error"   class="alert alert-error"   style="margin-bottom:1rem;"></div>
-          <div id="cfg-success" class="alert alert-success" style="margin-bottom:1rem;"></div>
-          <form id="cfg-notify-form" onsubmit="saveClinicSettings(event)" novalidate>
-            <div class="form-group" style="margin-bottom:1.25rem;">
-              <label for="cfg-notify-email" style="display:block;font-size:.875rem;font-weight:600;margin-bottom:.4rem;color:var(--gray-800);">
-                Email de notificaciones de reagendado
-              </label>
-              <p style="font-size:.8rem;color:var(--gray-600);margin-bottom:.6rem;">
-                Cuando un paciente solicita reagendar, la notificación se envía a este email. Si se deja vacío, se usa el email del dueño de la cuenta.
-              </p>
-              <input
-                id="cfg-notify-email"
-                type="email"
-                placeholder="notificaciones@tuclinica.com"
-                autocomplete="off"
-                style="width:100%;"
-              />
-            </div>
-            <button id="cfg-save-btn" type="submit" class="btn btn-primary">
-              Guardar cambios
-            </button>
-          </form>
-        </div>
-      </div>
     </div><!-- /tab-configuracion -->
 
       </div><!-- /container -->
@@ -4546,9 +4618,7 @@
     }
 
     const todayStr = _localDayKey(now);
-    const rangeEnd = new Date(now); rangeEnd.setDate(rangeEnd.getDate() + 6);
-    const rangeEndStr = _localDayKey(rangeEnd);
-    const qs = new URLSearchParams({ start_date: todayStr, end_date: rangeEndStr, limit: '100' });
+    const qs = new URLSearchParams({ start_date: todayStr, end_date: todayStr, limit: '100' });
     try {
       const res = await fetch(`${API}/api/v1/appointments?${qs}`, { headers: authHeaders() });
       if (res.status === 401) { logout(); return; }
@@ -4558,9 +4628,75 @@
       _updateSfCounts(_inicioAllItems);
       _renderNotifSection(_inicioAllItems);
       _renderInicioList();
+      _renderInicioMetrics(_inicioAllItems);
     } catch (err) {
       if (listEl) listEl.innerHTML = `<div style="text-align:center;padding:2.5rem;color:var(--gray-400);font-size:.88rem;">Error al cargar: ${err.message}</div>`;
     }
+    _loadInicioPatientsMetric();
+  }
+
+  // ── Saludo de Inicio: "Buen día / tarde / noche, [nombre]" + fecha ─────
+  let _currentUserName = '';
+
+  async function _loadCurrentUser() {
+    const cached = localStorage.getItem('user_full_name');
+    if (cached) _currentUserName = cached;
+    try {
+      const res = await fetch(`${API}/api/v1/users/me`, { headers: authHeaders() });
+      if (!res.ok) return;
+      const me = await res.json();
+      _currentUserName = me.full_name || '';
+      localStorage.setItem('user_full_name', _currentUserName);
+    } catch (_) {
+      // Si falla, se mantiene el nombre en caché (o el saludo genérico).
+    } finally {
+      _renderInicioGreeting();
+    }
+  }
+
+  function _renderInicioGreeting() {
+    const now = new Date();
+    const hour = now.getHours();
+    const salutation = hour < 12 ? 'Buen día' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+    const textEl = document.getElementById('inicio-greeting-text');
+    if (textEl) textEl.textContent = _currentUserName ? `${salutation}, ${_currentUserName}` : salutation;
+
+    const dateEl = document.getElementById('inicio-greeting-date');
+    if (dateEl) {
+      const dateFmt = now.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      dateEl.textContent = dateFmt.charAt(0).toUpperCase() + dateFmt.slice(1);
+    }
+  }
+
+  // ── Métricas de Inicio: Citas hoy / Pacientes activos / Próxima cita ──
+  function _renderInicioMetrics(items) {
+    const now = new Date();
+    const MEANINGFUL = ['scheduled', 'completed'];
+
+    const meaningful = items.filter(a => MEANINGFUL.includes((a.status || '').toLowerCase()));
+    const elToday = document.getElementById('inicio-kpi-today');
+    if (elToday) elToday.textContent = String(meaningful.length);
+
+    const upcoming = items
+      .filter(a => (a.status || '').toLowerCase() === 'scheduled' && a.starts_at && new Date(a.starts_at) >= now)
+      .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at))[0];
+    const elNext = document.getElementById('inicio-kpi-next');
+    if (elNext) {
+      elNext.textContent = upcoming
+        ? new Date(upcoming.starts_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true })
+        : '—';
+    }
+  }
+
+  async function _loadInicioPatientsMetric() {
+    const el = document.getElementById('inicio-kpi-patients');
+    if (!el) return;
+    try {
+      const res = await fetch(`${API}/api/v1/patients?limit=1`, { headers: authHeaders() });
+      if (!res.ok) return;
+      const data = await res.json();
+      el.textContent = data.total != null ? String(data.total) : '—';
+    } catch (_) {}
   }
 
   function _updateSfCounts(items) {
@@ -4595,11 +4731,24 @@
   function _renderInicioList() {
     const listEl = document.getElementById('inicio-list');
     if (!listEl) return;
+
+    // Sin ninguna cita hoy (independientemente del filtro activo): estado vacío explicativo.
+    if (!_inicioAllItems.length) {
+      listEl.innerHTML = `<div class="inicio-empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <p class="inicio-empty-title">No hay citas para hoy</p>
+        <p class="inicio-empty-desc">Aquí verás la hora, el paciente y el doctor de cada cita programada para hoy en cuanto agendes una.</p>
+        <button class="btn btn-outline" onclick="switchTab('tab-citas')">Ver agenda completa</button>
+      </div>`;
+      return;
+    }
+
     const CANCELED_STATUSES = ['canceled', 'canceled_by_patient', 'no_show'];
-    const now         = new Date();
-    const todayStr    = _localDayKey(now);
-    const tomorrowStr = (() => { const d = new Date(now); d.setDate(d.getDate() + 1); return _localDayKey(d); })();
-    const cutoff      = new Date(now.getTime() - 60 * 60 * 1000); // 1 h atrás
+    const now      = new Date();
+    const todayStr = _localDayKey(now);
+    const cutoff   = new Date(now.getTime() - 60 * 60 * 1000); // 1 h atrás
 
     let filtered = _inicioActiveFilter === 'all'
       ? [..._inicioAllItems]
@@ -4626,31 +4775,8 @@
       return;
     }
 
-    // Agrupar por día natural (local), preservando el orden por hora dentro de cada grupo
-    const groups = [];
-    const groupByKey = new Map();
-    filtered.forEach(a => {
-      const dt  = a.starts_at ? new Date(a.starts_at) : null;
-      const key = dt ? _localDayKey(dt) : '__sin-fecha__';
-      let group = groupByKey.get(key);
-      if (!group) {
-        group = { dt, items: [] };
-        groupByKey.set(key, group);
-        groups.push(group);
-      }
-      group.items.push(a);
-    });
-
-    const html = groups.map(group => {
-      const headerLabel = group.dt ? _dayHeaderLabel(group.dt, todayStr, tomorrowStr) : 'Sin fecha';
-      const rows = group.items.map(a => _renderInicioRow(a, now, todayStr, CANCELED_STATUSES)).join('');
-      return `<div class="inicio-day-group">
-        <div class="inicio-day-header">${headerLabel}</div>
-        <div class="inicio-day-items">${rows}</div>
-      </div>`;
-    }).join('');
-
-    listEl.innerHTML = `<div class="inicio-list">${html}</div>`;
+    const rows = filtered.map(a => _renderInicioRow(a, now, todayStr, CANCELED_STATUSES)).join('');
+    listEl.innerHTML = `<div class="inicio-list"><div class="inicio-day-items">${rows}</div></div>`;
   }
 
   // Formatea minutos como horas redondeadas a la media hora más cercana, ej. "1 h", "1.5 h"
@@ -5013,7 +5139,6 @@
     'tab-citas':       { title: 'Nueva cita',       label: 'Nueva cita',      action: () => openCalCreateModal(null) },
     'tab-doctores':    { title: 'Nuevo doctor',     label: 'Nuevo doctor',    action: () => openDoctorModal() },
     'tab-expedientes': { title: 'Nuevo expediente', label: 'Nuevo expediente',action: () => openExpedienteModal() },
-    'tab-ubicaciones': { title: 'Nueva ubicación',  label: 'Nueva ubicación', action: () => openLocModal() },
   };
 
   function fabAction() {
@@ -5027,11 +5152,17 @@
     document.getElementById(tabId).classList.add('active');
     const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
     if (btn) btn.classList.add('active');
+
+    // El saludo de Inicio reemplaza el kicker genérico "Panel de control"
+    const kicker = document.getElementById('page-kicker');
+    if (kicker) kicker.style.display = tabId === 'tab-inicio' ? 'none' : 'flex';
+
     if (tabId === 'tab-citas') {
       setTimeout(initCalendar, 80);
     }
     if (tabId === 'tab-inicio') {
       _loadInicioAppts();
+      _renderInicioGreeting();
       if (_notifRefreshTimer) clearInterval(_notifRefreshTimer);
       _notifRefreshTimer = setInterval(() => {
         if (_inicioAllItems.length) _renderNotifSection(_inicioAllItems);
@@ -5039,25 +5170,17 @@
     } else {
       if (_notifRefreshTimer) { clearInterval(_notifRefreshTimer); _notifRefreshTimer = null; }
     }
-    if (tabId === 'tab-estadisticas') {
-      loadDashboard();
-      _srListPage = 0;
-      _loadStatsResults();
-    }
     if (tabId === 'tab-expedientes') {
       _populateExpPatientSelect();
-    }
-    if (tabId === 'tab-ubicaciones') {
-      loadLocations();
     }
     if (tabId === 'tab-doctores') {
       loadUsers();
     }
     if (tabId === 'tab-configuracion') {
-      loadClinicSettings();
-    }
-    if (tabId === 'tab-planes') {
-      loadBillingStatus();
+      // Estadísticas, Ubicaciones y Planes viven como sub-secciones aquí dentro;
+      // se refresca la que esté activa (o "General" la primera vez).
+      const activeSub = document.querySelector('#tab-configuracion .sub-tab-btn.active');
+      switchSubTab(activeSub ? activeSub.dataset.subtab : 'subtab-general');
     }
 
     const fab = document.getElementById('fab-new-patient');
@@ -5075,6 +5198,31 @@
     }
   }
 
+  // ── Sub-tabs de Configuración: General / Estadísticas / Ubicaciones / Planes ──
+  function switchSubTab(subtabId) {
+    document.querySelectorAll('#tab-configuracion .sub-tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('#tab-configuracion .sub-tab-btn').forEach(b => b.classList.remove('active'));
+    const panel = document.getElementById(subtabId);
+    if (panel) panel.classList.add('active');
+    const btn = document.querySelector(`#tab-configuracion .sub-tab-btn[data-subtab="${subtabId}"]`);
+    if (btn) btn.classList.add('active');
+
+    if (subtabId === 'subtab-general') {
+      loadClinicSettings();
+    }
+    if (subtabId === 'subtab-estadisticas') {
+      loadDashboard();
+      _srListPage = 0;
+      _loadStatsResults();
+    }
+    if (subtabId === 'subtab-ubicaciones') {
+      loadLocations();
+    }
+    if (subtabId === 'subtab-planes') {
+      loadBillingStatus();
+    }
+  }
+
   // ── Pages ─────────────────────────────────────────────────────────────
   function showDashboard() {
     document.getElementById('landing-page').style.display   = 'none';
@@ -5082,11 +5230,9 @@
     document.getElementById('dashboard-page').style.display = 'block';
     document.getElementById('navbar-email').textContent = email() || '';
     const isOwner = userRole() === 'owner';
-    const showAdmin = isOwner || userRole() === 'assistant';
-    document.getElementById('tab-btn-doctores').style.display      = isOwner   ? '' : 'none';
-    document.getElementById('tab-btn-ubicaciones').style.display   = showAdmin ? '' : 'none';
-    document.getElementById('tab-btn-planes').style.display        = isOwner   ? '' : 'none';
-    document.getElementById('tab-btn-configuracion').style.display = isOwner   ? '' : 'none';
+    document.getElementById('tab-btn-doctores').style.display      = isOwner ? '' : 'none';
+    document.getElementById('tab-btn-configuracion').style.display = isOwner ? '' : 'none';
+    _loadCurrentUser();
     switchTab('tab-inicio');
   }
 
@@ -5103,6 +5249,7 @@
     localStorage.removeItem('user_email');
     localStorage.removeItem('user_role');
     localStorage.removeItem('clinic_id');
+    localStorage.removeItem('user_full_name');
     showLogin();
   }
 
@@ -5638,7 +5785,8 @@
       if (params.get('checkout') === 'success') {
         setTimeout(() => {
           if (userRole() === 'owner') {
-            switchTab('tab-planes');
+            switchTab('tab-configuracion');
+            switchSubTab('subtab-planes');
             showAlert('billing-alert', '¡Suscripción activada! Tu plan ya está activo.', 'success');
             loadBillingStatus();
           }

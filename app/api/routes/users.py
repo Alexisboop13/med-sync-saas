@@ -69,6 +69,29 @@ async def list_users(
     return out
 
 
+@router.get("/me", response_model=UserListItem)
+@limiter.limit("60/minute")
+async def get_me(
+    request: Request,
+    current_user: CurrentUser,
+):
+    try:
+        name = decrypt(current_user.full_name_enc)
+    except Exception:
+        name = current_user.full_name_enc
+    try:
+        email_val = decrypt(current_user.email_enc) if current_user.email_enc else ""
+    except Exception:
+        email_val = ""
+    return UserListItem(
+        id=current_user.id,
+        full_name=name,
+        email=email_val,
+        role=current_user.role,
+        is_active=current_user.is_active,
+    )
+
+
 @router.patch("/{user_id}/role", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("30/minute")
 async def update_user_role(
