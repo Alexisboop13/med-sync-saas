@@ -631,29 +631,44 @@
        Zero functional changes; visual overrides only.
     ═══════════════════════════════════════════════════════════════════════ */
 
-    /* Gradient canvas behind the glass card */
+    /* Canvas neutro detrás de la tarjeta de vidrio — sin tinte de color.
+       El color vive solo en los bloques de cita (por doctor), no en el fondo. */
     #appointments-view {
-      background: linear-gradient(135deg, #dbeeff 0%, #ede8ff 55%, #d8f0f8 100%);
+      background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
       padding: 1.25rem;
       border-radius: 16px;
     }
 
     /* Glass card — overrides .card only inside the calendar tab */
     #appointments-view .card {
-      background: rgba(255, 255, 255, 0.72);
+      background: rgba(255, 255, 255, 0.04);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       border-radius: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.58);
+      border: 1px solid var(--gray-200);
       box-shadow:
-        0 12px 40px rgba(44, 125, 160, 0.14),
-        0 2px 12px rgba(0, 0, 0, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+        0 12px 40px rgba(0, 0, 0, 0.35),
+        0 2px 12px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
       overflow: hidden;
     }
 
     #calendar-container { padding: 0 1.25rem 1.25rem; }
     #calendar { min-height: 640px; }
+
+    /* ── FullCalendar theme vars — grises neutros del tema oscuro,     ── */
+    /* ── nada de azul por defecto. El color vive solo en los eventos.  ── */
+    .fc {
+      --fc-border-color:        var(--gray-200);
+      --fc-page-bg-color:       transparent;
+      --fc-neutral-bg-color:    var(--gray-100);
+      --fc-neutral-text-color:  var(--gray-600);
+      --fc-today-bg-color:      rgba(255, 255, 255, 0.045);
+      --fc-now-indicator-color: var(--red);
+      --fc-event-bg-color:      var(--blue);
+      --fc-event-border-color:  var(--blue);
+      --fc-event-text-color:    #ffffff;
+    }
 
     /* ── FullCalendar native buttons (fallback) ── */
     .fc .fc-button-primary {
@@ -692,18 +707,17 @@
 
     /* ── Column headers (week / day) ── */
     .fc .fc-col-header-cell {
-      background: rgba(248, 250, 252, 0.62);
-      border-bottom: 1px solid rgba(228, 232, 237, 0.7);
+      background: var(--gray-100);
+      border-bottom: 1px solid var(--gray-200);
     }
     .fc .fc-col-header-cell-cushion {
-      color: var(--blue-dark); font-size: .8rem; font-weight: 700;
+      color: var(--gray-800); font-size: .8rem; font-weight: 700;
       text-decoration: none; padding: .6rem .4rem;
     }
 
     /* ── Time slots ── */
     .fc .fc-timegrid-slot { height: 2rem; }
     .fc .fc-timegrid-slot-label { font-size: .72rem; color: var(--gray-400); }
-    .fc .fc-timegrid-col { background: rgba(255, 255, 255, 0.32); }
 
     /* ── Now indicator ── */
     .fc .fc-timegrid-now-indicator-line  { border-color: var(--red); }
@@ -714,19 +728,12 @@
       font-size: .8rem; color: var(--gray-600); text-decoration: none; padding: .4rem .5rem;
     }
     .fc .fc-daygrid-day:hover .fc-daygrid-day-frame {
-      background: rgba(44, 125, 160, .06); border-radius: 10px; transition: background .18s;
+      background: rgba(255, 255, 255, .04); border-radius: 10px; transition: background .18s;
     }
 
-    /* ── Today — gradient highlight ── */
-    .fc .fc-day-today {
-      background: linear-gradient(160deg,
-        rgba(219, 234, 254, 0.85) 0%,
-        rgba(196, 221, 255, 0.60) 100%) !important;
-    }
+    /* ── Today — sutil, gris neutro (el color vive en los eventos) ── */
     .fc .fc-day-today .fc-daygrid-day-number {
-      font-weight: 700;
-      background: linear-gradient(135deg, #2c7da0 0%, #7c3aed 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      font-weight: 700; color: var(--blue-dark);
     }
 
     /* ── Dragging ── */
@@ -736,16 +743,16 @@
     }
     .fc .fc-event-dragging .cal-tooltip { display: none; }
 
-    /* ── Grid borders — softer ── */
-    .fc .fc-scrollgrid { border-color: rgba(228,232,237,0.5) !important; }
-    .fc td, .fc th { border-color: rgba(228,232,237,0.5) !important; }
+    /* ── Grid borders — grises neutros del tema ── */
+    .fc .fc-scrollgrid { border-color: var(--gray-200) !important; }
+    .fc td, .fc th { border-color: var(--gray-200) !important; }
 
     /* ── Custom toolbar ── */
     .cal-toolbar {
       display: flex; align-items: center; gap: .4rem; flex-wrap: wrap;
       padding: .85rem 1.5rem;
-      border-bottom: 1px solid rgba(228, 232, 237, 0.55);
-      background: rgba(255, 255, 255, 0.52);
+      border-bottom: 1px solid var(--gray-200);
+      background: rgba(255, 255, 255, 0.03);
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     }
     .cal-toolbar-right { display: flex; gap: .4rem; margin-left: auto; align-items: center; }
@@ -753,17 +760,17 @@
     .cal-nav-btn {
       display: inline-flex; align-items: center; justify-content: center;
       width: 32px; height: 32px;
-      background: rgba(255, 255, 255, 0.78);
-      border: 1px solid rgba(200, 210, 220, 0.7);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--gray-200);
       border-radius: 10px; color: var(--gray-600);
       cursor: pointer; font-size: .85rem; font-family: inherit;
       transition: all var(--transition);
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
     }
     .cal-nav-btn:hover {
-      background: rgba(44, 125, 160, .12); color: var(--blue-dark);
-      border-color: rgba(44, 125, 160, .35);
-      transform: translateY(-1px); box-shadow: 0 3px 8px rgba(44,125,160,.15);
+      background: rgba(91, 179, 217, .14); color: var(--blue-dark);
+      border-color: rgba(91, 179, 217, .4);
+      transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,.25);
     }
     .cal-nav-today { padding: 0 .85rem; width: auto; font-size: .78rem; font-weight: 700; letter-spacing: .01em; }
 
@@ -774,36 +781,56 @@
 
     .cal-view-btn {
       display: inline-flex; align-items: center; gap: .25rem;
-      background: rgba(255, 255, 255, 0.62);
-      border: 1px solid rgba(200, 210, 220, 0.65); border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--gray-200); border-radius: 10px;
       padding: .32rem .85rem; font-size: .8rem; font-weight: 600;
       font-family: inherit; color: var(--gray-600);
       cursor: pointer; transition: all var(--transition); line-height: 1.4;
-      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      box-shadow: 0 1px 3px rgba(0,0,0,.15);
     }
     .cal-view-btn:hover {
-      background: rgba(44, 125, 160, .10); color: var(--blue-dark);
-      border-color: rgba(44, 125, 160, .3); transform: translateY(-1px);
+      background: rgba(91, 179, 217, .12); color: var(--blue-dark);
+      border-color: rgba(91, 179, 217, .35); transform: translateY(-1px);
     }
     .cal-view-btn.active {
       background: linear-gradient(135deg, var(--blue) 0%, #1a5f9a 100%);
-      color: var(--white); border-color: var(--blue-dark);
-      box-shadow: 0 3px 10px rgba(44, 125, 160, .35);
+      color: #ffffff; border-color: var(--blue-dark);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, .35);
     }
 
     .cal-sep {
-      width: 1px; height: 22px; background: rgba(200, 210, 220, 0.7);
+      width: 1px; height: 22px; background: var(--gray-200);
       margin: 0 .15rem; display: inline-block; align-self: center;
     }
 
-    /* ── Custom event card ── */
+    /* ── Filtro de doctores (pills) ── */
+    .doc-filter-pill {
+      display: inline-flex; align-items: center; gap: .35rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--gray-200); border-radius: 999px;
+      padding: .2rem .65rem .2rem .2rem; font-size: .77rem; font-weight: 600;
+      font-family: inherit; color: var(--gray-800);
+      cursor: pointer; transition: all var(--transition); line-height: 1.4;
+    }
+    .doc-filter-pill:hover { border-color: var(--gray-400); }
+    .doc-filter-pill .dfp-avatar { transition: filter var(--transition), opacity var(--transition); }
+    .doc-filter-pill.off {
+      color: var(--gray-400); background: transparent;
+    }
+    .doc-filter-pill.off .dfp-avatar { filter: grayscale(1); opacity: .45; }
+
+    /* ── Custom event card — compacto: avatar + paciente + hora ── */
     .fc-cal-event { padding: 3px 6px; overflow: hidden; width: 100%; }
-    .fc-cal-event .ev-time    { font-size: .69rem; font-weight: 700; opacity: .92; display: block; line-height: 1.3; }
-    .fc-cal-event .ev-patient { font-size: .79rem; font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
-    .fc-cal-event .ev-doctor  { font-size: .7rem; opacity: .85; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .fc-cal-event .ev-loc     { font-size: .67rem; opacity: .78; }
-    .fc-daygrid-event .fc-cal-event .ev-time   { display: none; }
-    .fc-daygrid-event .fc-cal-event .ev-doctor { display: none; }
+    .fc-cal-event .ev-row {
+      display: flex; align-items: center; gap: .3rem; overflow: hidden; min-width: 0;
+    }
+    .fc-cal-event .ev-avatar { display: inline-flex; flex-shrink: 0; }
+    .fc-cal-event .ev-time    { font-size: .68rem; font-weight: 700; opacity: .92; display: block; line-height: 1.3; }
+    .fc-cal-event .ev-patient {
+      font-size: .78rem; font-weight: 700; white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; line-height: 1.3; min-width: 0;
+    }
+    .fc-daygrid-event .fc-cal-event .ev-avatar { display: none; }
     .fc .fc-event { cursor: grab; }
     .fc .fc-event:active { cursor: grabbing; }
 
@@ -3667,32 +3694,57 @@
     toast.addEventListener('click', () => toast.remove());
   }
 
-  // ── Doctor color palette ─────────────────────────────────────────────
-  const DOCTOR_COLORS = [
-    '#2c7da0', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444',
-    '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1',
-  ];
-  let _doctorColorMap = {};
-
-  function getDoctorColor(doctorId) {
-    if (!doctorId) return '#6b7280';
-    if (!_doctorColorMap[doctorId]) {
-      const idx = Object.keys(_doctorColorMap).length % DOCTOR_COLORS.length;
-      _doctorColorMap[doctorId] = DOCTOR_COLORS[idx];
-    }
-    return _doctorColorMap[doctorId];
+  // ── Doctor color por evento de calendario ────────────────────────────
+  // Reutiliza _avatarColor(name) — la misma función que colorea los
+  // avatares de iniciales en Doctores / select de citas / panel de
+  // control — para que cada doctor tenga el mismo color en toda la app,
+  // calendario incluido. Siempre hashea el full_name plano (nunca el
+  // label formateado "Dr. X - especialidad"), igual que en el resto de
+  // los avatares, para que el color coincida en todos lados.
+  function _doctorPlainName(doctorId, fallbackName) {
+    const doc = _doctorMap[doctorId];
+    return doc ? (doc.full_name || '') : (fallbackName || '');
   }
 
-  function _renderDocLegend() {
-    const legend = document.getElementById('doc-color-legend');
-    if (!legend) return;
-    const entries = Object.entries(_doctorColorMap);
-    if (!entries.length) { legend.innerHTML = ''; return; }
-    legend.innerHTML = entries.map(([id, color]) => {
-      const doc = _doctorMap[id];
-      const name = doc ? (doc.title ? `${doc.title} ${doc.full_name}` : `Dr. ${doc.full_name}`) : `#${id.slice(0,6)}`;
-      return `<span class="doc-legend-item"><span class="doc-legend-dot" style="background:${color}"></span>${_escHtml(name)}</span>`;
+  function getDoctorColor(doctorId) {
+    if (!doctorId) return _AVATAR_NEUTRAL;
+    return _avatarColor(_doctorPlainName(doctorId));
+  }
+
+  // ── Filtro de doctores del calendario (pills) ────────────────────────
+  // IDs de doctores actualmente OCULTOS en el calendario. Vacío = todos
+  // visibles (default).
+  let _hiddenDoctorIds = new Set();
+
+  function _renderCalDoctorFilter() {
+    const wrap = document.getElementById('doc-color-legend');
+    if (!wrap) return;
+    const doctors = Object.values(_doctorMap);
+    if (!doctors.length) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = doctors.map(doc => {
+      const name = doc.title ? `${doc.title} ${doc.full_name}` : `Dr. ${doc.full_name || ''}`;
+      const off  = _hiddenDoctorIds.has(doc.id);
+      return `<button type="button" class="doc-filter-pill${off ? ' off' : ''}"
+                data-doctor-id="${doc.id}" onclick="toggleCalDoctorFilter('${doc.id}')"
+                title="Mostrar/ocultar citas de ${_escHtml(name)}">
+          <span class="dfp-avatar">${_initialsAvatar(doc.full_name, 18)}</span>${_escHtml(name)}
+        </button>`;
     }).join('');
+  }
+
+  let _calFilterRefetchTimer = null;
+
+  function toggleCalDoctorFilter(doctorId) {
+    if (_hiddenDoctorIds.has(doctorId)) _hiddenDoctorIds.delete(doctorId);
+    else _hiddenDoctorIds.add(doctorId);
+    const pill = document.querySelector(`.doc-filter-pill[data-doctor-id="${doctorId}"]`);
+    if (pill) pill.classList.toggle('off', _hiddenDoctorIds.has(doctorId));
+    // Debounce: si el usuario despeja varios doctores casi al mismo tiempo,
+    // FullCalendar puede pisarse entre refetches solapados. Colapsar en uno solo.
+    clearTimeout(_calFilterRefetchTimer);
+    _calFilterRefetchTimer = setTimeout(() => {
+      if (calendar) calendar.refetchEvents();
+    }, 120);
   }
 
   function formatDate(str) {
@@ -5481,11 +5533,10 @@
       if (!res.ok) return;
       const raw  = await res.json();
       const list = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
-      _doctorColorMap = {};
-      list.forEach((d, i) => {
-        _doctorMap[d.id] = d;
-        _doctorColorMap[d.id] = DOCTOR_COLORS[i % DOCTOR_COLORS.length];
-      });
+      list.forEach(d => { _doctorMap[d.id] = d; });
+      // Doctores dados de baja del roster ya no aplican como filtro.
+      const validIds = new Set(list.map(d => d.id));
+      _hiddenDoctorIds.forEach(id => { if (!validIds.has(id)) _hiddenDoctorIds.delete(id); });
       const emptyOpt = '<option value="">— Seleccionar doctor —</option>';
       const opts = list.map(d => `<option value="${d.id}">${_escHtml(dLabel(d))}</option>`).join('');
       const ds = document.getElementById('doctor-select');
@@ -5493,7 +5544,7 @@
       document.getElementById('cal-doctor-select').innerHTML = emptyOpt + opts;
       const fd = document.getElementById('filter-doctor');
       if (fd) fd.innerHTML = '<option value="">Todos los doctores</option>' + opts;
-      _renderDocLegend();
+      _renderCalDoctorFilter();
     } catch (_) {}
   }
 
@@ -6165,6 +6216,7 @@
   let _listSort       = { col: 'date', asc: true };
   let _listFilter     = 'today';
   let _pendingDrop    = null;
+  let _calEventsFetchSeq = 0; // guard contra respuestas de red fuera de orden
 
   function apptToEvent(a) {
     const start = a.starts_at || a.appointment_datetime || a.datetime || a.scheduled_at
@@ -6225,6 +6277,9 @@
       eventMinHeight: 28,
       stickyHeaderDates: true,
       navLinks:     true,
+      // Evita que las citas encimadas en el mismo horario se apilen: FullCalendar
+      // las reparte en columnas lado a lado dentro del mismo slot (sin plugin de pago).
+      slotEventOverlap: false,
 
       // Actualizar título al cambiar de período/vista
       // Usar info.view.title (no calendar.view.title) porque datesSet
@@ -6234,21 +6289,25 @@
         if (el) el.textContent = info.view.title;
       },
 
+      // Tarjeta compacta: avatar de iniciales del doctor + paciente + hora.
+      // El resto (motivo, ubicación, notas, estado) va en el tooltip al pasar
+      // el mouse y en el modal de detalle al hacer clic — no en el bloque.
       eventContent(arg) {
         const a       = arg.event.extendedProps;
         const isMonth = arg.view.type === 'dayGridMonth';
         const timeStr = !isMonth && arg.event.start
           ? arg.event.start.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
           : '';
-        const loc = !isMonth && a.location_id && _locationMap[a.location_id]
-          ? `<span class="ev-loc">&#128205; ${_escHtml(_locationMap[a.location_id].name || '')}</span>`
+        const avatar = !isMonth
+          ? `<span class="ev-avatar">${_initialsAvatar(_doctorPlainName(a.doctor_id, a.doctor_name), 15)}</span>`
           : '';
         return {
           html: `<div class="fc-cal-event">
+            <div class="ev-row">
+              ${avatar}
+              <span class="ev-patient">${_escHtml(patientName(a))}</span>
+            </div>
             ${timeStr ? `<span class="ev-time">${timeStr}</span>` : ''}
-            <span class="ev-patient">${_escHtml(patientName(a))}</span>
-            ${!isMonth ? `<span class="ev-doctor">${_escHtml(doctorName(a))}</span>` : ''}
-            ${loc}
           </div>`
         };
       },
@@ -6284,6 +6343,11 @@
       eventResizeStart() { _hideTooltip(); },
 
       events: async (info, successCb, failureCb) => {
+        // Guard contra respuestas obsoletas: si el usuario cambia el filtro de
+        // doctores (o de rango) mientras un fetch anterior sigue en vuelo, el
+        // orden de resolución de red no está garantizado. Solo el fetch más
+        // reciente puede aplicar su resultado.
+        const seq = ++_calEventsFetchSeq;
         try {
           const params = new URLSearchParams({
             start_date: info.startStr,
@@ -6296,9 +6360,13 @@
           if (res.status === 401) { logout(); failureCb(new Error('401')); return; }
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const data = await res.json();
-          const list = Array.isArray(data) ? data : (data.items || []);
+          if (seq !== _calEventsFetchSeq) return; // superado por un fetch más nuevo
+          let list = Array.isArray(data) ? data : (data.items || []);
+          // Filtro por doctor (pills arriba del calendario) — despeja días saturados.
+          if (_hiddenDoctorIds.size) list = list.filter(a => !_hiddenDoctorIds.has(a.doctor_id));
           successCb(list.map(apptToEvent));
         } catch (err) {
+          if (seq !== _calEventsFetchSeq) return;
           failureCb(err);
           showToast('Error al cargar citas: ' + err.message, 'error');
         }
