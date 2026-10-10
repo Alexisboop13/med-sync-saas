@@ -656,6 +656,48 @@
     #calendar-container { padding: 0 1.25rem 1.25rem; }
     #calendar { min-height: 640px; }
 
+    /* ── Vista de Mes: calendario + panel de citas del día ──────────────── */
+    /* El layout solo se vuelve flex (calendario + panel) cuando la vista
+       activa es dayGridMonth — la clase la pone datesSet(). En semana/día
+       el layout queda igual que siempre (no se tocan esas vistas). */
+    #calendar-container.cal-container-month {
+      display: flex; align-items: flex-start; gap: 1.1rem;
+    }
+    #calendar-container.cal-container-month #calendar { flex: 1 1 auto; min-width: 0; }
+
+    .cal-day-panel {
+      display: none; flex-direction: column;
+      flex: 0 0 280px; max-height: 640px;
+      border: 1px solid var(--gray-200); border-radius: 14px;
+      background: rgba(255, 255, 255, .02); overflow: hidden;
+    }
+    #calendar-container.cal-container-month .cal-day-panel { display: flex; }
+
+    @media (max-width: 768px) {
+      #calendar-container.cal-container-month { flex-direction: column; }
+      #calendar-container.cal-container-month .cal-day-panel { flex: 1 1 auto; width: 100%; max-height: 360px; }
+    }
+
+    .cdp-header { padding: .9rem 1rem .75rem; border-bottom: 1px solid var(--gray-200); flex-shrink: 0; }
+    .cdp-date   { font-size: .92rem; font-weight: 700; color: var(--blue-dark); }
+    .cdp-count  { font-size: .78rem; color: var(--gray-400); margin-top: .15rem; }
+
+    .cdp-list  { flex: 1 1 auto; overflow-y: auto; padding: .5rem; }
+    .cdp-empty { padding: 1.5rem .5rem; text-align: center; font-size: .82rem; color: var(--gray-400); }
+    .cdp-row {
+      display: flex; align-items: center; gap: .55rem; width: 100%;
+      background: transparent; border: none; border-radius: 10px;
+      padding: .5rem .55rem; margin-bottom: .15rem; font-family: inherit;
+      text-align: left; cursor: pointer;
+    }
+    .cdp-row:hover { background: rgba(255, 255, 255, .05); }
+    .cdp-time    { font-size: .72rem; font-weight: 700; color: var(--gray-400); flex-shrink: 0; width: 76px; }
+    .cdp-patient {
+      font-size: .82rem; font-weight: 600; color: var(--gray-800);
+      flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .cdp-doc { flex-shrink: 0; }
+
     /* ── FullCalendar theme vars — grises neutros del tema oscuro,     ── */
     /* ── nada de azul por defecto. El color vive solo en los eventos.  ── */
     .fc {
@@ -736,9 +778,12 @@
     .fc .fc-timegrid-now-indicator-line  { border-color: var(--red); }
     .fc .fc-timegrid-now-indicator-arrow { border-top-color: var(--red); border-bottom-color: var(--red); }
 
-    /* ── Day number (month view) ── */
+    /* ── Day number (month view) — círculo compacto ── */
     .fc .fc-daygrid-day-number {
-      font-size: .8rem; color: var(--gray-600); text-decoration: none; padding: .4rem .5rem;
+      font-size: .8rem; font-weight: 600; color: var(--gray-600); text-decoration: none;
+      width: 26px; height: 26px; margin: .3rem .4rem 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; border: 1.5px solid transparent;
     }
     /* Hover = solo un tinte de fondo. Sin border-radius: la celda no tiene
        esquinas redondeadas en reposo, así que agregarlas solo en :hover
@@ -747,9 +792,14 @@
       background: rgba(255, 255, 255, .04); transition: background .18s;
     }
 
-    /* ── Today — sutil, gris neutro (el color vive en los eventos) ── */
+    /* ── Hoy: solo borde — el relleno se reserva para el día seleccionado ── */
     .fc .fc-day-today .fc-daygrid-day-number {
-      font-weight: 700; color: var(--blue-dark);
+      font-weight: 700; color: var(--blue-dark); border-color: var(--blue);
+    }
+
+    /* ── Día seleccionado (alimenta el panel de citas) — relleno ── */
+    .fc td.fc-daygrid-day.cal-day-selected .fc-daygrid-day-number {
+      background: var(--blue); border-color: var(--blue); color: #fff;
     }
 
     /* ── Dragging ── */
@@ -836,7 +886,7 @@
     .doc-filter-pill.off .dfp-avatar { filter: grayscale(1); opacity: .45; }
 
     /* ── Custom event card — compacto: avatar + paciente + hora ── */
-    .fc-cal-event { padding: 3px 6px; overflow: hidden; width: 100%; }
+    .fc-cal-event { padding: 3px 6px; overflow: hidden; width: 100%; container-type: inline-size; }
     .fc-cal-event .ev-row {
       display: flex; align-items: center; gap: .3rem; overflow: hidden; min-width: 0;
     }
@@ -847,8 +897,38 @@
       text-overflow: ellipsis; line-height: 1.3; min-width: 0;
     }
     .fc-daygrid-event .fc-cal-event .ev-avatar { display: none; }
+    /* Semana/Día — ajuste mínimo para citas encimadas: cuando FullCalendar
+       reparte la columna en sub-columnas muy angostas (slotEventOverlap:false,
+       ver initCalendar), el nombre truncado a 2-3 letras se ve roto. Con el
+       bloque tan angosto, solo queda avatar + hora; el nombre completo sigue
+       disponible en el tooltip (eventMouseEnter) que ya existe. */
+    @container (max-width: 90px) {
+      .fc-cal-event .ev-patient { display: none; }
+    }
     .fc .fc-event { cursor: grab; }
     .fc .fc-event:active { cursor: grabbing; }
+
+    /* ── Vista de Mes: nada de bloques de eventos, solo puntos por doctor ──
+       El detalle vive en el panel lateral (ver .cal-day-panel arriba). Ocultar
+       por completo el contenedor de eventos es lo que evita que un día con
+       muchas citas estire toda la fila de la semana. */
+    #calendar-container.cal-container-month #calendar .fc-daygrid-day-events {
+      display: none;
+    }
+    .fc .fc-daygrid-day-frame { min-height: 66px; }
+    .cal-day-dots {
+      display: flex; flex-wrap: wrap; gap: 3px;
+      /* Hasta ~3 filas de puntos (celdas angostas en mobile, donde los
+         puntos numerados no caben en una sola fila); más allá de eso se
+         recorta — sigue siendo "compacto", nunca estira la fila de la semana. */
+      padding: 0 .4rem .35rem; max-height: 48px; overflow: hidden;
+    }
+    .cal-day-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    /* Un doctor con varias citas ese día: el punto crece y muestra el número. */
+    .cal-day-dot:not(:empty) {
+      width: auto; min-width: 14px; height: 14px; padding: 0 3px;
+      font-size: .62rem; font-weight: 700; color: #fff; line-height: 14px; text-align: center;
+    }
 
     /* ── Tooltip — frosted glass ── */
     .cal-tooltip {
@@ -2443,6 +2523,15 @@
           <!-- ── Calendar view ── -->
           <div id="calendar-container">
             <div id="calendar"></div>
+
+            <!-- ── Panel de citas del día (solo visible en vista Mes) ── -->
+            <aside class="cal-day-panel" id="cal-day-panel" aria-label="Citas del día seleccionado">
+              <div class="cdp-header">
+                <div class="cdp-date" id="cdp-date">—</div>
+                <div class="cdp-count" id="cdp-count">0 citas</div>
+              </div>
+              <div class="cdp-list" id="cdp-list"></div>
+            </aside>
           </div>
 
           <!-- ── List view (hidden by default) ── -->
@@ -6234,6 +6323,11 @@
   let _pendingDrop    = null;
   let _calEventsFetchSeq = 0; // guard contra respuestas de red fuera de orden
 
+  // ── Vista de Mes: panel de citas del día seleccionado ──────────────────
+  let _selectedCalDate = _calDateKey(new Date()); // 'YYYY-MM-DD' — hoy por defecto
+  let _calDayGroups    = {}; // 'YYYY-MM-DD' → citas de ese día (ya filtradas por doctor)
+  let _dayPanelAppts   = []; // citas listadas actualmente en el panel (para abrir el modal)
+
   function apptToEvent(a) {
     const start = a.starts_at || a.appointment_datetime || a.datetime || a.scheduled_at
       || (a.date && a.time ? `${a.date}T${a.time}` : null)
@@ -6269,6 +6363,111 @@
     if (tip) tip.classList.remove('visible');
   }
 
+  // ── Vista de Mes: agregados por día (puntos por doctor + panel) ────────
+  // Todo se deriva del mismo fetch filtrado por doctor que ya usa el
+  // calendario (ver eventsSet en initCalendar) — nunca un fetch aparte.
+
+  function _calDateKey(input) {
+    const d = input instanceof Date ? input : new Date(input);
+    if (isNaN(d)) return null;
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  function _groupApptsByDay(list) {
+    const groups = {};
+    list.forEach(a => {
+      const key = a.starts_at ? _calDateKey(a.starts_at) : null;
+      if (!key) return;
+      (groups[key] = groups[key] || []).push(a);
+    });
+    Object.values(groups).forEach(arr => arr.sort((x, y) => new Date(x.starts_at) - new Date(y.starts_at)));
+    return groups;
+  }
+
+  // Un punto por doctor (no por cita). Si un doctor tiene varias citas ese
+  // día, el punto crece y muestra el número (ver CSS .cal-day-dot:not(:empty)).
+  function _dotsHtmlForDay(appts) {
+    if (!appts || !appts.length) return '';
+    const byDoctor = new Map();
+    appts.forEach(a => {
+      const id = a.doctor_id || '';
+      if (!byDoctor.has(id)) byDoctor.set(id, { count: 0, name: _doctorPlainName(id, a.doctor_name) });
+      byDoctor.get(id).count++;
+    });
+    return [...byDoctor.entries()]
+      .sort((a, b) => a[1].name.localeCompare(b[1].name))
+      .map(([id, info]) => {
+        const color = getDoctorColor(id);
+        const label = info.count > 1 ? info.count : '';
+        const title = info.count > 1 ? `${info.name} (${info.count})` : info.name;
+        return `<span class="cal-day-dot" style="background:${color};" title="${_escHtml(title)}">${label}</span>`;
+      }).join('');
+  }
+
+  function _renderMonthDots() {
+    document.querySelectorAll('#calendar .cal-day-dots').forEach(el => {
+      el.innerHTML = _dotsHtmlForDay(_calDayGroups[el.dataset.date] || []);
+    });
+  }
+
+  function _fmtPanelHeaderDate(dateKey) {
+    if (!dateKey) return '—';
+    const d = new Date(`${dateKey}T00:00:00`);
+    const weekday = d.toLocaleDateString('es-MX', { weekday: 'long' });
+    return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${d.getDate()}`;
+  }
+
+  function _renderDayPanel() {
+    const dateEl  = document.getElementById('cdp-date');
+    const countEl = document.getElementById('cdp-count');
+    const listEl  = document.getElementById('cdp-list');
+    if (!dateEl || !countEl || !listEl) return;
+
+    const appts = _calDayGroups[_selectedCalDate] || [];
+    _dayPanelAppts = appts;
+
+    dateEl.textContent  = _fmtPanelHeaderDate(_selectedCalDate);
+    countEl.textContent = `${appts.length} cita${appts.length === 1 ? '' : 's'}`;
+
+    if (!appts.length) {
+      listEl.innerHTML = '<div class="cdp-empty">Sin citas este día.</div>';
+      return;
+    }
+
+    const fmt = { hour: '2-digit', minute: '2-digit' };
+    listEl.innerHTML = appts.map(a => {
+      const start = a.starts_at ? new Date(a.starts_at) : null;
+      const end   = a.ends_at   ? new Date(a.ends_at)   : null;
+      const timeStr = start
+        ? start.toLocaleTimeString('es-MX', fmt) + (end ? ' – ' + end.toLocaleTimeString('es-MX', fmt) : '')
+        : '—';
+      const docName = _doctorPlainName(a.doctor_id, a.doctor_name);
+      return `<button type="button" class="cdp-row" onclick="_openDayPanelAppt('${a.id}')">
+        <span class="cdp-time">${timeStr}</span>
+        <span class="cdp-patient">${_escHtml(patientName(a))}</span>
+        <span class="cdp-doc">${_initialsAvatar(docName, 20)}</span>
+      </button>`;
+    }).join('');
+  }
+
+  function _openDayPanelAppt(id) {
+    const a = _dayPanelAppts.find(x => String(x.id) === String(id));
+    if (!a) return;
+    const start = a.starts_at ? new Date(a.starts_at) : null;
+    const end   = a.ends_at   ? new Date(a.ends_at)   : null;
+    openApptDetailModal({ id: String(a.id), extendedProps: a, start, end });
+  }
+
+  function _selectCalDay(dateStr) {
+    const prev = document.querySelector('#calendar td.fc-daygrid-day.cal-day-selected');
+    if (prev) prev.classList.remove('cal-day-selected');
+    _selectedCalDate = dateStr;
+    const cur = document.querySelector(`#calendar td.fc-daygrid-day[data-date="${dateStr}"]`);
+    if (cur) cur.classList.add('cal-day-selected');
+    _renderDayPanel();
+  }
+
   function initCalendar() {
     if (calendar) return;
 
@@ -6297,12 +6496,36 @@
       // las reparte en columnas lado a lado dentro del mismo slot (sin plugin de pago).
       slotEventOverlap: false,
 
+      // Vista de Mes: círculo del día (hoy / seleccionado) + puntos por
+      // doctor. Solo corre para celdas de dayGridMonth — timeGrid no tiene
+      // este hook. Los puntos se rellenan con lo que ya haya en caché
+      // (_calDayGroups); eventsSet los refresca cuando llegan datos nuevos.
+      dayCellDidMount(arg) {
+        const key = _calDateKey(arg.date);
+        if (key === _selectedCalDate) arg.el.classList.add('cal-day-selected');
+
+        const dots = document.createElement('div');
+        dots.className = 'cal-day-dots';
+        dots.dataset.date = key;
+        dots.innerHTML = _dotsHtmlForDay(_calDayGroups[key] || []);
+        const frame = arg.el.querySelector('.fc-daygrid-day-frame') || arg.el;
+        const top   = frame.querySelector('.fc-daygrid-day-top');
+        if (top) top.insertAdjacentElement('afterend', dots);
+        else frame.appendChild(dots);
+      },
+
       // Actualizar título al cambiar de período/vista
       // Usar info.view.title (no calendar.view.title) porque datesSet
       // puede dispararse antes de que la variable calendar esté asignada.
       datesSet(info) {
         const el = document.getElementById('cal-title');
         if (el) el.textContent = info.view.title;
+
+        // El panel de citas del día solo existe en la vista Mes.
+        const isMonth   = info.view.type === 'dayGridMonth';
+        const container = document.getElementById('calendar-container');
+        if (container) container.classList.toggle('cal-container-month', isMonth);
+        if (isMonth) _renderDayPanel();
       },
 
       // Tarjeta compacta: avatar de iniciales del doctor + paciente + hora.
@@ -6388,16 +6611,34 @@
         }
       },
 
+      // Vista de Mes: recalcula puntos por doctor y refresca el panel del día
+      // cada vez que cambia el set de eventos visibles — fetch nuevo, filtro
+      // de doctores, o simplemente volver a esta vista con datos en caché
+      // (en ese caso no hay fetch nuevo, pero eventsSet igual se dispara).
+      eventsSet(events) {
+        if (!calendar || calendar.view.type !== 'dayGridMonth') return;
+        _calDayGroups = _groupApptsByDay(events.map(ev => ev.extendedProps));
+        _renderMonthDots();
+        _renderDayPanel();
+      },
+
       eventClick(info) {
         _hideTooltip();
         openApptDetailModal(info.event);
       },
 
       dateClick(info) {
+        // En Mes, un clic en el día solo lo selecciona y actualiza el panel
+        // — no abre el modal de creación ni cambia de vista.
+        if (info.view.type === 'dayGridMonth') { _selectCalDay(info.dateStr); return; }
         openCalCreateModal(info.dateStr);
       },
 
       select(info) {
+        // En Mes, selectable:true puede disparar esto incluso para un clic
+        // simple; se resuelve igual que dateClick (seleccionar el día) y se
+        // limpia el resaltado nativo de selección.
+        if (info.view.type === 'dayGridMonth') { calendar.unselect(); _selectCalDay(info.startStr); return; }
         // Selección de rango en timeGrid → pre-rellenar fecha y horas en el modal
         openCalCreateModal(info.startStr);
       },
