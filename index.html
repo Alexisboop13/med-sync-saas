@@ -691,7 +691,7 @@
       text-align: left; cursor: pointer;
     }
     .cdp-row:hover { background: rgba(255, 255, 255, .05); }
-    .cdp-time    { font-size: .72rem; font-weight: 700; color: var(--gray-400); flex-shrink: 0; width: 76px; }
+    .cdp-time    { font-size: .72rem; font-weight: 700; color: var(--gray-400); flex-shrink: 0; width: 52px; white-space: nowrap; }
     .cdp-patient {
       font-size: .82rem; font-weight: 600; color: var(--gray-800);
       flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -871,10 +871,10 @@
 
     /* ── Filtro de doctores (pills) ── */
     .doc-filter-pill {
-      display: inline-flex; align-items: center; gap: .35rem;
+      display: inline-flex; align-items: center; gap: .3rem; flex-shrink: 0; white-space: nowrap;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--gray-200); border-radius: 999px;
-      padding: .2rem .65rem .2rem .2rem; font-size: .77rem; font-weight: 600;
+      padding: .15rem .55rem .15rem .15rem; font-size: .73rem; font-weight: 600;
       font-family: inherit; color: var(--gray-800);
       cursor: pointer; transition: all var(--transition); line-height: 1.4;
     }
@@ -915,19 +915,17 @@
     #calendar-container.cal-container-month #calendar .fc-daygrid-day-events {
       display: none;
     }
-    .fc .fc-daygrid-day-frame { min-height: 66px; }
+    .fc .fc-daygrid-day-frame { min-height: 70px; }
     .cal-day-dots {
-      display: flex; flex-wrap: wrap; gap: 3px;
-      /* Hasta ~3 filas de puntos (celdas angostas en mobile, donde los
-         puntos numerados no caben en una sola fila); más allá de eso se
-         recorta — sigue siendo "compacto", nunca estira la fila de la semana. */
-      padding: 0 .4rem .35rem; max-height: 48px; overflow: hidden;
+      display: flex; flex-wrap: wrap; gap: 4px;
+      /* Puntos simples (sin número) — hasta 2 filas; más allá se recorta,
+         sigue siendo "compacto", nunca estira la fila de la semana. */
+      padding: 0 .4rem .2rem; max-height: 20px; overflow: hidden;
     }
     .cal-day-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    /* Un doctor con varias citas ese día: el punto crece y muestra el número. */
-    .cal-day-dot:not(:empty) {
-      width: auto; min-width: 14px; height: 14px; padding: 0 3px;
-      font-size: .62rem; font-weight: 700; color: #fff; line-height: 14px; text-align: center;
+    .cal-day-total {
+      padding: 0 .4rem; font-size: .66rem; color: var(--gray-400);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
     /* ── Tooltip — frosted glass ── */
@@ -1556,8 +1554,11 @@
     @keyframes toast-out { from { opacity:1; } to { opacity:0; transform:translateY(6px); } }
 
     /* ── Doctor color legend ── */
+    /* Una sola fila siempre: con muchos doctores, scroll horizontal en vez
+       de pasar a una 2ª línea — eso empujaba el calendario hacia abajo. */
     .doc-legend {
-      display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+      display: flex; align-items: center; gap: .4rem; flex-wrap: nowrap;
+      overflow-x: auto; min-width: 0;
       padding: .4rem .8rem; font-size: .77rem; color: var(--gray-600);
     }
     .doc-legend-item { display: flex; align-items: center; gap: .3rem; }
@@ -3832,7 +3833,7 @@
       return `<button type="button" class="doc-filter-pill${off ? ' off' : ''}"
                 data-doctor-id="${doc.id}" onclick="toggleCalDoctorFilter('${doc.id}')"
                 title="Mostrar/ocultar citas de ${_escHtml(name)}">
-          <span class="dfp-avatar">${_initialsAvatar(doc.full_name, 18)}</span>${_escHtml(name)}
+          <span class="dfp-avatar">${_initialsAvatar(doc.full_name, 16)}</span>${_escHtml(name)}
         </button>`;
     }).join('');
   }
@@ -6385,8 +6386,12 @@
     return groups;
   }
 
-  // Un punto por doctor (no por cita). Si un doctor tiene varias citas ese
-  // día, el punto crece y muestra el número (ver CSS .cal-day-dot:not(:empty)).
+  function _apptCountLabel(n) {
+    return `${n} cita${n === 1 ? '' : 's'}`;
+  }
+
+  // Un punto por doctor (no por cita) — solo color, sin número; el total
+  // de citas del día va aparte, en texto (ver .cal-day-total).
   function _dotsHtmlForDay(appts) {
     if (!appts || !appts.length) return '';
     const byDoctor = new Map();
@@ -6399,15 +6404,18 @@
       .sort((a, b) => a[1].name.localeCompare(b[1].name))
       .map(([id, info]) => {
         const color = getDoctorColor(id);
-        const label = info.count > 1 ? info.count : '';
         const title = info.count > 1 ? `${info.name} (${info.count})` : info.name;
-        return `<span class="cal-day-dot" style="background:${color};" title="${_escHtml(title)}">${label}</span>`;
+        return `<span class="cal-day-dot" style="background:${color};" title="${_escHtml(title)}"></span>`;
       }).join('');
   }
 
-  function _renderMonthDots() {
+  function _renderMonthDaySummaries() {
     document.querySelectorAll('#calendar .cal-day-dots').forEach(el => {
       el.innerHTML = _dotsHtmlForDay(_calDayGroups[el.dataset.date] || []);
+    });
+    document.querySelectorAll('#calendar .cal-day-total').forEach(el => {
+      const n = (_calDayGroups[el.dataset.date] || []).length;
+      el.textContent = n ? _apptCountLabel(n) : '';
     });
   }
 
@@ -6428,7 +6436,7 @@
     _dayPanelAppts = appts;
 
     dateEl.textContent  = _fmtPanelHeaderDate(_selectedCalDate);
-    countEl.textContent = `${appts.length} cita${appts.length === 1 ? '' : 's'}`;
+    countEl.textContent = _apptCountLabel(appts.length);
 
     if (!appts.length) {
       listEl.innerHTML = '<div class="cdp-empty">Sin citas este día.</div>';
@@ -6439,12 +6447,15 @@
     listEl.innerHTML = appts.map(a => {
       const start = a.starts_at ? new Date(a.starts_at) : null;
       const end   = a.ends_at   ? new Date(a.ends_at)   : null;
-      const timeStr = start
-        ? start.toLocaleTimeString('es-MX', fmt) + (end ? ' – ' + end.toLocaleTimeString('es-MX', fmt) : '')
-        : '—';
+      // Solo la hora de inicio, en una línea — le deja espacio al nombre.
+      // El rango completo sigue disponible al pasar el mouse.
+      const timeStr = start ? start.toLocaleTimeString('es-MX', fmt) : '—';
+      const rangeStr = start && end
+        ? `${timeStr} – ${end.toLocaleTimeString('es-MX', fmt)}`
+        : timeStr;
       const docName = _doctorPlainName(a.doctor_id, a.doctor_name);
       return `<button type="button" class="cdp-row" onclick="_openDayPanelAppt('${a.id}')">
-        <span class="cdp-time">${timeStr}</span>
+        <span class="cdp-time" title="${_escHtml(rangeStr)}">${timeStr}</span>
         <span class="cdp-patient">${_escHtml(patientName(a))}</span>
         <span class="cdp-doc">${_initialsAvatar(docName, 20)}</span>
       </button>`;
@@ -6497,21 +6508,29 @@
       slotEventOverlap: false,
 
       // Vista de Mes: círculo del día (hoy / seleccionado) + puntos por
-      // doctor. Solo corre para celdas de dayGridMonth — timeGrid no tiene
-      // este hook. Los puntos se rellenan con lo que ya haya en caché
-      // (_calDayGroups); eventsSet los refresca cuando llegan datos nuevos.
+      // doctor + total corto ("10 citas"). Solo corre para celdas de
+      // dayGridMonth — timeGrid no tiene este hook. Se rellenan con lo que
+      // ya haya en caché (_calDayGroups); eventsSet los refresca cuando
+      // llegan datos nuevos.
       dayCellDidMount(arg) {
         const key = _calDateKey(arg.date);
         if (key === _selectedCalDate) arg.el.classList.add('cal-day-selected');
+        const appts = _calDayGroups[key] || [];
 
         const dots = document.createElement('div');
         dots.className = 'cal-day-dots';
         dots.dataset.date = key;
-        dots.innerHTML = _dotsHtmlForDay(_calDayGroups[key] || []);
+        dots.innerHTML = _dotsHtmlForDay(appts);
+
+        const total = document.createElement('div');
+        total.className = 'cal-day-total';
+        total.dataset.date = key;
+        total.textContent = appts.length ? _apptCountLabel(appts.length) : '';
+
         const frame = arg.el.querySelector('.fc-daygrid-day-frame') || arg.el;
         const top   = frame.querySelector('.fc-daygrid-day-top');
-        if (top) top.insertAdjacentElement('afterend', dots);
-        else frame.appendChild(dots);
+        if (top) { top.insertAdjacentElement('afterend', total); top.insertAdjacentElement('afterend', dots); }
+        else { frame.appendChild(dots); frame.appendChild(total); }
       },
 
       // Actualizar título al cambiar de período/vista
@@ -6618,7 +6637,7 @@
       eventsSet(events) {
         if (!calendar || calendar.view.type !== 'dayGridMonth') return;
         _calDayGroups = _groupApptsByDay(events.map(ev => ev.extendedProps));
-        _renderMonthDots();
+        _renderMonthDaySummaries();
         _renderDayPanel();
       },
 
