@@ -285,6 +285,12 @@
       color: var(--red);
     }
     .btn-outline-danger:hover { background: #fdecea; }
+    .btn-whatsapp { background: #25d366; color: #fff; box-shadow: 0 2px 8px rgba(37,211,102,.25); }
+    .btn-whatsapp:hover { background: #1fb957; }
+
+    .confirm-pill { display: inline-flex; align-items: center; gap: .35rem; font-size: .83rem; font-weight: 600; }
+    .confirm-pill.is-yes { color: #1d6e3f; }
+    .confirm-pill.is-no  { color: var(--gray-600); font-weight: 500; }
 
     /* ── Alerts ── */
     .alert {
@@ -297,6 +303,7 @@
     .alert.show { display: block; }
     .alert-error   { background: #fdecea; color: #b03030; border-left: 4px solid var(--red); }
     .alert-success { background: #e6f6ed; color: #1d6e3f; border-left: 4px solid var(--green); }
+    .alert-info    { background: #fff3cd; color: #8a6416; border-left: 4px solid #f0ad4e; }
 
     /* ── Quick patient: duplicate-found banner & birthdate mask ── */
     .qp-found-banner {
@@ -3433,6 +3440,9 @@
 
         <span class="detail-grid-label">Motivo</span>
         <span class="detail-grid-value" id="ad-reason">—</span>
+
+        <span class="detail-grid-label">Confirmación</span>
+        <span class="detail-grid-value" id="ad-confirm">—</span>
       </div>
 
       <!-- Notes history section -->
@@ -3485,6 +3495,14 @@
         <button class="btn btn-outline btn-sm" id="ad-btn-edit" onclick="toggleDetailPanel('ad-edit-panel')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Editar
+        </button>
+
+        <button class="btn btn-whatsapp btn-sm" id="ad-btn-whatsapp" onclick="openWhatsAppConfirm()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.94.56 3.76 1.53 5.3L2 22l4.93-1.6a9.87 9.87 0 0 0 5.11 1.4h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm0 17.93h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.99.99-3.03-.2-.31a8.2 8.2 0 0 1-1.26-4.34c0-4.55 3.71-8.26 8.27-8.26a8.2 8.2 0 0 1 5.84 2.42 8.2 8.2 0 0 1 2.42 5.84c0 4.56-3.71 8.02-8 8.02z"/></svg>
+          WhatsApp
+        </button>
+        <button class="btn btn-outline btn-sm" id="ad-btn-confirm" onclick="toggleStaffConfirm(this)">
+          Marcar confirmada
         </button>
 
         <button class="btn btn-success btn-sm" id="ad-btn-complete" onclick="changeApptStatus('completed')">
@@ -5873,6 +5891,13 @@
         const days = d.grace_days_remaining ?? '?';
         alertEl.textContent = `⚠ Tu pago está vencido. Tienes ${days} día(s) de gracia restantes antes de que se bloquee el acceso. Actualiza tu método de pago en "Gestionar suscripción".`;
         alertEl.className = 'alert alert-error show';
+      } else if (d.subscription_status === 'trialing' && d.is_suspended) {
+        alertEl.textContent = 'Tu período de prueba terminó. Contáctanos para activar tu plan.';
+        alertEl.className = 'alert alert-error show';
+      } else if (d.subscription_status === 'trialing') {
+        const days = d.trial_days_remaining ?? '?';
+        alertEl.textContent = `Estás en período de prueba: te quedan ${days} día(s).`;
+        alertEl.className = 'alert alert-info show';
       } else if (d.subscription_status === 'canceled' || d.is_suspended) {
         alertEl.textContent = 'Tu suscripción está cancelada. Contrata un plan para continuar usando MedSync.';
         alertEl.className = 'alert alert-error show';
@@ -7153,6 +7178,9 @@
     // Reason
     document.getElementById('ad-reason').textContent = a.reason || a.notes || a.description || '—';
 
+    // Confirmation
+    _renderConfirmRow(a);
+
     // Pre-fill edit panel inputs
     const isoDate  = event.start ? event.start.toISOString().split('T')[0] : '';
     const startTm  = event.start ? event.start.toTimeString().slice(0, 5) : '';
@@ -7185,6 +7213,9 @@
     _setDisplay('ad-notes-block',    isDoctorOrOwner);
     _setDisplay('ad-btn-cancel',     !terminal && isStaff);
     _setDisplay('ad-btn-no-show',    !terminal && isDoctorOrOwner);
+    _setDisplay('ad-btn-whatsapp',   !terminal && isStaff);
+    _setDisplay('ad-btn-confirm',    !terminal && isStaff);
+    _updateConfirmBtnLabel(a);
 
     document.getElementById('appt-detail-id').value = event.id;
     document.getElementById('appt-detail-modal').style.display = 'flex';
@@ -7195,6 +7226,87 @@
   function _setDisplay(id, show) {
     const el = document.getElementById(id);
     if (el) el.style.display = show ? '' : 'none';
+  }
+
+  function _renderConfirmRow(a) {
+    const el = document.getElementById('ad-confirm');
+    if (!el) return;
+    if (a.patient_confirmed_at) {
+      const d = new Date(a.patient_confirmed_at);
+      const fmt = isNaN(d) ? '' : d.toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      el.innerHTML = `<span class="confirm-pill is-yes">✓ Confirmada por WhatsApp</span>${fmt ? ` <small style="color:var(--gray-600);">· ${_escHtml(fmt)}</small>` : ''}`;
+    } else {
+      el.innerHTML = '<span class="confirm-pill is-no">Pendiente</span>';
+    }
+  }
+
+  function _updateConfirmBtnLabel(a) {
+    const btn = document.getElementById('ad-btn-confirm');
+    if (!btn) return;
+    btn.textContent = (a && a.patient_confirmed_at) ? 'Quitar confirmación' : 'Marcar confirmada';
+  }
+
+  async function openWhatsAppConfirm() {
+    const id = document.getElementById('appt-detail-id').value;
+    // Abrir la pestaña de inmediato (sincrónico al click) para que el navegador
+    // no la bloquee como popup; se navega una vez que llega el link.
+    const win = window.open('', '_blank');
+    let res;
+    try {
+      res = await fetch(`${API}/api/v1/appointments/${id}/whatsapp-link`, { headers: authHeaders() });
+    } catch {
+      if (win) win.close();
+      showToast('Error de conexión con el backend.', 'error');
+      return;
+    }
+    if (res.status === 401) { if (win) win.close(); logout(); return; }
+    if (!res.ok) {
+      if (win) win.close();
+      const err = await res.json().catch(() => ({}));
+      showToast(_apiErrMsg(err, `Error ${res.status}`), 'error');
+      return;
+    }
+    const data = await res.json();
+    const safeLink = data.has_phone ? _safeExternalUrl(data.wa_link) : null;
+    if (!safeLink) {
+      if (win) win.close();
+      showToast('El paciente no tiene un teléfono válido para WhatsApp.', 'error');
+      return;
+    }
+    if (win) win.location.href = safeLink;
+    else window.open(safeLink, '_blank');
+  }
+
+  async function toggleStaffConfirm(btn) {
+    const id = document.getElementById('appt-detail-id').value;
+    const wasConfirmed = !!(_detailAppt && _detailAppt.patient_confirmed_at);
+    btn.disabled = true;
+    btn.textContent = wasConfirmed ? 'Quitando…' : 'Guardando…';
+    try {
+      const res = await fetch(`${API}/api/v1/appointments/${id}/confirm`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ confirmed: !wasConfirmed, channel: 'whatsapp' }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(_apiErrMsg(err, `Error ${res.status}`));
+      }
+      const updated = await res.json();
+      _detailAppt = {
+        ..._detailAppt,
+        patient_confirmed_at: updated.patient_confirmed_at,
+        patient_confirmation_channel: updated.patient_confirmation_channel,
+      };
+      _renderConfirmRow(_detailAppt);
+      if (calendar) calendar.refetchEvents();
+      showToast(wasConfirmed ? 'Confirmación retirada.' : 'Cita marcada como confirmada.', 'success');
+    } catch (err) {
+      showToast(`No se pudo actualizar la confirmación: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      _updateConfirmBtnLabel(_detailAppt || {});
+    }
   }
 
   function closeApptDetailModal() {

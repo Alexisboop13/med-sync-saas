@@ -131,6 +131,8 @@ Los servicios externos (SMTP, S3, Stripe, WhatsApp/GreenAPI) pueden dejarse vac�
 | DELETE | `/api/v1/appointments/{id}` | Cancelar cita (libera slot) | ✅ |
 | PATCH | `/api/v1/appointments/{id}/status` | Transición de estado (completar/cancelar) | ✅ |
 | PATCH | `/api/v1/appointments/{id}/mark-no-show` | Marcar como no-show + incrementar contador | ✅ |
+| GET | `/api/v1/appointments/{id}/whatsapp-link` | Link wa.me con mensaje de confirmación precargado (no envía nada) | ✅ |
+| PATCH | `/api/v1/appointments/{id}/confirm` | Marcar/quitar confirmación manual de asistencia | ✅ |
 | GET | `/api/v1/appointments/{id}/notes` | Listar notas clínicas del historial | ✅ |
 | POST | `/api/v1/appointments/{id}/notes` | Agregar nota clínica (inmutable, nunca sobreescribe) | ✅ |
 | DELETE | `/api/v1/appointments/{id}/notes/{nid}` | Eliminar nota (solo autor o OWNER) | ✅ |
@@ -240,6 +242,42 @@ En `ENVIRONMENT=production`:
 - `/docs`, `/redoc` y `/openapi.json` quedan deshabilitados automáticamente.
 - CORS solo permite los orígenes configurados en `CORS_ORIGINS`.
 - Redis es requerido para que el rate limiting funcione correctamente con múltiples workers.
+
+---
+
+## WhatsApp: atajo manual + confirmación manual
+
+Por defecto (`WHATSAPP_MODE=manual`) el sistema **no envía WhatsApp automáticos**. El flujo es:
+
+1. En el detalle de una cita, el staff presiona **WhatsApp** → se abre `wa.me/{número}?text={mensaje}` con un mensaje plantilla ya redactado (nombre del paciente, doctor, clínica, fecha y hora).
+2. El staff revisa el mensaje dentro de WhatsApp Web/App y presiona **Enviar**.
+3. Cuando el paciente responde *SÍ*, el staff presiona **Marcar confirmada** en el detalle de la cita (`PATCH /appointments/{id}/confirm`). Esto no cambia el estado de la cita, solo registra `patient_confirmed_at` / `patient_confirmation_channel`.
+
+Este modo no requiere cuenta de GreenAPI ni consume su cuota gratuita de mensajes.
+
+Para volver al envío automático (confirmaciones y recordatorios vía GreenAPI):
+
+1. Configura `GREENAPI_INSTANCE_ID` y `GREENAPI_API_TOKEN` con valores reales.
+2. Cambia `WHATSAPP_MODE=api` en el `.env` correspondiente.
+3. Redeploy. `whatsapp_api_enabled()` (`app/core/whatsapp.py`) valida ambas condiciones antes de enviar nada.
+
+---
+
+## Período de prueba (7 días)
+
+Toda clínica nueva (`POST /auth/register` con `clinic_name`) arranca con `subscription_status=trialing` y `trial_ends_at = ahora + TRIAL_DAYS` (7 días por defecto). Al vencer, `Clinic.is_suspended` devuelve `True` y el acceso se bloquea con el mensaje "Tu período de prueba terminó. Contáctanos para activar tu plan."
+
+Administración manual con `scripts/manage_trial.py`:
+
+```bash
+python -m scripts.manage_trial list
+python -m scripts.manage_trial start <slug> [--days N]
+python -m scripts.manage_trial extend <slug> --days N
+python -m scripts.manage_trial activate <slug> [--plan starter|growth|enterprise]
+python -m scripts.manage_trial suspend <slug>
+```
+
+`GET /billing/status` expone `trial_days_remaining` (días redondeados hacia arriba, `null` si la clínica no está en prueba) para que el frontend muestre el aviso correspondiente.
 
 ---
 

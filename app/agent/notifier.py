@@ -6,7 +6,7 @@ Envío de recordatorios de citas.
 Prioridad de canales:
   1. SendGrid (si SENDGRID_API_KEY está configurada)
   2. SMTP directo (si SMTP_HOST está configurado)
-  3. WhatsApp vía GreenAPI (si GREENAPI_INSTANCE_ID está configurado)
+  3. WhatsApp vía GreenAPI (solo si WHATSAPP_MODE=api, ver app/core/whatsapp.py)
 
 Al menos un canal debe tener éxito para que la función devuelva True.
 Cada intento queda registrado en la tabla `notifications`.
@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent.scheduler import ReminderTask
 from app.core.config import settings
-from app.core.whatsapp import format_appointment_reminder, send_whatsapp
+from app.core.whatsapp import format_appointment_reminder, send_whatsapp, whatsapp_api_enabled
 from app.models.notification import (
     Notification,
     NotificationChannel,
@@ -260,7 +260,7 @@ async def send_reminder(db: AsyncSession, task: ReminderTask) -> bool:
             )
 
     # ── WhatsApp ───────────────────────────────────────────────────────────────
-    if task.patient_phone and settings.GREENAPI_INSTANCE_ID:
+    if task.patient_phone and whatsapp_api_enabled():
         magic_url = (
             f"{settings.APP_BASE_URL}/appointments/public/{task.magic_token}"
             if task.magic_token else ""

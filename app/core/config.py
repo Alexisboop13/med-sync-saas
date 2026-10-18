@@ -126,6 +126,13 @@ class Settings(BaseSettings):
     GREENAPI_INSTANCE_ID: str = ""
     GREENAPI_API_TOKEN:   str = ""
 
+    # "manual" (default): el consultorio abre un atajo wa.me y confirma a mano.
+    # "api": envío automático vía GreenAPI (requiere GREENAPI_INSTANCE_ID/TOKEN).
+    WHATSAPP_MODE: str = "manual"
+
+    # Duración del período de prueba para clínicas nuevas, en días.
+    TRIAL_DAYS: int = 7
+
     # ── Agente automático ─────────────────────────────────────────────────────
     # Token para proteger POST /internal/agent/run (trigger externo desde cron)
     # Genera uno con: python -c "import secrets; print(secrets.token_urlsafe(32))"

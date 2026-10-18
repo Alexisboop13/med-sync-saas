@@ -39,7 +39,7 @@ from app.core.config import settings
 from app.core.crypto import _load_keyring, make_search_hash
 from app.core.email import send_booking_confirmation
 from app.core.limiter import limiter
-from app.core.whatsapp import format_appointment_confirmation, send_whatsapp
+from app.core.whatsapp import format_appointment_confirmation, send_whatsapp, whatsapp_api_enabled
 from app.db.session import get_db
 from app.models.appointment import ACTIVE_STATUSES, Appointment, AppointmentStatus
 from app.models.clinic import Clinic
@@ -481,8 +481,8 @@ async def create_public_booking(
         background_tasks=background_tasks,
     )
 
-    # WhatsApp confirmation (si GreenAPI está configurado)
-    if body.patient_phone and settings.GREENAPI_INSTANCE_ID:
+    # WhatsApp confirmation (solo en modo automático — WHATSAPP_MODE=api)
+    if body.patient_phone and whatsapp_api_enabled():
         try:
             tz = pytz.timezone(clinic.timezone or "America/Mexico_City")
             starts_local = body.starts_at.astimezone(tz).strftime("%A %d de %B %Y a las %H:%M")

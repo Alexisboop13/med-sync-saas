@@ -217,3 +217,14 @@ class ProposeRescheduleBody(BaseModel):
         if self.starts_at >= self.ends_at:
             raise ValueError("starts_at must be before ends_at.")
         return self
+
+
+class WhatsAppLinkResponse(BaseModel):
+    wa_link: Optional[str] = None
+    message: str
+    has_phone: bool
+
+
+class StaffConfirmBody(BaseModel):
+    confirmed: bool = True
+    channel: Literal["whatsapp", "phone", "staff"] = "whatsapp"
