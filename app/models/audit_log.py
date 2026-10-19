@@ -111,6 +111,7 @@ class EventType:
     USER_CREATED = "user.created"
     USER_ROLE_CHANGED = "user.role.changed"
     USER_DEACTIVATED = "user.deactivated"
+    USER_PASSWORD_RESET_ADMIN = "user.password_reset.admin"
 
     # Billing events
     SUBSCRIPTION_STARTED = "billing.subscription.started"

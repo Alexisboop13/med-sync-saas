@@ -2339,11 +2339,19 @@
       <button class="modal-close" onclick="closeForgotModal()" aria-label="Cerrar">&times;</button>
     </div>
     <div class="modal-body">
-      <p style="color:var(--gray-600);font-size:.875rem;margin:0 0 1.2rem;line-height:1.5;">
+      <p id="forgot-intro" style="color:var(--gray-600);font-size:.875rem;margin:0 0 1.2rem;line-height:1.5;">
         Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
       </p>
       <div id="forgot-error"   class="alert alert-error"></div>
       <div id="forgot-success" class="alert alert-success"></div>
+      <div id="forgot-no-email" style="display:none;">
+        <p style="color:var(--gray-600);font-size:.875rem;line-height:1.5;margin:0 0 1.2rem;">
+          Contacta a soporte para recuperar tu contraseña.
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeForgotModal()" style="flex:1;">Cerrar</button>
+        </div>
+      </div>
       <form id="forgot-form">
         <div class="form-group">
           <label for="forgot-email">Correo electrónico</label>
@@ -8695,11 +8703,25 @@
   }
 
   // ── Forgot password modal ────────────────────────────────────────────
-  function openForgotModal() {
+  async function openForgotModal() {
     hideAlert('forgot-error');
     hideAlert('forgot-success');
     document.getElementById('forgot-email').value = '';
     document.getElementById('forgot-modal').style.display = 'flex';
+    document.getElementById('forgot-form').style.display     = '';
+    document.getElementById('forgot-intro').style.display    = '';
+    document.getElementById('forgot-no-email').style.display = 'none';
+    try {
+      const res = await fetch(`${API}/api/v1/auth/password-reset-availability`);
+      if (res.ok) {
+        const data = await res.json();
+        if (!data.available) {
+          document.getElementById('forgot-form').style.display     = 'none';
+          document.getElementById('forgot-intro').style.display    = 'none';
+          document.getElementById('forgot-no-email').style.display = '';
+        }
+      }
+    } catch (_) { /* si falla el chequeo, dejamos el formulario normal */ }
   }
   function closeForgotModal() {
     document.getElementById('forgot-modal').style.display = 'none';
