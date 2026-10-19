@@ -320,6 +320,8 @@ Genera una contraseña temporal, revoca las sesiones activas del usuario (refres
 
 `scripts/backup_db.sh` y `scripts/restore_db.sh` respaldan/restauran con `pg_dump`/`pg_restore` en formato custom (`-Fc`). Los `.dump` se guardan en `backups/` (gitignored, nunca se commitean).
 
+La base de producción es Postgres 16 — usa un `pg_dump`/`pg_restore` **igual o más nuevo** en tu PATH (en macOS con Homebrew, `brew install postgresql@18` y antepón `/opt/homebrew/opt/postgresql@18/bin` al PATH si tu `psql` por defecto es más viejo). Con un cliente más viejo que el servidor, `pg_dump` directamente se niega a correr.
+
 **Respaldar producción** (requiere la *External Database URL* de Render: Dashboard → tu base Postgres → Connect → External Connection):
 
 ```bash
