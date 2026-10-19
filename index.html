@@ -104,7 +104,7 @@
     .dashboard-main { flex: 1; min-width: 0; }
 
     /* ── Page wrappers ── */
-    #login-page {
+    #login-page, #signup-page {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -114,7 +114,7 @@
       position: relative;
       overflow: hidden;
     }
-    #login-page::before {
+    #login-page::before, #signup-page::before {
       content: ''; position: absolute; inset: 0; pointer-events: none;
       background: radial-gradient(ellipse 70% 55% at 50% 40%,
         rgba(99,102,241,.20) 0%, rgba(59,130,246,.10) 40%, transparent 70%);
@@ -169,19 +169,54 @@
     /* ── Login inputs (dark overrides) ── */
     .login-card .form-group label { color: #94a3b8; }
     .login-card input[type="email"],
-    .login-card input[type="password"] {
+    .login-card input[type="password"],
+    .login-card input[type="text"] {
       background: rgba(255,255,255,.07) !important;
       border-color: rgba(255,255,255,.12) !important;
       color: #f1f5f9 !important;
     }
     .login-card input[type="email"]:focus,
-    .login-card input[type="password"]:focus {
+    .login-card input[type="password"]:focus,
+    .login-card input[type="text"]:focus {
       border-color: rgba(99,102,241,.65) !important;
       background: rgba(255,255,255,.10) !important;
       box-shadow: 0 0 0 3px rgba(99,102,241,.18) !important;
       outline: none !important;
     }
     .login-card input::placeholder { color: #475569 !important; }
+
+    /* ── Password show/hide toggle ── */
+    .pwd-input-wrap { position: relative; }
+    .pwd-input-wrap input { padding-right: 2.6rem !important; }
+    .pwd-toggle-btn {
+      position: absolute; right: .6rem; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; padding: .3rem;
+      color: #64748b; display: flex; align-items: center;
+    }
+    .pwd-toggle-btn:hover { color: #94a3b8; }
+
+    /* ── Signup checkbox row ── */
+    .signup-check-row {
+      display: flex; align-items: flex-start; gap: .6rem;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; padding: .75rem .9rem; margin-bottom: 1.1rem;
+    }
+    .signup-check-row input[type="checkbox"] { margin-top: .2rem; accent-color: #6366f1; width: 16px; height: 16px; flex-shrink: 0; }
+    .signup-check-row label { color: #cbd5e1; font-size: .85rem; line-height: 1.4; cursor: pointer; }
+
+    /* ── Onboarding banner (post-signup, 3 pasos) ── */
+    .onboarding-banner {
+      background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(59,130,246,.08));
+      border: 1px solid rgba(99,102,241,.3); border-radius: var(--radius, 10px);
+      padding: 1.1rem 1.3rem; margin-bottom: 1.25rem; position: relative;
+    }
+    .onboarding-banner h4 { margin: 0 0 .7rem; font-size: .95rem; color: var(--gray-800); }
+    .onboarding-banner ol { margin: 0; padding-left: 1.2rem; color: var(--gray-800); font-size: .87rem; line-height: 1.8; }
+    .onboarding-banner-close {
+      position: absolute; top: .7rem; right: .8rem; background: none; border: none;
+      cursor: pointer; color: var(--gray-400); font-size: 1.1rem; line-height: 1; padding: .2rem;
+    }
+    .onboarding-banner-close:hover { color: var(--gray-600); }
 
     /* ── Login submit button ── */
     .login-card .btn-primary {
@@ -1913,6 +1948,7 @@
     </a>
     <div class="lp-nav-actions">
       <button class="lp-btn-ghost" onclick="scrollToDemoForm()">Solicitar demo</button>
+      <button class="lp-btn-ghost" onclick="goToSignup()">Prueba gratis 7 días</button>
       <button class="lp-btn-primary-sm" onclick="goToLogin()">Iniciar sesión</button>
     </div>
   </nav>
@@ -1930,7 +1966,11 @@
         Menos papeles, más tiempo con tus pacientes.
       </p>
       <div class="lp-hero-actions">
-        <button class="lp-btn-hero-primary" onclick="goToLogin()">
+        <button class="lp-btn-hero-primary" onclick="goToSignup()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Prueba gratis 7 días
+        </button>
+        <button class="lp-btn-hero-ghost" onclick="goToLogin()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           Iniciar sesión
         </button>
@@ -2206,7 +2246,86 @@
     <div class="login-divider">o</div>
     <div class="login-signup-row">
       ¿No tienes cuenta?&nbsp;
-      <button type="button" onclick="showLanding(); setTimeout(scrollToDemoForm, 400)">Solicitar demo gratuita</button>
+      <button type="button" onclick="goToSignup()">Crear cuenta</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ PAGE: Signup (prueba gratis 7 días) ═══ -->
+<div id="signup-page" style="display:none;">
+  <div class="login-card" style="max-width:460px;">
+
+    <button class="login-back-btn" onclick="goToLogin()" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Iniciar sesión
+    </button>
+
+    <div class="login-logo">
+      <div class="icon-wrap">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/>
+          <path d="M9 11.5a3 3 0 0 0 6 0"/>
+          <line x1="12" y1="8" x2="12" y2="8.5"/>
+        </svg>
+      </div>
+      <h1>Prueba gratis 7 días</h1>
+      <p>Crea tu clínica en Med-Sync</p>
+    </div>
+
+    <div id="signup-error" class="alert alert-error"></div>
+
+    <form id="signup-form">
+      <div class="form-group">
+        <label for="su-clinic-name">Nombre del consultorio</label>
+        <input type="text" id="su-clinic-name" placeholder="Consultorio Dental Pérez" required autocomplete="organization" />
+      </div>
+      <div class="form-group">
+        <label for="su-full-name">Tu nombre</label>
+        <input type="text" id="su-full-name" placeholder="Dra. Ana Pérez" required autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label for="su-email">Correo electrónico</label>
+        <input type="email" id="su-email" placeholder="ana@consultorio.com" required autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label for="su-password">Contraseña</label>
+        <div class="pwd-input-wrap">
+          <input type="password" id="su-password" placeholder="Mín. 8 caracteres" required minlength="8" autocomplete="new-password" />
+          <button type="button" class="pwd-toggle-btn" onclick="togglePwdVisibility('su-password', this)" aria-label="Mostrar contraseña" tabindex="-1">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="su-password-confirm">Confirmar contraseña</label>
+        <div class="pwd-input-wrap">
+          <input type="password" id="su-password-confirm" placeholder="Repite la contraseña" required minlength="8" autocomplete="new-password" />
+          <button type="button" class="pwd-toggle-btn" onclick="togglePwdVisibility('su-password-confirm', this)" aria-label="Mostrar contraseña" tabindex="-1">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="su-invite-code">Código de invitación</label>
+        <input type="text" id="su-invite-code" placeholder="MEDSYNC-XXXX" required autocomplete="off" />
+      </div>
+
+      <div class="signup-check-row">
+        <input type="checkbox" id="su-is-doctor" checked />
+        <label for="su-is-doctor">Yo también atiendo pacientes (crea tu perfil de doctor con horario lun–vie 9:00–14:00 y 16:00–19:00; lo puedes editar después)</label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block" id="signup-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Crear cuenta y empezar
+      </button>
+    </form>
+
+    <div class="login-divider">o</div>
+    <div class="login-signup-row">
+      ¿Ya tienes cuenta?&nbsp;
+      <button type="button" onclick="goToLogin()">Iniciar sesión</button>
     </div>
 
   </div>
@@ -2362,6 +2481,17 @@
             </svg>
             Nueva cita
           </button>
+        </div>
+
+        <!-- Banner de onboarding — solo justo después del registro -->
+        <div id="onboarding-banner" class="onboarding-banner" style="display:none;">
+          <button class="onboarding-banner-close" onclick="dismissOnboardingBanner()" aria-label="Cerrar">&times;</button>
+          <h4>👋 Primeros pasos en Med-Sync</h4>
+          <ol>
+            <li>Revisa tu horario en <strong>Doctores</strong> (ya quedó configurado, pero puedes ajustarlo).</li>
+            <li>Da de alta un <strong>paciente</strong> con su número de teléfono.</li>
+            <li>Agenda una <strong>cita</strong> y confírmala con el botón de WhatsApp.</li>
+          </ol>
         </div>
 
         <!-- Métricas del día -->
@@ -5403,6 +5533,7 @@
   function showDashboard() {
     document.getElementById('landing-page').style.display   = 'none';
     document.getElementById('login-page').style.display     = 'none';
+    document.getElementById('signup-page').style.display    = 'none';
     document.getElementById('dashboard-page').style.display = 'block';
     document.getElementById('navbar-email').textContent = email() || '';
     const isOwner = userRole() === 'owner';
@@ -5410,13 +5541,36 @@
     document.getElementById('tab-btn-configuracion').style.display = isOwner ? '' : 'none';
     _loadCurrentUser();
     switchTab('tab-inicio');
+    if (localStorage.getItem('show_onboarding') === '1') {
+      document.getElementById('onboarding-banner').style.display = '';
+    }
+  }
+
+  function dismissOnboardingBanner() {
+    document.getElementById('onboarding-banner').style.display = 'none';
+    localStorage.removeItem('show_onboarding');
   }
 
   function showLogin() {
     document.getElementById('landing-page').style.display   = 'none';
     document.getElementById('login-page').style.display     = 'flex';
+    document.getElementById('signup-page').style.display    = 'none';
     document.getElementById('dashboard-page').style.display = 'none';
     document.getElementById('fab-new-patient').classList.remove('visible');
+  }
+
+  function showSignup() {
+    document.getElementById('landing-page').style.display   = 'none';
+    document.getElementById('login-page').style.display     = 'none';
+    document.getElementById('signup-page').style.display    = 'flex';
+    document.getElementById('dashboard-page').style.display = 'none';
+    document.getElementById('fab-new-patient').classList.remove('visible');
+  }
+
+  function togglePwdVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    input.type = input.type === 'password' ? 'text' : 'password';
+    btn.setAttribute('aria-label', input.type === 'password' ? 'Mostrar contraseña' : 'Ocultar contraseña');
   }
 
   function logout() {
@@ -5480,6 +5634,69 @@
       showAlert('login-error', err.message || 'Error de conexión. ¿Está el servidor corriendo?');
     } finally {
       setLoading('login-btn', false);
+    }
+  });
+
+  // ── Signup (prueba gratis 7 días) ───────────────────────────────────────
+  document.getElementById('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert('signup-error');
+
+    const clinicName  = document.getElementById('su-clinic-name').value.trim();
+    const fullName    = document.getElementById('su-full-name').value.trim();
+    const emailVal    = document.getElementById('su-email').value.trim();
+    const passVal     = document.getElementById('su-password').value;
+    const passConfirm = document.getElementById('su-password-confirm').value;
+    const inviteCode  = document.getElementById('su-invite-code').value.trim();
+    const isDoctor    = document.getElementById('su-is-doctor').checked;
+
+    if (passVal !== passConfirm) {
+      showAlert('signup-error', 'Las contraseñas no coinciden.');
+      return;
+    }
+
+    setLoading('signup-btn', true);
+    try {
+      const res = await fetch(`${API}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clinic_name: clinicName,
+          full_name: fullName,
+          email: emailVal,
+          password: passVal,
+          invite_code: inviteCode,
+          is_doctor: isDoctor,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = Array.isArray(err.detail) ? err.detail[0]?.msg : err.detail;
+        throw new Error(msg || `Error ${res.status}`);
+      }
+
+      const data = await res.json();
+      const jwt = data.access_token;
+      if (!jwt) throw new Error('La respuesta del servidor no incluye un token.');
+
+      const payload = jwtPayload(jwt);
+      localStorage.setItem('access_token', jwt);
+      localStorage.setItem('jwt_token', jwt);
+      localStorage.setItem('user_email', emailVal);
+      localStorage.setItem('user_role', payload.role || '');
+      localStorage.setItem('clinic_id', payload.clinic_id || '');
+      localStorage.setItem('show_onboarding', '1');
+
+      showDashboard();
+      loadPatients();
+      loadDoctorSelects().then(() => loadAppointments());
+      if (payload.role === 'owner') { loadDoctors(); loadUsers(); loadClinicSettings(); loadBillingStatus(); }
+      loadLocations();
+    } catch (err) {
+      showAlert('signup-error', err.message || 'Error de conexión. ¿Está el servidor corriendo?');
+    } finally {
+      setLoading('signup-btn', false);
     }
   });
 
@@ -8580,6 +8797,7 @@
   function showLanding() {
     document.getElementById('landing-page').style.display   = 'block';
     document.getElementById('login-page').style.display     = 'none';
+    document.getElementById('signup-page').style.display    = 'none';
     document.getElementById('dashboard-page').style.display = 'none';
     requestAnimationFrame(initLandingAnimations);
   }
@@ -8587,6 +8805,11 @@
   function goToLogin() {
     document.getElementById('landing-page').style.display = 'none';
     showLogin();
+  }
+
+  function goToSignup() {
+    document.getElementById('landing-page').style.display = 'none';
+    showSignup();
   }
 
   function scrollToDemoForm() {

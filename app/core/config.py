@@ -133,6 +133,10 @@ class Settings(BaseSettings):
     # Duración del período de prueba para clínicas nuevas, en días.
     TRIAL_DAYS: int = 7
 
+    # Código requerido para registrar una clínica nueva (prueba gratis).
+    # Vacío = registro público cerrado (ninguna clínica nueva puede registrarse).
+    SIGNUP_INVITE_CODE: str = ""
+
     # ── Agente automático ─────────────────────────────────────────────────────
     # Token para proteger POST /internal/agent/run (trigger externo desde cron)
     # Genera uno con: python -c "import secrets; print(secrets.token_urlsafe(32))"
