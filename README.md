@@ -233,10 +233,20 @@ med-sync/
 
 ## Despliegue en producción (Render)
 
-```bash
-# Procfile (incluido)
-web: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+El repo incluye un Blueprint (`render.yaml`) que crea el web service, la base Postgres y el Key Value (Redis) juntos. En el dashboard de Render: **New → Blueprint** → elige este repo.
+
+```yaml
+# render.yaml (incluido) — resumen
+build: pip install -r requirements.txt
+start: alembic upgrade head && gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:$PORT
+health check: /health
 ```
+
+Secretos (`JWT_SECRET_KEY`, `SEARCH_HMAC_KEY`, `AGENT_SECRET_KEY`) se generan automáticamente al aplicar el Blueprint. `ENCRYPTION_KEYS` debe pegarse a mano en el dashboard (32 bytes en base64 — ver `scripts/generate_secrets.py`), porque el valor autogenerado de Render no garantiza ese formato exacto.
+
+`SMTP_*`, `AWS_*`, `STRIPE_*` y `GREENAPI_*` se dejan sin configurar al desplegar por primera vez — la app arranca y sirve tráfico normalmente sin ellos (cada integración falla de forma controlada: 503 en el endpoint que la necesita, nunca un crash al arrancar). Se agregan después desde el dashboard cuando estén listos.
+
+El `Procfile` (single-worker, sin Redis) sigue funcionando para plataformas basadas en buildpacks (Railway/Heroku-style); Render usa el `startCommand` de `render.yaml`, no el Procfile.
 
 En `ENVIRONMENT=production`:
 - `/docs`, `/redoc` y `/openapi.json` quedan deshabilitados automáticamente.
