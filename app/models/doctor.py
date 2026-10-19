@@ -78,7 +78,7 @@ class Doctor(TenantBase):
     specialty: Mapped[str] = mapped_column(
         String(120),
         nullable=False,
-        default="General Practice",
+        default="Medicina general",
         comment="Displayed on patient-facing booking page.",
     )
 

@@ -84,7 +84,7 @@ def _normalize_working_hours_input(v: Any) -> Optional[Dict[str, List[Dict[str, 
 class DoctorCreate(BaseModel):
     user_id: uuid.UUID
     title: str = Field(default="Dr.", max_length=10)
-    specialty: str = Field(default="General Practice", max_length=120)
+    specialty: str = Field(default="Medicina general", max_length=120)
     bio: Optional[str] = Field(None, max_length=1000)
     avatar_s3_key: Optional[str] = Field(None, max_length=500)
     date_of_birth: Optional[str] = None
