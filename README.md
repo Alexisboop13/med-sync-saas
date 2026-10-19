@@ -291,6 +291,28 @@ python -m scripts.manage_trial suspend <slug>
 
 ---
 
+## Respaldos de la base de datos
+
+`scripts/backup_db.sh` y `scripts/restore_db.sh` respaldan/restauran con `pg_dump`/`pg_restore` en formato custom (`-Fc`). Los `.dump` se guardan en `backups/` (gitignored, nunca se commitean).
+
+**Respaldar producción** (requiere la *External Database URL* de Render: Dashboard → tu base Postgres → Connect → External Connection):
+
+```bash
+RENDER_DB_URL="postgresql://usuario:password@host:5432/medsync" ./scripts/backup_db.sh
+```
+
+**Restaurar en local** (guard de seguridad: solo acepta `LOCAL_DB_URL` apuntando a `localhost`/`127.0.0.1`):
+
+```bash
+createdb medsync_restore
+LOCAL_DB_URL="postgresql://usuario@localhost:5432/medsync_restore" \
+  ./scripts/restore_db.sh backups/medsync_20261019_030000.dump
+```
+
+Los datos de pacientes quedan cifrados en el dump igual que en la base original — para leerlos después de restaurar hace falta `ENCRYPTION_KEYS` (ver `secrets/render-prod.env` si existe localmente, o tu gestor de secretos) y correr la app apuntando a esa base restaurada.
+
+---
+
 ## Roadmap / Próximos pasos
 
 - [ ] **Suite de tests** — es la deuda técnica más importante. No hay tests automatizados; la cobertura actual es 0%.

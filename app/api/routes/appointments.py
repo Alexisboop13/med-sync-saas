@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, outerjoin, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import AnyStaff, ClinicContext, CurrentUser, DBSession, DoctorOrAbove, TenantContext
@@ -111,6 +112,23 @@ async def _assert_no_overlap(
         )
 
 
+_OVERLAP_RACE_DETAIL = "Ese horario acaba de ser ocupado por otra cita. Por favor, elige otro horario."
+
+
+def _raise_overlap_or_reraise(exc: IntegrityError) -> None:
+    """
+    Converts a uq_doctor_no_overlap GIST exclusion-constraint violation into a
+    friendly 409. This is the race-condition guard: _assert_no_overlap() above
+    already rejects the common case before any write; this only fires when two
+    concurrent requests both pass that check for the same doctor/slot and the
+    DB constraint (migration z7a8b9c0d1e2) catches the loser at write time.
+    Any other IntegrityError is re-raised unchanged.
+    """
+    if "uq_doctor_no_overlap" in str(exc.orig):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=_OVERLAP_RACE_DETAIL) from exc
+    raise exc
+
+
 @router.post("", response_model=AppointmentResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("100/minute")
 async def create_appointment(
@@ -161,7 +179,11 @@ async def create_appointment(
         magic_token_expires_at=datetime.now(timezone.utc) + timedelta(hours=72),
     )
     ctx.db.add(appointment)
-    await ctx.db.flush()
+    try:
+        await ctx.db.flush()
+    except IntegrityError as exc:
+        await ctx.db.rollback()
+        _raise_overlap_or_reraise(exc)
     await log_audit(
         ctx.db,
         event_type=EventType.APPT_CREATED,
@@ -856,7 +878,11 @@ async def update_appointment_public(
     else:
         appt.status = AppointmentStatus.SCHEDULED
 
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        _raise_overlap_or_reraise(exc)
     await db.refresh(appt)
     formatted_date, formatted_time = _format_appt_datetimes(appt.starts_at, appt.ends_at, tz_name)
     return PublicAppointmentResponse(
@@ -1002,7 +1028,11 @@ async def confirm_reschedule(request: Request, token: str, db: DBSession):
     appt.proposed_ends_at = None
     appt.reschedule_token = None
     appt.reschedule_token_expires_at = None
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        _raise_overlap_or_reraise(exc)
     return {"message": "Cambio de cita confirmado exitosamente."}
 
 
@@ -1328,7 +1358,11 @@ async def update_appointment(
         else:
             setattr(appointment, field, value)
 
-    await ctx.db.commit()
+    try:
+        await ctx.db.commit()
+    except IntegrityError as exc:
+        await ctx.db.rollback()
+        _raise_overlap_or_reraise(exc)
     await ctx.db.refresh(appointment)
     return appointment
 
