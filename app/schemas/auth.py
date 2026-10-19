@@ -13,6 +13,8 @@ class UserRegister(BaseModel):
     role: str = "assistant"
     clinic_id: Optional[uuid.UUID] = None
     clinic_name: Optional[str] = None
+    invite_code: Optional[str] = None
+    is_doctor: bool = True
 
     @field_validator("password")
     @classmethod

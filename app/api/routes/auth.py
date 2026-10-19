@@ -27,6 +27,7 @@ from app.core.security import (
 )
 from app.models.audit_log import EventType
 from app.models.clinic import Clinic
+from app.models.doctor import Doctor
 from app.models.password_reset_token import PasswordResetToken
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
@@ -145,8 +146,19 @@ async def _create_tokens(db: AsyncSession, user: User) -> Token:
     return Token(access_token=access_token, refresh_token=raw_refresh)
 
 
+_DEFAULT_DOCTOR_SCHEDULE = {
+    "mon": [{"start": "09:00", "end": "14:00"}, {"start": "16:00", "end": "19:00"}],
+    "tue": [{"start": "09:00", "end": "14:00"}, {"start": "16:00", "end": "19:00"}],
+    "wed": [{"start": "09:00", "end": "14:00"}, {"start": "16:00", "end": "19:00"}],
+    "thu": [{"start": "09:00", "end": "14:00"}, {"start": "16:00", "end": "19:00"}],
+    "fri": [{"start": "09:00", "end": "14:00"}, {"start": "16:00", "end": "19:00"}],
+    "sat": [],
+    "sun": [],
+}
+
+
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
-@limiter.limit("10/minute")
+@limiter.limit("5/minute")
 async def register(
     request: Request,
     body: UserRegister,
@@ -157,6 +169,15 @@ async def register(
     email_hash = make_search_hash(email_lower)
 
     if body.clinic_name:
+        # Registro público de clínica nueva: siempre requiere código de invitación.
+        # SIGNUP_INVITE_CODE vacío = registro cerrado (ningún código es válido).
+        if not settings.SIGNUP_INVITE_CODE or not secrets.compare_digest(
+            body.invite_code or "", settings.SIGNUP_INVITE_CODE
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Código de invitación inválido.",
+            )
         slug = await _unique_slug(db, _slugify(body.clinic_name))
         trial_ends_at = datetime.now(timezone.utc) + timedelta(days=settings.TRIAL_DAYS)
         clinic = Clinic(name=body.clinic_name, slug=slug, trial_ends_at=trial_ends_at)
@@ -205,6 +226,15 @@ async def register(
     )
     db.add(user)
     await db.flush()
+
+    if body.clinic_name and body.is_doctor:
+        doctor = Doctor(
+            clinic_id=clinic_id,
+            user_id=user.id,
+            working_hours=_DEFAULT_DOCTOR_SCHEDULE,
+        )
+        db.add(doctor)
+        await db.flush()
 
     return await _create_tokens(db, user)
 

@@ -233,25 +233,35 @@ med-sync/
 
 ## Despliegue en producción (Render)
 
-El repo incluye un Blueprint (`render.yaml`) que crea el web service, la base Postgres y el Key Value (Redis) juntos. En el dashboard de Render: **New → Blueprint** → elige este repo.
+El servicio vive en Render como un **Web Service Docker** (no un Blueprint/`render.yaml` — no existe ninguno en este repo; si llegas a necesitar uno, créalo desde cero en lugar de confiar en una versión vieja, para no terminar con recursos duplicados). Render construye la imagen con el `Dockerfile` del repo y arranca con:
 
-```yaml
-# render.yaml (incluido) — resumen
-build: pip install -r requirements.txt
-start: alembic upgrade head && gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:$PORT
-health check: /health
+```dockerfile
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 10000"]
 ```
 
-Secretos (`JWT_SECRET_KEY`, `SEARCH_HMAC_KEY`, `AGENT_SECRET_KEY`) se generan automáticamente al aplicar el Blueprint. `ENCRYPTION_KEYS` debe pegarse a mano en el dashboard (32 bytes en base64 — ver `scripts/generate_secrets.py`), porque el valor autogenerado de Render no garantiza ese formato exacto.
+Correr `alembic upgrade head` dentro del propio `CMD` (en vez de un "pre-deploy command") es intencional: esa función es exclusiva de los planes pagados de Render, y el plan Free no la tiene — así que las migraciones corren en cada arranque del contenedor, antes de levantar `uvicorn`.
 
-`SMTP_*`, `AWS_*`, `STRIPE_*` y `GREENAPI_*` se dejan sin configurar al desplegar por primera vez — la app arranca y sirve tráfico normalmente sin ellos (cada integración falla de forma controlada: 503 en el endpoint que la necesita, nunca un crash al arrancar). Se agregan después desde el dashboard cuando estén listos.
+**Recursos actuales** (todos en la región Oregon, todos en plan **Free**):
+- Web Service `med-sync` — Docker, single worker (uvicorn sin `--workers`), se duerme tras 15 min de inactividad.
+- Postgres `med-sync-db` — PostgreSQL 16. **Las bases Free de Render expiran a los 30 días** y se borran si no se sube a un plan pagado antes. Revisa la fecha de vencimiento en el dashboard de la base (banner superior) y respalda con `scripts/backup_db.sh` regularmente.
+- Key Value `med-sync-redis` — Redis-compatible (Valkey), usado por el rate limiter (`REDIS_URL`).
 
-El `Procfile` (single-worker, sin Redis) sigue funcionando para plataformas basadas en buildpacks (Railway/Heroku-style); Render usa el `startCommand` de `render.yaml`, no el Procfile.
+Variables de entorno relevantes configuradas directamente en el dashboard del servicio (Environment): `DATABASE_URL` (interna, apunta al Postgres de arriba), `REDIS_URL` (interna), `JWT_SECRET_KEY`, `ENCRYPTION_KEYS`, `SEARCH_HMAC_KEY`, `AGENT_SECRET_KEY`, `SIGNUP_INVITE_CODE`, `WHATSAPP_MODE=manual`, `TRIAL_DAYS=7`, `APP_BASE_URL`/`CORS_ORIGINS` (la URL pública real del servicio — si no coinciden, los enlaces de los correos de confirmación/reset de contraseña quedan rotos). `SMTP_*`, `AWS_*`, `STRIPE_*` y `GREENAPI_*` pueden dejarse sin configurar: la app arranca y sirve tráfico normal sin ellos (cada integración falla de forma controlada — 503 puntual — nunca un crash al arrancar).
+
+Copia de los secretos de producción (incluida la *External Database URL* del Postgres, necesaria para `scripts/backup_db.sh`) vive en `secrets/render-prod.env`, fuera del repo y en `.gitignore` — nunca se commitea ni se pega en ningún chat.
+
+El `Procfile` (single-worker, sin Redis, `uvicorn` directo) sigue sirviendo como referencia para plataformas basadas en buildpacks (Railway/Heroku-style); Render en este repo usa el `Dockerfile`, no el Procfile.
 
 En `ENVIRONMENT=production`:
 - `/docs`, `/redoc` y `/openapi.json` quedan deshabilitados automáticamente.
 - CORS solo permite los orígenes configurados en `CORS_ORIGINS`.
-- Redis es requerido para que el rate limiting funcione correctamente con múltiples workers.
+- Redis es requerido para que el rate limiting funcione correctamente con múltiples workers (no aplica aquí: el plan Free corre un solo worker de todos modos).
+
+### Registro con código de invitación
+
+`POST /auth/register` con `clinic_name` (alta de clínica nueva) requiere `invite_code` exacto a `SIGNUP_INVITE_CODE` (comparación con `secrets.compare_digest`). Si `SIGNUP_INVITE_CODE` está vacío, el registro público queda cerrado — ningún código es válido. Un código inválido o ausente devuelve 403. Límite: `5/minute`. Esto **no** afecta el alta de doctores/asistentes dentro de una clínica existente (`clinic_id` + JWT de owner) — ese flujo nunca pidió invite code.
+
+El checkbox "Yo también atiendo pacientes" (marcado por defecto) crea además un perfil de `Doctor` para el owner con horario lun–vie 9:00–14:00 y 16:00–19:00 (editable después desde Doctores).
 
 ---
 
