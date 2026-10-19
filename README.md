@@ -301,6 +301,21 @@ python -m scripts.manage_trial suspend <slug>
 
 ---
 
+## Restablecer contraseña sin correo configurado
+
+`GET /auth/password-reset-availability` (público) devuelve `{"available": bool}` según si `SMTP_HOST`/`SMTP_USER` están configurados. El modal de "¿Olvidaste tu contraseña?" lo consulta al abrirse: si no hay correo configurado, muestra "Contacta a soporte para recuperar tu contraseña" en vez de prometer un enlace que nunca va a llegar.
+
+Para esos casos, `scripts/reset_password.py` restablece la contraseña a mano desde el Shell de Render:
+
+```bash
+python -m scripts.reset_password owner@clinica.com
+python -m scripts.reset_password owner@clinica.com --clinic-id <uuid>   # si el email existe en varias clínicas
+```
+
+Genera una contraseña temporal, revoca las sesiones activas del usuario (refresh tokens) y la imprime una sola vez — no se guarda en ningún lado. Pásasela al usuario por un canal seguro y pídele que la cambie en cuanto entre.
+
+---
+
 ## Respaldos de la base de datos
 
 `scripts/backup_db.sh` y `scripts/restore_db.sh` respaldan/restauran con `pg_dump`/`pg_restore` en formato custom (`-Fc`). Los `.dump` se guardan en `backups/` (gitignored, nunca se commitean).

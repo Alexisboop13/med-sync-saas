@@ -374,6 +374,18 @@ async def logout(request: Request, body: LogoutRequest, db: AsyncSession = Depen
         await db.commit()
 
 
+@router.get("/password-reset-availability")
+@limiter.limit("60/minute")
+async def password_reset_availability(request: Request):
+    """
+    Público, sin datos sensibles: le dice al frontend si '¿Olvidaste tu
+    contraseña?' puede enviar un correo real (SMTP_HOST/SMTP_USER
+    configurados) para que muestre el mensaje correcto en vez de prometer
+    un correo que nunca llega.
+    """
+    return {"available": bool(settings.SMTP_HOST and settings.SMTP_USER)}
+
+
 _GENERIC_RESET_MSG = "Si el correo existe en nuestro sistema, recibirás un enlace de recuperación en breve."
 
 _RESET_RATE_LIMIT = 3
