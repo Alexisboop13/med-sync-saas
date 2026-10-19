@@ -19,6 +19,7 @@ in deps.py to block access when a subscription lapses.
 
 from __future__ import annotations
 
+import math
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from typing import TYPE_CHECKING, List, Optional
@@ -220,7 +221,20 @@ class Clinic(SystemBase):
                 return False
             grace_end = self.past_due_since + timedelta(days=self._GRACE_DAYS)
             return datetime.now(timezone.utc) > grace_end
+        if self.subscription_status == SubscriptionStatus.TRIALING:
+            if self.trial_ends_at is None:
+                # Clínicas antiguas sin trial_ends_at: no se bloquean.
+                return False
+            return datetime.now(timezone.utc) > self.trial_ends_at
         return False
+
+    @property
+    def trial_days_remaining(self) -> Optional[int]:
+        """Días restantes de prueba, redondeados hacia arriba (mínimo 0). None si no está en prueba."""
+        if self.subscription_status != SubscriptionStatus.TRIALING or self.trial_ends_at is None:
+            return None
+        remaining = self.trial_ends_at - datetime.now(timezone.utc)
+        return max(0, math.ceil(remaining.total_seconds() / 86400))
 
     @property
     def grace_days_remaining(self) -> Optional[int]:

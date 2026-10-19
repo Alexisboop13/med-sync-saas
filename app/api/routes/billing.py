@@ -103,6 +103,7 @@ class BillingStatusResponse(BaseModel):
     past_due_since: Optional[str] = None
     is_suspended: bool
     grace_days_remaining: Optional[int] = None
+    trial_days_remaining: Optional[int] = None
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -196,4 +197,5 @@ async def get_billing_status(
         past_due_since=clinic.past_due_since.isoformat() if clinic.past_due_since else None,
         is_suspended=clinic.is_suspended,
         grace_days_remaining=clinic.grace_days_remaining,
+        trial_days_remaining=clinic.trial_days_remaining,
     )

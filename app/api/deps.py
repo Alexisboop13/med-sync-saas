@@ -272,6 +272,8 @@ async def get_clinic(
             detail = "Suscripción cancelada. Accede a Planes y precios para reactivar tu cuenta."
         elif sub_status == "past_due":
             detail = "Período de gracia vencido. Actualiza tu método de pago para continuar."
+        elif sub_status == "trialing":
+            detail = "Tu período de prueba terminó. Contáctanos para activar tu plan."
         else:
             detail = "Clinic account is suspended. Please contact support."
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)

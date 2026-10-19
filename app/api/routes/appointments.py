@@ -30,6 +30,7 @@ from app.models.user import Role
 from app.models.appointment_note import AppointmentNote
 from app.services.scheduling import DAY_ABBR as _DAY_ABBR
 from app.services.scheduling import validate_working_hours as _validate_working_hours
+from app.core.whatsapp import build_wa_link, format_confirmation_request
 from app.schemas.appointment import (
     AgendaResponse,
     AppointmentCreate,
@@ -47,6 +48,8 @@ from app.schemas.appointment import (
     PublicAppointmentResponse,
     SlotItem,
     SlotsResponse,
+    StaffConfirmBody,
+    WhatsAppLinkResponse,
 )
 from app.schemas.medical_record import MedicalRecordResponse
 from app.schemas.reschedule_request import RescheduleRequestPublicBody
@@ -633,6 +636,10 @@ _ES_MONTHS = (
     "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 )
 
+_ES_WEEKDAYS = (
+    "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo",
+)
+
 
 def _decrypt_name(value: str | None, fallback: str) -> str:
     """Decrypt an encrypted name field; if already plaintext, return as-is."""
@@ -1134,6 +1141,121 @@ async def mark_no_show(
             "before": {"status": "scheduled"},
             "after": {"status": "no_show"},
             "patient_id": str(appointment.patient_id),
+        },
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    await ctx.db.commit()
+    await ctx.db.refresh(appointment)
+    return appointment
+
+
+@router.get("/{appointment_id}/whatsapp-link", response_model=WhatsAppLinkResponse)
+@limiter.limit("100/minute")
+async def get_whatsapp_link(
+    request: Request,
+    appointment_id: uuid.UUID,
+    ctx: TenantContext,
+    _: AnyStaff,
+):
+    """
+    Devuelve el link wa.me con el mensaje de confirmación precargado para esta
+    cita. No envía nada — el staff abre el link y presiona Enviar manualmente.
+    """
+    result = await ctx.db.execute(
+        select(Appointment)
+        .options(
+            selectinload(Appointment.patient),
+            selectinload(Appointment.doctor).selectinload(Doctor.user),
+            selectinload(Appointment.clinic),
+        )
+        .where(
+            Appointment.clinic_id == ctx.clinic_id,
+            Appointment.id == appointment_id,
+        )
+    )
+    appointment = result.scalar_one_or_none()
+    if appointment is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found.")
+
+    patient = appointment.patient
+    patient_name = _decrypt_name(patient.full_name_enc if patient else None, "Paciente")
+    phone = _decrypt_name(patient.phone_enc if patient else None, "") if patient else ""
+
+    doctor_name = "Doctor"
+    if appointment.doctor and appointment.doctor.user:
+        title = appointment.doctor.title or "Dr."
+        doctor_name = f"{title} {_decrypt_name(appointment.doctor.user.full_name_enc, '')}"
+
+    clinic_name = appointment.clinic.name if appointment.clinic else ""
+    tz_name = (appointment.clinic.timezone if appointment.clinic else None) or "America/Mexico_City"
+    local_start = _to_local(appointment.starts_at, tz_name)
+    use_12h = tz_name.startswith("America/") or tz_name.startswith("Pacific/Honolulu")
+    weekday_name = _ES_WEEKDAYS[local_start.weekday()]
+    date_str = f"{weekday_name} {local_start.day} de {_ES_MONTHS[local_start.month - 1]} de {local_start.year}"
+    starts_at_local = f"{date_str}, {_fmt_time(local_start, use_12h)}"
+
+    message = format_confirmation_request(
+        patient_name=patient_name,
+        doctor_name=doctor_name,
+        clinic_name=clinic_name,
+        starts_at_local=starts_at_local,
+    )
+    wa_link = build_wa_link(phone, message) if phone else None
+
+    return WhatsAppLinkResponse(wa_link=wa_link, message=message, has_phone=bool(wa_link))
+
+
+@router.patch("/{appointment_id}/confirm", response_model=AppointmentResponse)
+@limiter.limit("100/minute")
+async def confirm_appointment_staff(
+    request: Request,
+    appointment_id: uuid.UUID,
+    body: StaffConfirmBody,
+    ctx: TenantContext,
+    current_user: AnyStaff,
+):
+    """Marca (o desmarca) la confirmación de asistencia del paciente. No cambia el status de la cita."""
+    result = await ctx.db.execute(
+        select(Appointment).where(
+            Appointment.clinic_id == ctx.clinic_id,
+            Appointment.id == appointment_id,
+        )
+    )
+    appointment = result.scalar_one_or_none()
+    if appointment is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found.")
+
+    if appointment.status != AppointmentStatus.SCHEDULED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Solo se pueden confirmar citas con estado 'scheduled'. "
+                f"Estado actual: '{appointment.status}'."
+            ),
+        )
+
+    now = datetime.now(timezone.utc)
+    if body.confirmed:
+        appointment.patient_confirmed_at = now
+        appointment.patient_confirmation_channel = body.channel
+    else:
+        appointment.patient_confirmed_at = None
+        appointment.patient_confirmation_channel = None
+
+    await log_audit(
+        ctx.db,
+        event_type=EventType.APPT_CONFIRMED,
+        entity_type="Appointment",
+        clinic_id=ctx.clinic_id,
+        actor_id=current_user.id,
+        actor_role=current_user.role,
+        entity_id=appointment_id,
+        source=request.url.path,
+        data={
+            "actor_role": current_user.role,
+            "confirmed": body.confirmed,
+            "channel": body.channel,
         },
         ip=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),

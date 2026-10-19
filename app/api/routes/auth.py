@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import re
 import secrets
+import unicodedata
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -110,7 +111,8 @@ async def _require_owner_of_clinic(
 
 
 def _slugify(name: str) -> str:
-    slug = re.sub(r"[^\w\s-]", "", name.lower())
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    slug = re.sub(r"[^\w\s-]", "", ascii_name.lower())
     slug = re.sub(r"[\s_-]+", "-", slug)
     return slug.strip("-")[:80]
 
@@ -156,7 +158,8 @@ async def register(
 
     if body.clinic_name:
         slug = await _unique_slug(db, _slugify(body.clinic_name))
-        clinic = Clinic(name=body.clinic_name, slug=slug)
+        trial_ends_at = datetime.now(timezone.utc) + timedelta(days=settings.TRIAL_DAYS)
+        clinic = Clinic(name=body.clinic_name, slug=slug, trial_ends_at=trial_ends_at)
         db.add(clinic)
         await db.flush()
         clinic_id = clinic.id
